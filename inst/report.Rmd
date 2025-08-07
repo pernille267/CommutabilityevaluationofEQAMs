@@ -34,7 +34,7 @@ params:
 ```{r setup, include=FALSE}
 
 # This chunk sets up the global options for the report.
-knitr::opts_chunk$set(echo = FALSE, message = TRUE, warning = TRUE, fig.align = 'center', fig.pos = 'H')
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = 'center', fig.pos = 'H')
 
 # Load necessary libraries for rendering tables
 library(knitr)
@@ -411,14 +411,19 @@ if (isTRUE(inherits(params$formal_assessment_results, "data.table"))) {
 ## Visual Model Assessment Plot
 
 
-```{r visual-assessment-plot, fig.width = 8, fig.height = 8}
+```{r visual-assessment-plot, fig.width = 8, fig.height = 8, out.width = "80%", fig.cap = "Model Assessment Plot"}
+
+if (isTRUE(inherits(params$assessment_plot, "ggplot"))) {
+  plot(params$assessment_plot)
+}
+
 
 # CORRECTED: Use include_graphics with the file path
-if (isTRUE(is.character(params$assessment_plot) && file.exists(params$assessment_plot))) {
-  knitr::include_graphics(params$assessment_plot, dpi = 900)
-} else {
-  "No visual model assessment plot was generated."
-}
+#if (isTRUE(is.character(params$assessment_plot) && file.exists(params$assessment_plot))) {
+#  knitr::include_graphics(params$assessment_plot, dpi = 900)
+#} else {
+#  "No visual model assessment plot was generated."
+#}
 ```
 
 \newpage
@@ -563,11 +568,11 @@ if (isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merg
     ) |>
     pack_rows(
       index = table(ce_results_dt$comparison),
-      latex_gap_space = "1.5em",
       bold = TRUE
     ) |>
     column_spec(
       column = 6,
+      bold = TRUE,
       color = ifelse(
         ce_results_dt$Conclusion == "Commutable",
         "#28A745",
@@ -592,14 +597,13 @@ if (isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merg
 
 The plot below provides a graphical representation of the commutability evaluation.
 
-```{r ce-results-plot, fig.width = 8, fig.height = 8}
+```{r ce-results-plot, fig.width = 12, fig.height = 10, out.width = "80%", fig.cap = "Commutability Evaluation Plot"}
 
-
-if (isTRUE(is.character(params$ce_plot) && file.exists(params$ce_plot))) {
-  knitr::include_graphics(params$ce_plot, dpi = 900)
-} else {
-  "No commutability evaluation plot to display. Please ensure the plot was generated in the app."
+if (isTRUE(inherits(params$ce_plot, "ggplot"))) {
+  plot(params$ce_plot)
 }
+
+
 ```
 
 

@@ -23,4 +23,5 @@ Imports:
     shinydashboard,
     shinyWidgets,
     smooth.commutability,
+    tinytex,
     tools

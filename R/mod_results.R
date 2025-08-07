@@ -663,21 +663,21 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
         # --- PLOT HANDLING ---
         # Initialize plot paths as NULL
-        assessment_plot_path <- NULL
-        ce_plot_path <- NULL
+        #assessment_plot_path <- NULL
+        #ce_plot_path <- NULL
 
         # Safely get the plot objects, checking if they are ggplot objects
-        assessment_plot_obj <- model_validation_data$assessment_plot()
-        if (inherits(assessment_plot_obj, "ggplot")) {
-          assessment_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
-          ggsave(assessment_plot_path, plot = assessment_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
-        }
+        #assessment_plot_obj <- model_validation_data$assessment_plot()
+        #if (inherits(assessment_plot_obj, "ggplot")) {
+        #  assessment_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
+        #  ggsave(assessment_plot_path, plot = assessment_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
+        #}
 
-        ce_plot_obj <- try(plot_button_pressed(), silent = TRUE)
-        if (inherits(ce_plot_obj, "ggplot")) {
-          ce_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
-          ggsave(ce_plot_path, plot = ce_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
-        }
+        #ce_plot_obj <- try(plot_button_pressed(), silent = TRUE)
+        #if (inherits(ce_plot_obj, "ggplot")) {
+        #  ce_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
+        #  ggsave(ce_plot_path, plot = ce_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
+        #}
 
 
 
@@ -698,26 +698,32 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
             # From mod_model_validation
             formal_assessment_results = try(model_validation_data$formal_results(), silent = TRUE),
-            assessment_plot = assessment_plot_path, # Pass the file path
+            assessment_plot = model_validation_data$assessment_plot(),
 
             # From mod_dins
             dins_params = try(mod_dins_params(), silent = TRUE),
 
             # From this module (mod_results)
             ce_results = try(calculate_button_pressed(), silent = TRUE),
-            ce_plot = ce_plot_path # Pass the file path
+            ce_plot = plot_button_pressed()
           )
         )
 
         # Render the report
-        rmarkdown::render(
+        rendered_report <- rmarkdown::render(
           input = temp_report,
-          output_file = file,
           output_format = "pdf_document",
           params = params,
           envir = new.env(parent = globalenv()),
           intermediates_dir = temp_dir
         )
+
+        # Relocate the file
+        file.copy(
+          from = rendered_report,
+          to = file
+        )
+
       }
     )
 

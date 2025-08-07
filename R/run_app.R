@@ -14,6 +14,7 @@
 #' @import shinydashboard
 #' @import shinyWidgets
 #' @import smooth.commutability
+#' @import tinytex
 #' @import tools
 
 run_app <- function() {
