@@ -157,29 +157,6 @@ mod_results_ui <- function(id) {
               type = 4
             )
           )
-        ),
-        # ADDED: Report Download Card
-        div(
-          class = "dashboard-card",
-          div(
-            class = "card-header",
-            icon("file-download", class = "header-icon"),
-            h3("Download Full Analysis Report")
-          ),
-          div(
-            class = "card-body",
-            p("Click the button below to download a comprehensive HTML report summarizing all data, parameters, and results from your current session."),
-            div(
-              class = "text-center mt-3",
-              downloadBttn(
-                outputId = ns("download_report"),
-                label = "Download Report",
-                style = "gradient",
-                color = "success",
-                size = "lg"
-              )
-            )
-          )
         )
       ),
 
@@ -322,6 +299,29 @@ mod_results_ui <- function(id) {
           )
         )
       )
+    ),
+    # ADDED: Report Download Card
+    div(
+      class = "dashboard-card",
+      div(
+        class = "card-header",
+        icon("file-download", class = "header-icon"),
+        h3("Download Full Analysis Report")
+      ),
+      div(
+        class = "card-body",
+        p("Click the button below to download a comprehensive HTML report summarizing all data, parameters, and results from your current session."),
+        div(
+          class = "text-center mt-3",
+          downloadBttn(
+            outputId = ns("download_report"),
+            label = "Download Report",
+            style = "gradient",
+            color = "royal",
+            size = "lg"
+          )
+        )
+      )
     )
   )
 }
@@ -454,6 +454,7 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
     # Calculation for the table is triggered by the 'Calculate' button
     calculate_button_pressed <- eventReactive(input$calculate, {
+      print(inherits(outlier_data$results(), "data.table"))
       perform_calculation()
     })
 
@@ -630,96 +631,92 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       }
     )
 
-    # --- UPDATED: PDF Report Generation Logic ---
+
+
+
+    # --- UPDATED: Report Generation Logic ---
     output$download_report <- downloadHandler(
       filename = function() {
-        paste0("Commutability-Evaluation-Report-", Sys.Date(), ".pdf")
+        paste0("Commutability-Evaluation-Report-", Sys.Date(), ".", "pdf")
       },
       content = function(file) {
         id <- showNotification(
-          "Generating PDF report... This may take a moment.",
+          "Generating report... This may take a moment.",
           duration = NULL,
           closeButton = FALSE,
           type = "message"
         )
-        # Ensure the notification is removed when the function exits
         on.exit(removeNotification(id))
 
-        # Correctly find the path to the Rmd template within the package.
-        report_path <- system.file("report.Rmd", package = "CommutabilityevaluationofEQAMs")
+        # Create a temporary directory for intermediate files like plots
+        temp_dir <- tempdir()
 
+        # Find the path to the Rmd template within the package.
+        report_path <- system.file("report.Rmd", package = "CommutabilityevaluationofEQAMs")
         if (report_path == "") {
-          stop("Could not find report.Rmd in the package. Make sure it is in the 'inst' directory.")
+          stop("Could not find report.Rmd. Make sure it is in the 'inst' directory.")
         }
 
-        # Create a temporary copy to avoid writing to the package library
-        temp_report <- file.path(tempdir(), "report.Rmd")
+        # Create a temporary copy of the report to avoid writing to the package library
+        temp_report <- file.path(temp_dir, "report.Rmd")
         file.copy(report_path, temp_report, overwrite = TRUE)
 
-        # CORRECTED: Create a temporary directory for intermediate files to avoid path issues
-        temp_dir <- tempfile()
-        dir.create(temp_dir)
+        # --- PLOT HANDLING ---
+        # Initialize plot paths as NULL
+        assessment_plot_path <- NULL
+        ce_plot_path <- NULL
+
+        # Safely get the plot objects, checking if they are ggplot objects
+        assessment_plot_obj <- model_validation_data$assessment_plot()
+        if (inherits(assessment_plot_obj, "ggplot")) {
+          assessment_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
+          ggsave(assessment_plot_path, plot = assessment_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
+        }
+
+        ce_plot_obj <- try(plot_button_pressed(), silent = TRUE)
+        if (inherits(ce_plot_obj, "ggplot")) {
+          ce_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
+          ggsave(ce_plot_path, plot = ce_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
+        }
+
+
 
         # Gather all necessary parameters to pass to the Rmd file.
-        params <- list(
-          # From mod_file_upload
-          cs_data = file_upload_data$raw_cs_data(),
-          eq_data = file_upload_data$raw_eq_data(),
-          diagnostics_cs = file_upload_data$diagnostics_cs(),
-          diagnostics_eq = file_upload_data$diagnostics_eq(),
-          diagnostics_both = file_upload_data$diagnostics_both(),
+        # Use try() to gracefully handle cases where calculations haven't been run
+        params <- isolate(
+          list(
+            # From mod_file_upload
+            cs_data = try(file_upload_data$raw_cs_data(), silent = TRUE),
+            eq_data = try(file_upload_data$raw_eq_data(), silent = TRUE),
+            diagnostics_cs = try(file_upload_data$diagnostics_cs(), silent = TRUE),
+            diagnostics_eq = try(file_upload_data$diagnostics_eq(), silent = TRUE),
+            diagnostics_both = try(file_upload_data$diagnostics_both(), silent = TRUE),
 
-          # From mod_outlier_analysis
-          outlier_results = outlier_data$results(),
-          outlier_params = outlier_data$params(),
+            # From mod_outlier_analysis
+            outlier_results = try(outlier_data$results(), silent = TRUE),
+            outlier_params = try(outlier_data$params(), silent = TRUE),
 
-          # From mod_model_validation
-          formal_assessment_results = model_validation_data$formal_results(),
-          assessment_plot = model_validation_data$assessment_plot(),
+            # From mod_model_validation
+            formal_assessment_results = try(model_validation_data$formal_results(), silent = TRUE),
+            assessment_plot = assessment_plot_path, # Pass the file path
 
-          # From mod_dins
-          dins_params = mod_dins_params(),
+            # From mod_dins
+            dins_params = try(mod_dins_params(), silent = TRUE),
 
-          # From this module (mod_results)
-          ce_results = calculate_button_pressed(),
-          ce_plot = plot_button_pressed()
+            # From this module (mod_results)
+            ce_results = try(calculate_button_pressed(), silent = TRUE),
+            ce_plot = ce_plot_path # Pass the file path
+          )
         )
 
-        #browser()
-
-        # --- NEW PLOT HANDLING LOGIC ---
-        # Create safe file paths for the plots
-        assessment_plot_path <- tempfile(fileext = ".png")
-        ce_plot_path <- tempfile(fileext = ".png")
-
-        # Save the plots to these paths
-        if (inherits(params$assessment_plot, "ggplot")) {
-          ggsave(assessment_plot_path, plot = params$assessment_plot, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
-          # Replace the plot object with the file path
-          params$assessment_plot <- assessment_plot_path
-        } else {
-          params$assessment_plot <- NULL # Ensure it's NULL if not a valid plot
-        }
-
-        if (inherits(params$ce_plot, "ggplot")) {
-          ggsave(ce_plot_path, plot = params$ce_plot, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
-          # Replace the plot object with the file path
-          params$ce_plot <- ce_plot_path
-        } else {
-          params$ce_plot <- NULL # Ensure it's NULL if not a valid plot
-        }
-        # --- END OF NEW LOGIC ---
-
-        browser()
-
-        # Render the report to PDF
+        # Render the report
         rmarkdown::render(
           input = temp_report,
           output_file = file,
           output_format = "pdf_document",
           params = params,
-          envir = new.env(parent = globalenv()), # Use a clean environment
-          intermediates_dir = temp_dir # Use the safe temporary directory
+          envir = new.env(parent = globalenv()),
+          intermediates_dir = temp_dir
         )
       }
     )

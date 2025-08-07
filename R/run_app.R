@@ -7,6 +7,7 @@
 #' @import ggplot2
 #' @import kableExtra
 #' @import readxl
+#' @import rmarkdown
 #' @import shiny
 #' @import DT
 #' @import shinycssloaders
@@ -14,6 +15,7 @@
 #' @import shinyWidgets
 #' @import smooth.commutability
 #' @import tools
+
 run_app <- function() {
 
   options(knitr.kable.NA = '', shiny.autoreload = TRUE)

@@ -7,14 +7,6 @@ output:
     number_sections: true
     latex_engine: pdflatex
 fontsize: 11pt
-geometry: "left=2.5cm,right=2.5cm,top=3cm,bottom=3cm"
-header-includes:
-   - \usepackage{fancyhdr}
-   - \pagestyle{fancy}
-   - \fancyhead[L]{Commutability Evaluation Report}
-   - \fancyfoot[C]{\thepage}
-   - \usepackage{graphicx}
-   - \usepackage{float}
 params:
   # From mod_file_upload
   cs_data: NA
@@ -40,8 +32,9 @@ params:
 ---
 
 ```{r setup, include=FALSE}
+
 # This chunk sets up the global options for the report.
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = 'center', fig.pos = 'H')
+knitr::opts_chunk$set(echo = FALSE, message = TRUE, warning = TRUE, fig.align = 'center', fig.pos = 'H')
 
 # Load necessary libraries for rendering tables
 library(knitr)
@@ -59,25 +52,35 @@ library(ggplot2)
 
 # Introduction
 
-This report details the commutability evaluation of External Quality Assessment Materials (EQAMs) against clinical samples (CS). The analysis was performed using the `CommutabilityevaluationofEQAMs` Shiny application. All data, parameters, and results are documented below.
+This report details the commutability evaluation of External Quality Assessment Materials (EQAMs) / Certified Reference Materials (CRMs) against clinical samples (CS). The analysis was performed using the `CommutabilityevaluationofEQAMs` Shiny application. All data, parameters, and results are documented below.
 
 \newpage
 
 # Data Diagnostics
 
-This section summarizes the initial diagnostic checks performed on the uploaded data files.
+This section summarizes the initial diagnostic checks performed on the uploaded data files. 
 
 ## Clinical Sample (CS) Data Diagnostics
 
 ```{r cs-diagnostics}
+
+# Message to user
+message_to_user <- NULL
+
+# Checks if diagnostic data for clinical samples are available
 if (isTRUE(is.list(params$diagnostics_cs))) {
+  
   # Display the quality badge and score
   cat(paste("**Overall Quality Badge:**", params$diagnostics_cs$badge, "\n\n"))
   cat(paste("**Quality Score:**", params$diagnostics_cs$score, "/ 9\n\n"))
   
   # Display the validation test results
   validation_dt <- data.table(
-    Test = c("Mandatory ID Columns", "Numeric IVD-MD Measurements", "Acceptable Missing Values", "Sufficient IVD-MDs"),
+    Test = c(
+      "Mandatory ID Columns",
+      "Numeric IVD-MD Measurements",
+      "Acceptable Number of Missing Values",
+      "Sufficient Number of IVD-MDs"),
     Status = c(
       ifelse(params$diagnostics_cs$validity$valid_mandatory_id_columns, "PASS", "FAIL"),
       ifelse(params$diagnostics_cs$validity$valid_numeric_columns, "PASS", "FAIL"),
@@ -85,19 +88,44 @@ if (isTRUE(is.list(params$diagnostics_cs))) {
       ifelse(params$diagnostics_cs$validity$valid_number_remaining_numeric, "PASS", "FAIL")
     )
   )
-  kbl(validation_dt, format = "latex", caption = "CS Data Validation Tests", booktabs = TRUE, align = "lc") |>
-    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
-    column_spec(1, bold = TRUE, width = "10cm") |>
-    column_spec(2, bold = TRUE, color = ifelse(validation_dt$Status == "PASS", "green", "red"))
-
-} else {
-  "No clinical sample diagnostics were performed or available."
+  
+  # Generate the table
+  kbl(
+    x = validation_dt,
+    format = "latex",
+    caption = "Clinical Sample Data Validation Tests",
+    booktabs = TRUE,
+    align = "lc"
+  ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8") |>
+    column_spec(
+      column = 2,
+      bold = TRUE,
+      color = ifelse(validation_dt$Status == "PASS", "#28A745", "#dc3545")
+    ) |>
+    kable_styling(latex_options = c("scale_down", "striped"))
 }
+
+if (isTRUE(is.na(params$diagnostics_cs))) {
+  message_to_user <- "Diagnostics for clinical sample data could not be generated."
+}
+
+
 ```
+
+`r message_to_user`
 
 ## EQA Material (EQAM) Data Diagnostics
 
 ```{r eq-diagnostics}
+
+# Message to user
+message_to_user <- NULL
+
 if (isTRUE(is.list(params$diagnostics_eq))) {
   # Display the quality badge and score
   cat(paste("**Overall Quality Badge:**", params$diagnostics_eq$badge, "\n\n"))
@@ -105,7 +133,12 @@ if (isTRUE(is.list(params$diagnostics_eq))) {
   
   # Display the validation test results
   validation_dt <- data.table(
-    Test = c("Mandatory ID Columns", "Numeric IVD-MD Measurements", "Acceptable Missing Values", "Sufficient IVD-MDs"),
+    Test = c(
+      "Mandatory ID Columns",
+      "Numeric IVD-MD Measurements",
+      "Acceptable Missing Values",
+      "Sufficient IVD-MDs"
+    ),
     Status = c(
       ifelse(params$diagnostics_eq$validity$valid_mandatory_id_columns, "PASS", "FAIL"),
       ifelse(params$diagnostics_eq$validity$valid_numeric_columns, "PASS", "FAIL"),
@@ -113,35 +146,84 @@ if (isTRUE(is.list(params$diagnostics_eq))) {
       ifelse(params$diagnostics_eq$validity$valid_number_remaining_numeric, "PASS", "FAIL")
     )
   )
-  kbl(validation_dt, format = "latex", caption = "EQAM Data Validation Tests", booktabs = TRUE, align = "lc") |>
-    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
-    column_spec(1, bold = TRUE, width = "10cm") |>
-    column_spec(2, bold = TRUE, color = ifelse(validation_dt$Status == "PASS", "green", "red"))
   
-} else {
-  "No EQA material diagnostics were performed or available."
+  # Generate the table
+  kbl(
+    x = validation_dt,
+    format = "latex",
+    caption = "External Quality Assessment Material Data Validation Tests",
+    booktabs = TRUE,
+    align = "lc"
+  ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8") |>
+    column_spec(
+      column = 2,
+      bold = TRUE,
+      color = ifelse(validation_dt$Status == "PASS", "#28A745", "#dc3545")
+    ) |>
+    kable_styling(latex_options = c("scale_down", "striped"))
+  
 }
+
+if (isTRUE(is.na(params$diagnostics_eq))) {
+  message_to_user <- "Diagnostics for external quality assessment data could not be generated."
+}
+
+
 ```
+
+`r message_to_user`
 
 ## Structural Agreement Between Datasets
 
 ```{r both-diagnostics}
+
+# Message to user
+message_to_user <- NULL
+
 if (isTRUE(is.list(params$diagnostics_both))) {
   agreement_dt <- data.table(
-    Test = c("Equal IVD-MD Names", "Equal IVD-MD Column Order"),
+    Test = c(
+      "Equal IVD-MD Names",
+      "Equal IVD-MD Column Order"
+    ),
     Status = c(
       ifelse(params$diagnostics_both$equal_names, "PASS", "FAIL"),
       ifelse(params$diagnostics_both$equal_order, "PASS", "FAIL")
     )
   )
-  kbl(agreement_dt, format = "latex", caption = "Structural Agreement Tests", booktabs = TRUE, align = "lc") |>
-    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
-    column_spec(1, bold = TRUE, width = "10cm") |>
-    column_spec(2, bold = TRUE, color = ifelse(agreement_dt$Status == "PASS", "green", "red"))
-} else {
-  "Structural agreement checks were not performed or available."
+  
+  kbl(
+    x = agreement_dt,
+    format = "latex",
+    caption = "Structural Agreement Tests",
+    booktabs = TRUE,
+    align = "lc"
+  ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8") |>
+    column_spec(
+      column = 2,
+      bold = TRUE,
+      color = ifelse(validation_dt$Status == "PASS", "#28A745", "#dc3545")
+    ) |>
+    kable_styling(latex_options = c("scale_down", "striped"))
 }
+
+if (isTRUE(is.list(params$diagnostics_both))) {
+  message_to_user <- NULL
+}
+
 ```
+
+`r message_to_user`
 
 \newpage
 
@@ -150,23 +232,48 @@ if (isTRUE(is.list(params$diagnostics_both))) {
 This section outlines the parameters selected by the user to perform the commutability evaluation.
 
 ```{r dins-parameters}
+
+# Message to user
+message_to_user <- NULL
+
 if (isTRUE(is.list(params$dins_params))) {
   params_dt <- data.table(
-    Parameter = c("Data Transformation", "Prediction Interval Method", "Tolerance (M)", "Recommended Critical Zeta"),
+    Parameter = c(
+      "Data Transformation",
+      "Prediction Interval Method",
+      "Differences in Nonselectivity Tolerance $M(\\%)$",
+      "Recommended $\\zeta_{\\mathrm{upper}}$"
+    ),
     Value = c(
       params$dins_params$transformation,
       params$dins_params$pi_method,
-      paste0(params$dins_params$M * 100, "%"),
+      paste0(params$dins_params$M * 100, "\\%"),
       round(params$dins_params$zeta_upper, 3)
     )
   )
-  kbl(params_dt, format = "latex", caption = "Core Analysis Parameters", booktabs = TRUE, align = "lc") |>
-    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
-    column_spec(1, bold = TRUE, width = "8cm")
-} else {
-  "Analysis parameters were not available."
+  kbl(
+    x = params_dt,
+    format = "latex",
+    caption = "Core Analysis Parameters",
+    booktabs = TRUE,
+    align = "lc",
+    escape = FALSE
+  ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8") |>
+    kable_styling(latex_options = c("scale_down", "striped"))
 }
+
+if (isTRUE(is.na(params$dins_params))) {
+  message_to_user <- "Could not generate differences in nonselectivity (DINS) parameters"
+}
+
 ```
+
+`r message_to_user`
 
 \newpage
 
@@ -174,30 +281,97 @@ if (isTRUE(is.list(params$dins_params))) {
 
 This section displays the results of the outlier analysis performed on the clinical sample data.
 
-```{r outlier-analysis, eval = FALSE}
+```{r outlier-analysis-params}
 
-if (isTRUE(is.data.frame(params$outlier_results) && nrow(params$outlier_results) > 0)) {
-  if(!is.null(params$outlier_params)) {
-    outlier_params_dt <- data.table(
-      Parameter = c("Outlier Test", "Confidence Level"),
-      Value = c(
-        params$outlier_params$outlier_test,
-        paste0(params$outlier_params$outlier_test_conf_level * 100, "%")
-      )
-    )
-    kbl(outlier_params_dt, format = "latex", caption = "Outlier Analysis Parameters", booktabs = TRUE, align = "lc") |>
-      kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
-      column_spec(1, bold = TRUE, width = "5cm")
-  }
+if (isTRUE(inherits(params$outlier_results, "data.table"))) {
+
+  test_name <- ifelse(
+    params$outlier_params$outlier_test == "burnett",
+    "Between Samples (Burnett's Criterion)", 
+    "Within Samples (Studentized Range Q)"
+  )
   
-  outlier_dt <- as.data.table(params$outlier_results)
-  kbl(outlier_params_dt, format = "latex", caption = "Outlier Analysis Parameters", booktabs = TRUE, align = "lc") |>
-      kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
-      column_spec(1, bold = TRUE, width = "5cm")
-} else {
-  "No outlier analysis was performed or no outliers were detected."
+  # Outlier Parameter Table
+  outlier_params_dt <- data.table(Parameter = c("Outlier Test", "Confidence Level"),
+                                  Value = c(
+                                    test_name,
+                                    paste0(
+                                      "$",
+                                      format(
+                                        x = params$outlier_params$outlier_test_conf_level * 100,
+                                        nsmall = 1,
+                                        digits = 1
+                                      ),
+                                      "\\%$"
+                                    )
+                                  ))
+  
+  # Explicitly print the parameters table
+  kbl(
+      x = outlier_params_dt,
+      format = "latex",
+      caption = "Outlier Analysis Parameters",
+      booktabs = TRUE,
+      label = "outlier-analysis-params",
+      align = "lc",
+      escape = FALSE
+    ) |>
+      row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8") |>
+    kable_styling(latex_options = c("scale_down", "striped"))
 }
+
 ```
+
+
+```{r outlier-analysis-results}
+
+message_to_user <- NULL
+
+if (isTRUE(inherits(params$outlier_results, "data.table"))) {
+
+  aligning <- ifelse(
+    params$outlier_params$outlier_test == "burnett",
+    "lcc", 
+    paste0("l", paste0(rep("c", ncol(params$outlier_results)), collapse = ""))
+  )
+  
+  test_caption <- ifelse(
+    params$outlier_params$outlier_test == "burnett",
+    "Outlier Analysis Between Samples Results", 
+    "Outlier Analysis Within Samples Results"
+  )
+  
+  outlier_dt <- params$outlier_results
+  
+  kbl(
+    x = outlier_dt,
+    format = "latex",
+    caption = test_caption,
+    booktabs = TRUE,
+    label = "outlier-analysis-results",
+    align = aligning
+  ) |>
+    row_spec(
+    row = 0,
+    bold = TRUE,
+    color = "white",
+    background = "#605ca8"
+  ) |>
+    kable_styling(latex_options = c("scale_down", "striped"))
+  
+}
+
+if (isFALSE(inherits(params$outlier_results, "data.table"))) {
+  message_to_user <- "Outlier analysis results were not generated."
+}
+
+```
+
+`r message_to_user`
 
 \newpage
 
@@ -208,12 +382,30 @@ This section presents the results from the formal and visual model validation te
 ## Formal Model Assessment
 
 ```{r formal-assessment}
-if (isTRUE(is.data.frame(params$formal_assessment_results) && nrow(params$formal_assessment_results) > 0)) {
-  kbl(params$formal_assessment_results, caption = "Formal Model Assessment Test Results", booktabs = TRUE, longtable = TRUE, digits = 3) |>
-   kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 9)
-} else {
-  "No formal model assessment tests were performed."
+
+if (isTRUE(inherits(params$formal_assessment_results, "data.table"))) {
+  
+  kbl(
+    x = params$formal_assessment_results,
+    format = "latex",
+    caption = "Formal Model Assessment Test Results",
+    align = "lccccc",
+    booktabs = TRUE,
+    position = "H",
+    linesep = ""
+  ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8"
+    ) |>
+    kable_styling(
+      latex_options = c("scale_down", "striped")
+    )
 }
+
+
 ```
 
 ## Visual Model Assessment Plot
@@ -240,32 +432,160 @@ This is the final output of the commutability evaluation, based on the data and 
 The table below shows the detailed numerical results of the commutability evaluation.
 
 ```{r ce-results-table}
-if (isTRUE(is.list(params$ce_results) && !is.null(params$ce_results$merged_ce_data))) {
+
+if (isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merged_ce_data, "data.table"))) {
   
-  results_tbl <- as.data.table(params$ce_results$merged_ce_data)
+  ce_results_dt <- params$ce_results$merged_ce_data |> setDT()
   
-  # Pre-process for better display
-  results_tbl[, `Conclusion` := ifelse(pi_inside == 1L, "Commutable", "Non-commutable")]
-  results_tbl[, `Strength (%)` := ifelse(pi_inside == 1L, inside_rate * 100, (1 - inside_rate) * 100)]
-  results_tbl[, `PI` := paste0(round(pi_lwr, 2), " - ", round(pi_upr, 2))]
-
-  # Select and rename columns for the final display table
-  display_tbl <- results_tbl[, .(`Sample ID` = SampleID,
-                                 `Prediction` = round(prediction, 2),
-                                 `Prediction Interval` = PI,
-                                  Conclusion,
-                                 `Strength (%)` = round(`Strength (%)`, 1))]
-
-  kbl(display_tbl, caption = "Commutability Evaluation Results", booktabs = TRUE, longtable = TRUE, linesep = "", align = "r") |>
-    kable_styling(latex_options = c("striped", "repeat_header", "hold_position"), full_width = FALSE, font_size = 10) |>
-    pack_rows(index = table(results_tbl$comparison), latex_gap_space = "1.5em", bold = TRUE) |>
-    column_spec(1, bold = TRUE) |>
-    column_spec(4, color = ifelse(display_tbl$Conclusion == "Commutable", "green", "red")) |>
-    add_header_above(c(" " = 1, "Prediction Details" = 2, "Commutability Assessment" = 2), bold = TRUE)
-
-} else {
-  "No commutability evaluation results to display. Please ensure the calculation was run in the app."
+  ce_results_dt$Zeta <- paste0(
+    format(
+      x = ce_results_dt$zeta,
+      nsmall = 2,
+      digits = 2
+    ),
+    " (",
+    format(
+      x = ce_results_dt$zeta_ci_lwr,
+      nsmall = 2,
+      digits = 2
+    ),
+    " - ",
+    format(
+      x = ce_results_dt$zeta_ci_upr,
+      nsmall = 2,
+      digits = 2
+    ),
+    ")"
+  )
+  
+  ce_results_dt$Zeta_upr <- format(
+    x = ce_results_dt$zeta_upper,
+    nsmall = 2,
+    digits = 2
+  )
+  
+  ce_results_dt$Measurements <- paste0(
+    "(",
+    format(
+      x = ce_results_dt$MP_B,
+      nsmall = 2,
+      digits = 2
+    ),
+    ", ",
+    format(
+      x = ce_results_dt$MP_A,
+      nsmall = 2,
+      digits = 2
+    ),
+    ")"
+  )
+  
+  ce_results_dt$Pred <- paste0(
+    format(
+      x = ce_results_dt$pi_lwr,
+      nsmall = 2L,
+      digits = 2L
+    ),
+    " - ",
+    format(
+      x = ce_results_dt$pi_upr,
+      nsmall = 2L,
+      digits = 2L
+    )
+  )
+  
+  ce_results_dt$Conclusion <- ifelse(
+    ce_results_dt$pi_inside == 1L & ce_results_dt$dins_conclusion == 0L,
+    "Commutable",
+    ifelse(
+      ce_results_dt$pi_inside == 0L & ce_results_dt$dins_conclusion == 0L,
+      "Noncommutable",
+      "Excessive DINS"
+    )
+  )
+  
+  ce_results_dt$Strength <- ifelse(
+    ce_results_dt$pi_inside == 1L & ce_results_dt$dins_conclusion == 0L,
+    paste0(
+      "$",
+      format(ce_results_dt$pi_inside * 100, nsmall = 1, digits = 1),
+      " \\%$"
+    ),
+    ifelse(
+      ce_results_dt$pi_inside == 0L & ce_results_dt$dins_conclusion == 0L,
+      paste0(
+        "$",
+        format((1 - ce_results_dt$pi_inside) * 100, nsmall = 1, digits = 1),
+        " \\%$"
+      ),
+      "."
+    )
+  )
+  
+  ce_results_display_dt <- subset(
+    x = ce_results_dt,
+    select = c(
+      "SampleID",
+      "Zeta",
+      "Zeta_upr",
+      "Measurements",
+      "Pred",
+      "Conclusion",
+      "Strength"
+    )
+  )
+  
+  # Render Table
+  kbl(
+    x = ce_results_display_dt,
+    format = "latex",
+    col.names = c(
+      "ID",
+      "$\\hat{\\zeta}$",
+      "$\\hat{\\zeta}_{\\mathrm{crit}}$",
+      "(x, y)",
+      "PI",
+      "Conclusion",
+      "Strength"
+    ),
+    align = "lcccccc",
+    booktabs = TRUE,
+    caption = "Commutability Evaluation Results",
+    longtable = TRUE,
+    position = "H",
+    escape = FALSE
+  ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8"
+    ) |>
+    pack_rows(
+      index = table(ce_results_dt$comparison),
+      latex_gap_space = "1.5em",
+      bold = TRUE
+    ) |>
+    column_spec(
+      column = 6,
+      color = ifelse(
+        ce_results_dt$Conclusion == "Commutable",
+        "#28A745",
+        ifelse(
+          ce_results_dt$Conclusion == "Noncommutable",
+          "#dc3545",
+          "orange"
+        )
+      )
+    ) |>
+    kable_styling(
+      latex_options = c(
+        "striped",
+        "repeat_header"
+      )
+    )
 }
+
 ```
 
 ## Results Plot
@@ -273,7 +593,8 @@ if (isTRUE(is.list(params$ce_results) && !is.null(params$ce_results$merged_ce_da
 The plot below provides a graphical representation of the commutability evaluation.
 
 ```{r ce-results-plot, fig.width = 8, fig.height = 8}
-# CORRECTED: Use include_graphics with the file path
+
+
 if (isTRUE(is.character(params$ce_plot) && file.exists(params$ce_plot))) {
   knitr::include_graphics(params$ce_plot, dpi = 900)
 } else {

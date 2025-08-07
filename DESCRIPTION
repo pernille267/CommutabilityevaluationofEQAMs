@@ -17,6 +17,7 @@ Imports:
     ggplot2,
     kableExtra,
     readxl,
+    rmarkdown,
     shiny,
     shinycssloaders,
     shinydashboard,
