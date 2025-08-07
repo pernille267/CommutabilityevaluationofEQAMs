@@ -62,20 +62,22 @@ run_app <- function() {
 
     # 3. Instantiate the Outlier Analysis module
     # It also receives the data from the file upload module.
-    mod_outlier_analysis_server("outlier_analysis_1",
-                                file_upload_data = file_upload_data)
+    outlier_data <- mod_outlier_analysis_server("outlier_analysis_1",
+                                                file_upload_data = file_upload_data)
 
     # 4. Instantiate the Model Validation module
     # This module needs data from both the file upload and user input modules.
-    mod_model_validation_server("model_validation_1",
-                                file_upload_data = file_upload_data,
-                                mod_dins_params = mod_dins_params)
+    model_validation_data <- mod_model_validation_server("model_validation_1",
+                                                         file_upload_data = file_upload_data,
+                                                         mod_dins_params = mod_dins_params)
 
     # 5. Instantiate the Results module
-    # This is the final module in the chain, requiring data from both upstream modules.
+    # Pass the new data from the other modules
     mod_results_server("results_1",
                        file_upload_data = file_upload_data,
-                       mod_dins_params = mod_dins_params)
+                       mod_dins_params = mod_dins_params,
+                       outlier_data = outlier_data,
+                       model_validation_data = model_validation_data)
 
   }
 

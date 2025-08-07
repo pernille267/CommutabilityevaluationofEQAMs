@@ -425,5 +425,13 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
         )
       }
     )
+
+    return(
+      list(
+        formal_results = assessment_tests_results,
+        assessment_plot = assessment_plot_object
+      )
+    )
+
   })
 }

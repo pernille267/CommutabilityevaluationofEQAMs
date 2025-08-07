@@ -373,7 +373,10 @@ mod_file_upload_server <- function(id) {
         is_valid = reactive({
           if (input$ignore_invalid_data == "TRUE") return(TRUE)
           current_validity()
-        })
+        }),
+        diagnostics_cs = current_diagnostics_cs,
+        diagnostics_eq = current_diagnostics_eq,
+        diagnostics_both = current_diagnostics_both
       )
     )
   })

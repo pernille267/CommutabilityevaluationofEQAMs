@@ -1,0 +1,284 @@
+---
+title: "Commutability Evaluation Report"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: pdflatex
+fontsize: 11pt
+geometry: "left=2.5cm,right=2.5cm,top=3cm,bottom=3cm"
+header-includes:
+   - \usepackage{fancyhdr}
+   - \pagestyle{fancy}
+   - \fancyhead[L]{Commutability Evaluation Report}
+   - \fancyfoot[C]{\thepage}
+   - \usepackage{graphicx}
+   - \usepackage{float}
+params:
+  # From mod_file_upload
+  cs_data: NA
+  eq_data: NA
+  diagnostics_cs: NA
+  diagnostics_eq: NA
+  diagnostics_both: NA
+  
+  # From mod_outlier_analysis
+  outlier_results: NA
+  outlier_params: NA
+  
+  # From mod_model_validation
+  formal_assessment_results: NA
+  assessment_plot: NA
+  
+  # From mod_dins
+  dins_params: NA
+  
+  # From mod_results
+  ce_results: NA
+  ce_plot: NA
+---
+
+```{r setup, include=FALSE}
+# This chunk sets up the global options for the report.
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = 'center', fig.pos = 'H')
+
+# Load necessary libraries for rendering tables
+library(knitr)
+library(data.table)
+library(kableExtra)
+library(ggplot2)
+
+```
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+# Introduction
+
+This report details the commutability evaluation of External Quality Assessment Materials (EQAMs) against clinical samples (CS). The analysis was performed using the `CommutabilityevaluationofEQAMs` Shiny application. All data, parameters, and results are documented below.
+
+\newpage
+
+# Data Diagnostics
+
+This section summarizes the initial diagnostic checks performed on the uploaded data files.
+
+## Clinical Sample (CS) Data Diagnostics
+
+```{r cs-diagnostics}
+if (isTRUE(is.list(params$diagnostics_cs))) {
+  # Display the quality badge and score
+  cat(paste("**Overall Quality Badge:**", params$diagnostics_cs$badge, "\n\n"))
+  cat(paste("**Quality Score:**", params$diagnostics_cs$score, "/ 9\n\n"))
+  
+  # Display the validation test results
+  validation_dt <- data.table(
+    Test = c("Mandatory ID Columns", "Numeric IVD-MD Measurements", "Acceptable Missing Values", "Sufficient IVD-MDs"),
+    Status = c(
+      ifelse(params$diagnostics_cs$validity$valid_mandatory_id_columns, "PASS", "FAIL"),
+      ifelse(params$diagnostics_cs$validity$valid_numeric_columns, "PASS", "FAIL"),
+      ifelse(params$diagnostics_cs$validity$valid_number_nas, "PASS", "FAIL"),
+      ifelse(params$diagnostics_cs$validity$valid_number_remaining_numeric, "PASS", "FAIL")
+    )
+  )
+  kbl(validation_dt, format = "latex", caption = "CS Data Validation Tests", booktabs = TRUE, align = "lc") |>
+    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
+    column_spec(1, bold = TRUE, width = "10cm") |>
+    column_spec(2, bold = TRUE, color = ifelse(validation_dt$Status == "PASS", "green", "red"))
+
+} else {
+  "No clinical sample diagnostics were performed or available."
+}
+```
+
+## EQA Material (EQAM) Data Diagnostics
+
+```{r eq-diagnostics}
+if (isTRUE(is.list(params$diagnostics_eq))) {
+  # Display the quality badge and score
+  cat(paste("**Overall Quality Badge:**", params$diagnostics_eq$badge, "\n\n"))
+  cat(paste("**Quality Score:**", params$diagnostics_eq$score, "/ 9\n\n"))
+  
+  # Display the validation test results
+  validation_dt <- data.table(
+    Test = c("Mandatory ID Columns", "Numeric IVD-MD Measurements", "Acceptable Missing Values", "Sufficient IVD-MDs"),
+    Status = c(
+      ifelse(params$diagnostics_eq$validity$valid_mandatory_id_columns, "PASS", "FAIL"),
+      ifelse(params$diagnostics_eq$validity$valid_numeric_columns, "PASS", "FAIL"),
+      ifelse(params$diagnostics_eq$validity$valid_number_nas, "PASS", "FAIL"),
+      ifelse(params$diagnostics_eq$validity$valid_number_remaining_numeric, "PASS", "FAIL")
+    )
+  )
+  kbl(validation_dt, format = "latex", caption = "EQAM Data Validation Tests", booktabs = TRUE, align = "lc") |>
+    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
+    column_spec(1, bold = TRUE, width = "10cm") |>
+    column_spec(2, bold = TRUE, color = ifelse(validation_dt$Status == "PASS", "green", "red"))
+  
+} else {
+  "No EQA material diagnostics were performed or available."
+}
+```
+
+## Structural Agreement Between Datasets
+
+```{r both-diagnostics}
+if (isTRUE(is.list(params$diagnostics_both))) {
+  agreement_dt <- data.table(
+    Test = c("Equal IVD-MD Names", "Equal IVD-MD Column Order"),
+    Status = c(
+      ifelse(params$diagnostics_both$equal_names, "PASS", "FAIL"),
+      ifelse(params$diagnostics_both$equal_order, "PASS", "FAIL")
+    )
+  )
+  kbl(agreement_dt, format = "latex", caption = "Structural Agreement Tests", booktabs = TRUE, align = "lc") |>
+    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
+    column_spec(1, bold = TRUE, width = "10cm") |>
+    column_spec(2, bold = TRUE, color = ifelse(agreement_dt$Status == "PASS", "green", "red"))
+} else {
+  "Structural agreement checks were not performed or available."
+}
+```
+
+\newpage
+
+# Analysis Parameters
+
+This section outlines the parameters selected by the user to perform the commutability evaluation.
+
+```{r dins-parameters}
+if (isTRUE(is.list(params$dins_params))) {
+  params_dt <- data.table(
+    Parameter = c("Data Transformation", "Prediction Interval Method", "Tolerance (M)", "Recommended Critical Zeta"),
+    Value = c(
+      params$dins_params$transformation,
+      params$dins_params$pi_method,
+      paste0(params$dins_params$M * 100, "%"),
+      round(params$dins_params$zeta_upper, 3)
+    )
+  )
+  kbl(params_dt, format = "latex", caption = "Core Analysis Parameters", booktabs = TRUE, align = "lc") |>
+    kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
+    column_spec(1, bold = TRUE, width = "8cm")
+} else {
+  "Analysis parameters were not available."
+}
+```
+
+\newpage
+
+# Outlier Analysis
+
+This section displays the results of the outlier analysis performed on the clinical sample data.
+
+```{r outlier-analysis, eval = FALSE}
+
+if (isTRUE(is.data.frame(params$outlier_results) && nrow(params$outlier_results) > 0)) {
+  if(!is.null(params$outlier_params)) {
+    outlier_params_dt <- data.table(
+      Parameter = c("Outlier Test", "Confidence Level"),
+      Value = c(
+        params$outlier_params$outlier_test,
+        paste0(params$outlier_params$outlier_test_conf_level * 100, "%")
+      )
+    )
+    kbl(outlier_params_dt, format = "latex", caption = "Outlier Analysis Parameters", booktabs = TRUE, align = "lc") |>
+      kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
+      column_spec(1, bold = TRUE, width = "5cm")
+  }
+  
+  outlier_dt <- as.data.table(params$outlier_results)
+  kbl(outlier_params_dt, format = "latex", caption = "Outlier Analysis Parameters", booktabs = TRUE, align = "lc") |>
+      kable_styling(latex_options = c("striped", "hold_position"), full_width = FALSE) |>
+      column_spec(1, bold = TRUE, width = "5cm")
+} else {
+  "No outlier analysis was performed or no outliers were detected."
+}
+```
+
+\newpage
+
+# Model Validation
+
+This section presents the results from the formal and visual model validation tests.
+
+## Formal Model Assessment
+
+```{r formal-assessment}
+if (isTRUE(is.data.frame(params$formal_assessment_results) && nrow(params$formal_assessment_results) > 0)) {
+  kbl(params$formal_assessment_results, caption = "Formal Model Assessment Test Results", booktabs = TRUE, longtable = TRUE, digits = 3) |>
+   kable_styling(latex_options = c("striped", "hold_position", "repeat_header"), font_size = 9)
+} else {
+  "No formal model assessment tests were performed."
+}
+```
+
+## Visual Model Assessment Plot
+
+
+```{r visual-assessment-plot, fig.width = 8, fig.height = 8}
+
+# CORRECTED: Use include_graphics with the file path
+if (isTRUE(is.character(params$assessment_plot) && file.exists(params$assessment_plot))) {
+  knitr::include_graphics(params$assessment_plot, dpi = 900)
+} else {
+  "No visual model assessment plot was generated."
+}
+```
+
+\newpage
+
+# Commutability Evaluation Results
+
+This is the final output of the commutability evaluation, based on the data and parameters provided.
+
+## Results Table
+
+The table below shows the detailed numerical results of the commutability evaluation.
+
+```{r ce-results-table}
+if (isTRUE(is.list(params$ce_results) && !is.null(params$ce_results$merged_ce_data))) {
+  
+  results_tbl <- as.data.table(params$ce_results$merged_ce_data)
+  
+  # Pre-process for better display
+  results_tbl[, `Conclusion` := ifelse(pi_inside == 1L, "Commutable", "Non-commutable")]
+  results_tbl[, `Strength (%)` := ifelse(pi_inside == 1L, inside_rate * 100, (1 - inside_rate) * 100)]
+  results_tbl[, `PI` := paste0(round(pi_lwr, 2), " - ", round(pi_upr, 2))]
+
+  # Select and rename columns for the final display table
+  display_tbl <- results_tbl[, .(`Sample ID` = SampleID,
+                                 `Prediction` = round(prediction, 2),
+                                 `Prediction Interval` = PI,
+                                  Conclusion,
+                                 `Strength (%)` = round(`Strength (%)`, 1))]
+
+  kbl(display_tbl, caption = "Commutability Evaluation Results", booktabs = TRUE, longtable = TRUE, linesep = "", align = "r") |>
+    kable_styling(latex_options = c("striped", "repeat_header", "hold_position"), full_width = FALSE, font_size = 10) |>
+    pack_rows(index = table(results_tbl$comparison), latex_gap_space = "1.5em", bold = TRUE) |>
+    column_spec(1, bold = TRUE) |>
+    column_spec(4, color = ifelse(display_tbl$Conclusion == "Commutable", "green", "red")) |>
+    add_header_above(c(" " = 1, "Prediction Details" = 2, "Commutability Assessment" = 2), bold = TRUE)
+
+} else {
+  "No commutability evaluation results to display. Please ensure the calculation was run in the app."
+}
+```
+
+## Results Plot
+
+The plot below provides a graphical representation of the commutability evaluation.
+
+```{r ce-results-plot, fig.width = 8, fig.height = 8}
+# CORRECTED: Use include_graphics with the file path
+if (isTRUE(is.character(params$ce_plot) && file.exists(params$ce_plot))) {
+  knitr::include_graphics(params$ce_plot, dpi = 900)
+} else {
+  "No commutability evaluation plot to display. Please ensure the plot was generated in the app."
+}
+```
+
+

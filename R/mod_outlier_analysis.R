@@ -157,24 +157,27 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
 
     # --- Server Logic ---
 
-    # Calculate Outlier Test Results if Button is Pressed
-    run_outlier_analysis_button_pressed <- eventReactive(input$get_outlier_results, {
-      req(cs_data_long())
+    # Create a reactiveVal to store the results. Initialize with NULL.
+    analysis_results_val <- reactiveVal(NULL)
 
-      analysis_results <- commutability::do_outlier_analysis(
+    # When the button is pressed, run the analysis and update the reactiveVal.
+    observeEvent(input$get_outlier_results, {
+      req(cs_data_long())
+      results <- commutability::do_outlier_analysis(
         data = cs_data_long(),
         method = input$outlier_test,
         variable = "influence",
         level = as.numeric(input$outlier_test_conf_level),
         output = "visual"
       )
-      return(analysis_results)
+      analysis_results_val(results) # Update the value
     })
 
-    # Render the results table
+    # Render the results table from the reactiveVal.
     output$outlier_results <- DT::renderDT({
-      req(cs_data_long())
-      results <- run_outlier_analysis_button_pressed()
+      # Require the value to be non-NULL before rendering.
+      req(analysis_results_val())
+      results <- analysis_results_val()
 
       DT::datatable(
         results,
@@ -184,7 +187,7 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
           scolllX = TRUE,
           scrollY = "400px",
           pageLength = 25,
-          dom = "Bfrtip", # B=Buttons, f=filtering, r=processing, t=table, i=info, p=pagination
+          dom = "Bfrtip",
           buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
           columnDefs = list(
             list(className = 'dt-center', targets = "_all")
@@ -199,5 +202,18 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
         )
       )
     })
+
+    return(
+      list(
+        results = analysis_results_val,
+        params = reactive({
+          list(
+            outlier_test = input$outlier_test,
+            outlier_test_conf_level = as.numeric(input$outlier_test_conf_level)
+          )
+        })
+      )
+    )
+
   })
 }
