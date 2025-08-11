@@ -298,27 +298,32 @@ mod_results_ui <- function(id) {
             )
           )
         )
-      )
-    ),
-    # ADDED: Report Download Card
-    div(
-      class = "dashboard-card",
-      div(
-        class = "card-header",
-        icon("file-download", class = "header-icon"),
-        h3("Download Full Analysis Report")
       ),
-      div(
-        class = "card-body",
-        p("Click the button below to download a comprehensive HTML report summarizing all data, parameters, and results from your current session."),
+      tabPanel(
+        title = "Report",
+        value = "show_results_report",
+        icon = icon("paper-plane"),
+
         div(
-          class = "text-center mt-3",
-          downloadBttn(
-            outputId = ns("download_report"),
-            label = "Download Report",
-            style = "gradient",
-            color = "royal",
-            size = "lg"
+          class = "dashboard-card",
+          div(
+            class = "card-header",
+            icon("file-download", class = "header-icon"),
+            h3("Download Full Analysis Report")
+          ),
+          div(
+            class = "card-body",
+            p("Click the button below to download a comprehensive PDF report summarizing all data, parameters, and results from your current session."),
+            div(
+              class = "text-center mt-3",
+              downloadBttn(
+                outputId = ns("download_report"),
+                label = "Download Report",
+                style = "gradient",
+                color = "royal",
+                size = "lg"
+              )
+            )
           )
         )
       )
@@ -454,7 +459,6 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
     # Calculation for the table is triggered by the 'Calculate' button
     calculate_button_pressed <- eventReactive(input$calculate, {
-      print(inherits(outlier_data$results(), "data.table"))
       perform_calculation()
     })
 
@@ -591,17 +595,68 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       }
     })
 
+    # --- DYNAMIC DIMENSION LOGIC ---
+
+    # Reactive to calculate optimal download dimensions
+    optimal_dims <- reactive({
+      results_list <- plot_data_reactive()
+      req(results_list, !is.null(results_list$merged_ce_data))
+
+      n_panels <- length(unique(results_list$merged_ce_data$comparison))
+      if (n_panels == 0) return(list(width = 17.6, height = 11.7)) # Default values
+
+      n_cols <- ceiling(sqrt(n_panels))
+      n_rows <- ceiling(n_panels / n_cols)
+
+      # Define dimensions in cm, assuming ~6cm per panel and space for labels/legends
+      optimal_width <- 6 + (n_cols * 6)
+      optimal_height <- 3 + (n_rows * 6)
+
+      # Clamp the values to a reasonable range to avoid extremely large files
+      optimal_width <- max(12, min(40, optimal_width))
+      optimal_height <- max(10, min(50, optimal_height))
+
+      return(list(width = round(optimal_width, 1), height = round(optimal_height, 1)))
+    })
+
+    # Observer to update the numeric inputs when the plot is generated
+    observeEvent(optimal_dims(), {
+      dims <- optimal_dims()
+      updateNumericInputIcon(
+        session = session,
+        inputId = "width",
+        value = dims$width
+      )
+      updateNumericInputIcon(
+        session = session,
+        inputId = "height",
+        value = dims$height
+      )
+    })
+
     output$ce_plots <- renderPlot(
-      height = function() {
-        # Ensure inputs are valid numbers before calculating
-        req(is.numeric(input$width), input$width > 0, is.numeric(input$height))
-        # Get the current width of the plot container in pixels
-        plot_width_px <- session$clientData[[paste0("output_", session$ns("ce_plots"), "_width")]]
-        req(plot_width_px)
-        # Calculate the height in pixels that maintains the desired aspect ratio
-        plot_width_px * (input$height / input$width)
-      },
       res = 120,
+      height = function() {
+        # --- DYNAMIC HEIGHT CALCULATION ---
+        results_list <- plot_data_reactive()
+        req(results_list, !is.null(results_list$merged_ce_data))
+
+        # 1. Get the number of unique panels (comparisons)
+        n_panels <- length(unique(results_list$merged_ce_data$comparison))
+        if (n_panels == 0) return(400) # Default height if no data
+
+        # 2. Determine the layout ggplot will use (it tries to be square-ish)
+        n_cols <- ceiling(sqrt(n_panels))
+        n_rows <- ceiling(n_panels / n_cols)
+
+        # 3. Calculate total height in pixels
+        # (Base height for title/legend + height per row)
+        base_height_px <- 150
+        height_per_row_px <- 280
+        total_height <- base_height_px + (n_rows * height_per_row_px)
+
+        return(total_height)
+      },
       {
         plot_obj <- plot_button_pressed()
         if (!is.null(plot_obj)) {
@@ -631,9 +686,6 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       }
     )
 
-
-
-
     # --- UPDATED: Report Generation Logic ---
     output$download_report <- downloadHandler(
       filename = function() {
@@ -661,52 +713,22 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
         temp_report <- file.path(temp_dir, "report.Rmd")
         file.copy(report_path, temp_report, overwrite = TRUE)
 
-        # --- PLOT HANDLING ---
-        # Initialize plot paths as NULL
-        #assessment_plot_path <- NULL
-        #ce_plot_path <- NULL
-
-        # Safely get the plot objects, checking if they are ggplot objects
-        #assessment_plot_obj <- model_validation_data$assessment_plot()
-        #if (inherits(assessment_plot_obj, "ggplot")) {
-        #  assessment_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
-        #  ggsave(assessment_plot_path, plot = assessment_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
-        #}
-
-        #ce_plot_obj <- try(plot_button_pressed(), silent = TRUE)
-        #if (inherits(ce_plot_obj, "ggplot")) {
-        #  ce_plot_path <- tempfile(tmpdir = temp_dir, fileext = ".png")
-        #  ggsave(ce_plot_path, plot = ce_plot_obj, device = "png", width = 20, height = 20, dpi = 1800, units = "cm")
-        #}
-
-
-
         # Gather all necessary parameters to pass to the Rmd file.
         # Use try() to gracefully handle cases where calculations haven't been run
-        params <- isolate(
-          list(
-            # From mod_file_upload
-            cs_data = try(file_upload_data$raw_cs_data(), silent = TRUE),
-            eq_data = try(file_upload_data$raw_eq_data(), silent = TRUE),
-            diagnostics_cs = try(file_upload_data$diagnostics_cs(), silent = TRUE),
-            diagnostics_eq = try(file_upload_data$diagnostics_eq(), silent = TRUE),
-            diagnostics_both = try(file_upload_data$diagnostics_both(), silent = TRUE),
-
-            # From mod_outlier_analysis
-            outlier_results = try(outlier_data$results(), silent = TRUE),
-            outlier_params = try(outlier_data$params(), silent = TRUE),
-
-            # From mod_model_validation
-            formal_assessment_results = try(model_validation_data$formal_results(), silent = TRUE),
-            assessment_plot = model_validation_data$assessment_plot(),
-
-            # From mod_dins
-            dins_params = try(mod_dins_params(), silent = TRUE),
-
-            # From this module (mod_results)
-            ce_results = try(calculate_button_pressed(), silent = TRUE),
-            ce_plot = plot_button_pressed()
-          )
+        params <- list(
+          cs_data = tryCatch(file_upload_data$raw_cs_data(), error = function(e) NA),
+          eq_data = tryCatch(file_upload_data$raw_eq_data(), error = function(e) NA),
+          diagnostics_cs = tryCatch(file_upload_data$diagnostics_cs(), error = function(e) NA),
+          diagnostics_eq = tryCatch(file_upload_data$diagnostics_eq(), error = function(e) NA),
+          diagnostics_both = tryCatch(file_upload_data$diagnostics_both(), error = function(e) NA),
+          outlier_results = tryCatch(outlier_data$results(), error = function(e) NA),
+          outlier_params = tryCatch(outlier_data$params(), error = function(e) NA),
+          formal_assessment_results = tryCatch(model_validation_data$formal_results(), error = function(e) NA),
+          assessment_plot = tryCatch(model_validation_data$assessment_plot(), error = function(e) NA),
+          assessment_plot_type = tryCatch(model_validation_data$assessment_plot_type(), error = function(e) NA),
+          dins_params = tryCatch(mod_dins_params(), error = function(e) NA),
+          ce_results = tryCatch(calculate_button_pressed(), error = function(e) NA),
+          ce_plot = tryCatch(plot_button_pressed(), error = function(e) NA)
         )
 
         # Render the report

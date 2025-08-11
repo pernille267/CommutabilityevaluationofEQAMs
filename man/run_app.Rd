@@ -2,10 +2,45 @@
 % Please edit documentation in R/run_app.R
 \name{run_app}
 \alias{run_app}
-\title{Run the Commutability Evaluation Application}
+\title{Launch the Commutability Evaluation Shiny Application}
 \usage{
 run_app()
 }
+\value{
+This function does not return any value. It is called for its side effect of
+launching the Shiny application.
+}
 \description{
-Run the Commutability Evaluation Application
+This function launches a comprehensive Shiny web application for performing
+commutability evaluations. The application is structured into a series of
+modules, each dedicated to a specific step of the analysis pipeline:
+data upload and validation, outlier analysis, model validation, and final
+results interpretation.
+
+The user interface is built as a \code{shinydashboard}, providing a clean and
+organized layout with a sidebar for easy navigation between the different
+analysis stages.
+}
+\details{
+The server-side logic of the application is modular, where each tab in the
+user interface corresponds to a server module. The modules are chained
+together to create a reactive data flow:
+\enumerate{
+\item \code{mod_file_upload_server}: Manages the initial data upload and performs
+critical diagnostic checks. It passes the raw data and diagnostic
+results to downstream modules.
+\item \code{mod_dins_server}: Takes the uploaded data and allows the user to set
+key parameters for the analysis, such as data transformations and
+the statistical model for prediction intervals.
+\item \code{mod_outlier_analysis_server}: Uses the clinical sample data to screen
+for potential outliers that could influence the analysis.
+\item \code{mod_model_validation_server}: Provides tools for formally and
+visually assessing the assumptions of the chosen statistical model.
+\item \code{mod_results_server}: The final module that consolidates data and
+parameters from all previous modules to calculate and display the
+final commutability evaluation results in tables and plots.
+}
+
+This modular design ensures that the application is organized, maintainable,
+and that data dependencies are handled efficiently and reactively.
 }

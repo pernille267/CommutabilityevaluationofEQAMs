@@ -71,6 +71,13 @@ mod_dins_ui <- function(id) {
             status = "primary",
             justified = TRUE
           )
+        ),
+        div(
+          class = "input-note",
+          icon(name = "circle-info"),
+          "The symbol",
+          icon(name = "weight-hanging"),
+          "means 'weighted'"
         )
       )
     ),
@@ -81,19 +88,19 @@ mod_dins_ui <- function(id) {
       div(
         class = "card-header",
         icon("calculator", class = "header-icon"),
-        h3("Calculate zeta Values for Given Transformation and Model")
+        h3("Calculate \\(\\hat{\\zeta}\\) Values for Given Transformation and Model")
       ),
       div(
         class = "card-body",
         div(
           class = "text-center mb-4",
           actionBttn(inputId = ns("calculate_zetas"),
-                     label = "Calculate zetas",
+                     label = "Calculate \\(\\hat{\\zeta}\\)",
                      icon = icon(name = "calculator"),
                      style = "gradient",
                      color = "royal"),
           actionBttn(inputId = ns("clear_zetas"),
-                     label = "Clear zetas",
+                     label = NULL,
                      icon = icon(name = "trash"),
                      style = "gradient",
                      color = "primary")
@@ -111,7 +118,7 @@ mod_dins_ui <- function(id) {
       div(
         class = "card-header",
         icon("bullseye", class = "header-icon"),
-        h3("IVD-MD Specific Imprecision Estimates")
+        h3("Calculate IVD-MD Specific Imprecision Estimates")
       ),
       div(
         class = "card-body",
@@ -123,7 +130,7 @@ mod_dins_ui <- function(id) {
                      style = "gradient",
                      color = "royal"),
           actionBttn(inputId = ns("clear_imprecision"),
-                     label = "Clear Estimates",
+                     label = NULL,
                      icon = icon(name = "trash"),
                      style = "gradient",
                      color = "primary")
@@ -145,17 +152,27 @@ mod_dins_ui <- function(id) {
       ),
       div(
         class = "card-body",
-        div(
-          class = "parameter-section",
-          h5("Set M(%) - Threshold for Maximum Tolerable Differences in Non-Selectivity"),
-          radioGroupButtons(
-            inputId = ns("M"),
-            label = NULL,
-            choiceValues = c(0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50, 0.75, 1),
-            choiceNames = c("0 %", "5 %", "10 %", "15 %", "20 %", "25 %", "30 %", "40 %", "50 %", "75%", "100%"),
-            selected = 0.25,
-            status = "primary",
-            justified = TRUE
+        fluidRow(
+          column(
+            width = 8,
+            div(
+              class = "parameter-section",
+              h5("Set M(%) - Threshold for Maximum Tolerable Differences in Non-Selectivity"),
+              sliderTextInput(
+                inputId = ns("M"),
+                label = NULL,
+                animate = TRUE,
+                choices = seq(0, 200, by = 5),
+                selected = 25,
+                post = " %",
+                width = "100%"
+              )
+            )
+          ),
+          column(
+            width = 4,
+            # ADDED: UI output for the recommended zeta value
+            uiOutput(ns("recommended_zeta_display"))
           )
         )
       )
@@ -369,33 +386,60 @@ mod_dins_server <- function(id, file_upload_data) {
     current_recommended_zeta_upper <- reactive({
       req(cs_data_long(), input$M)
 
-      # This logic requires the raw_cs_data to be available from the file_upload_data reactive list
-      cs_data <- cs_data_long()
+      # This logic requires current_raw_cs_data_wide to be available from the file_upload_data reactive list
+      #cs_data <- cs_data_long()
 
-      # Safely split data if it's in the expected format
-      if ("comparison" %in% names(cs_data)) {
-        cs_data <- split(cs_data, by = "comparison", keep.by = FALSE)
+      diagnostics <- commutability::check_data(data = file_upload_data$raw_cs_data(), type = "cs")
+      study_design_information <- diagnostics$quality
+
+      maximum_n <- max(study_design_information$effective_number_of_samples, na.rm = TRUE)
+      maximum_R <- ceiling(max(study_design_information$average_number_of_replicates, na.rm = TRUE))
+
+      current_M <- as.numeric(input$M) / 100
+
+      if (maximum_n < 20) maximum_n <- 20
+      if (maximum_n > 50) maximum_n <- 50
+      if (maximum_R < 2)  maximum_R <- 2
+      if (maximum_R > 5)  maximum_R <- 5
+
+      matches_n <- which(abs(commutability::look_up_table$n - maximum_n) <= 0.1)
+      matches_R <- which(abs(commutability::look_up_table$R - maximum_R) <= 0.1)
+      matches_M <- which(abs(commutability::look_up_table$M - current_M) <= 0.01)
+
+      which_row <- intersect(intersect(matches_n, matches_R), matches_M)
+
+      recommended_zeta_upper <- if (length(which_row) == 0) {
+        which_row_fallback <- intersect(matches_n, matches_R)
+        commutability::look_up_table$zeta[which_row_fallback][1] * (1 + current_M)^2
       } else {
-        cs_data <- list(cs_data) # Treat as a single group if no comparison column
+        commutability::look_up_table$zeta[which_row][1]
       }
 
-      obs_n <- lapply(X = cs_data, FUN = function(x) length(unique(x$SampleID) |> na.omit())) |> unlist() |> median(na.rm = TRUE)
-      obs_R <- lapply(X = cs_data, FUN = function(x) length(unique(x$ReplicateID) |> na.omit())) |> unlist() |> median(na.rm = TRUE)
-      obs_M <- as.numeric(input$M)
+      round(recommended_zeta_upper, digits = 2L)
+    })
 
-      # Clamp values to the lookup table range
-      if(is.na(obs_n) || obs_n < 20) obs_n <- 20 else if(obs_n > 50) obs_n <- 50
-      if(is.na(obs_R) || obs_R < 2) obs_R <- 2 else if(obs_R > 5) obs_R <- 5
-
-      matches_n <- which(abs(commutability::look_up_table$n - obs_n) == 0)
-      matches_R <- which(abs(commutability::look_up_table$R - obs_R) == 0)
-      matches_M <- which(abs(commutability::look_up_table$M - obs_M) == 0)
-      which_row <- intersect(x = matches_n, y = matches_R) |> intersect(matches_M)
-
-      # Provide a fallback if no exact match is found
-      if (length(which_row) == 0) return(NA_real_)
-
-      return(round(commutability::look_up_table[which_row, ]$zeta, digits = 3L))
+    # ADDED: Render the recommended zeta display
+    output$recommended_zeta_display <- renderUI({
+      req(current_recommended_zeta_upper())
+      zeta_val <- current_recommended_zeta_upper()
+      withMathJax(
+        div(
+          class = "help-info-box",
+          style = "margin-top: 0px; border-left-color: #605CA8;",
+          tagList(
+            div(
+              class = "input-note",
+              style = "font-style: normal; font-weight: 600;",
+              icon("cogs"),
+              sprintf("Calculated value: \\(\\hat{\\zeta}_{\\mathrm{upper}} = %s\\)", format(zeta_val, nsmall = 2, digits = 2))
+            ),
+            div(
+              style = "margin-top: 10px; color: #6c757d; font-size: 1.25rem;",
+              "Any IVD-MD pair with a \\(\\hat{\\zeta}\\) value above this limit will be deemed to have excessive differences in nonselectivity."
+            )
+          )
+        )
+      )
     })
 
     # --- Return values for other modules ---
@@ -404,7 +448,7 @@ mod_dins_server <- function(id, file_upload_data) {
         list(
           transformation = input$transformation,
           pi_method = input$pi_method,
-          M = as.numeric(input$M),
+          M = as.numeric(input$M) / 100,
           zeta_upper = current_recommended_zeta_upper()
         )
       })

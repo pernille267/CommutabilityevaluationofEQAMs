@@ -22,6 +22,7 @@ params:
   # From mod_model_validation
   formal_assessment_results: NA
   assessment_plot: NA
+  assessment_plot_type: NA
   
   # From mod_dins
   dins_params: NA
@@ -34,7 +35,13 @@ params:
 ```{r setup, include=FALSE}
 
 # This chunk sets up the global options for the report.
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.align = 'center', fig.pos = 'H')
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = 'center',
+  fig.pos = 'H'
+)
 
 # Load necessary libraries for rendering tables
 library(knitr)
@@ -44,21 +51,25 @@ library(ggplot2)
 
 ```
 
-\maketitle
-
-\tableofcontents
-
-\newpage
-
 # Introduction
 
 This report details the commutability evaluation of External Quality Assessment Materials (EQAMs) / Certified Reference Materials (CRMs) against clinical samples (CS). The analysis was performed using the `CommutabilityevaluationofEQAMs` Shiny application. All data, parameters, and results are documented below.
 
-\newpage
-
 # Data Diagnostics
 
-This section summarizes the initial diagnostic checks performed on the uploaded data files. 
+This section outlines the validation checks performed on your uploaded data. To ensure suitability for analysis, both the **clinical sample (CS)** and **external quality assessment material (EQAM)** files are subjected to four key tests.
+
+For clarity, 'IVD-MD' refers to an in vitro diagnostic medical device.
+
+1. **Mandatory ID Columns**: This check verifies the presence of the mandatory SampleID and ReplicateID columns. These columns must be named correctly, though the system can correct for minor typos. This check is fundamental; a failure here will halt any further validation.
+2. **Numeric IVD-MD Measurements**: This ensures that all measurement values reported by the IVD-MDs are numeric or can be successfully converted into a numeric format.
+3. **Number of Missing Values**: This multi-step test evaluates data completeness:
+  * It assesses the overall fraction of missing values across the dataset.
+  * It compares the proportion of missing values between different IVD-MDs. If one device has a disproportionately high number of missing entries, the system may attempt to repair the data by removing this IVD-MD before re-testing.
+  * For CS data only, the dataset must contain a minimum of 20 valid samples after rows with missing values have been excluded. A dataset with fewer than 20 samples will automatically fail.
+4. **Number of IVD-MDs**: This final check confirms that the dataset contains at least two valid IVD-MDs after excluding any devices that failed the two preceding checks.
+
+Based on the performance in these four checks, your data is assigned a quality score ranging from 0 (poor) to 9 (excellent). This score is then translated into a colored badge, providing an immediate, at-a-glance indication of the overall data quality.
 
 ## Clinical Sample (CS) Data Diagnostics
 
@@ -70,17 +81,16 @@ message_to_user <- NULL
 # Checks if diagnostic data for clinical samples are available
 if (isTRUE(is.list(params$diagnostics_cs))) {
   
-  # Display the quality badge and score
-  cat(paste("**Overall Quality Badge:**", params$diagnostics_cs$badge, "\n\n"))
-  cat(paste("**Quality Score:**", params$diagnostics_cs$score, "/ 9\n\n"))
+  # Number of tests that passed
+  num_tests_passed <- sum(unlist(params$diagnostics_cs$validity))
   
   # Display the validation test results
   validation_dt <- data.table(
     Test = c(
       "Mandatory ID Columns",
       "Numeric IVD-MD Measurements",
-      "Acceptable Number of Missing Values",
-      "Sufficient Number of IVD-MDs"),
+      "Number of Missing Values",
+      "Number of IVD-MDs"),
     Status = c(
       ifelse(params$diagnostics_cs$validity$valid_mandatory_id_columns, "PASS", "FAIL"),
       ifelse(params$diagnostics_cs$validity$valid_numeric_columns, "PASS", "FAIL"),
@@ -89,13 +99,26 @@ if (isTRUE(is.list(params$diagnostics_cs))) {
     )
   )
   
+  # Display text
+  message_to_user <- paste0(
+    "Your clinical sample data passed a total of ",
+    num_tests_passed,
+    " out of 4 validation tests. Based on these results, the data achieved a **quality score of ",
+    params$diagnostics_cs$score,
+    " out of 9** and earned a **",
+    params$diagnostics_cs$badge,
+    "** badge."
+  )
+  
+  
   # Generate the table
   kbl(
     x = validation_dt,
     format = "latex",
     caption = "Clinical Sample Data Validation Tests",
     booktabs = TRUE,
-    align = "lc"
+    align = "lc",
+    position = "H",
   ) |>
     row_spec(
       row = 0,
@@ -111,9 +134,12 @@ if (isTRUE(is.list(params$diagnostics_cs))) {
 }
 
 if (isTRUE(is.na(params$diagnostics_cs))) {
-  message_to_user <- "Diagnostics for clinical sample data could not be generated."
+  message_to_user <- paste0(
+   "Diagnostics for clinical sample could not be generated. ",
+   "Did you upload valid clinical sample data in the ",
+   "**Upload Data** Module of the application?"
+  )
 }
-
 
 ```
 
@@ -127,9 +153,20 @@ if (isTRUE(is.na(params$diagnostics_cs))) {
 message_to_user <- NULL
 
 if (isTRUE(is.list(params$diagnostics_eq))) {
-  # Display the quality badge and score
-  cat(paste("**Overall Quality Badge:**", params$diagnostics_eq$badge, "\n\n"))
-  cat(paste("**Quality Score:**", params$diagnostics_eq$score, "/ 9\n\n"))
+  
+  # Number of tests that passed
+  num_tests_passed <- sum(unlist(params$diagnostics_eq$validity))
+  
+  # Display text
+  message_to_user <- paste0(
+    "Your external quality assessment data passed a total of ",
+    num_tests_passed,
+    " out of 4 validation tests. Based on these results, the data achieved a **quality score of ",
+    params$diagnostics_eq$score,
+    " out of 9** and earned a **",
+    params$diagnostics_eq$badge,
+    "** badge."
+  )
   
   # Display the validation test results
   validation_dt <- data.table(
@@ -153,7 +190,8 @@ if (isTRUE(is.list(params$diagnostics_eq))) {
     format = "latex",
     caption = "External Quality Assessment Material Data Validation Tests",
     booktabs = TRUE,
-    align = "lc"
+    align = "lc",
+    position = "H",
   ) |>
     row_spec(
       row = 0,
@@ -170,7 +208,11 @@ if (isTRUE(is.list(params$diagnostics_eq))) {
 }
 
 if (isTRUE(is.na(params$diagnostics_eq))) {
-  message_to_user <- "Diagnostics for external quality assessment data could not be generated."
+  message_to_user <- paste0(
+   "Diagnostics for external quality assessment material data could not be generated. ",
+   "Did you upload valid external quality assessment material data in the ",
+   "**Upload Data** Module of the application?"
+  )
 }
 
 
@@ -186,6 +228,8 @@ if (isTRUE(is.na(params$diagnostics_eq))) {
 message_to_user <- NULL
 
 if (isTRUE(is.list(params$diagnostics_both))) {
+  
+  # Make agreement data.table
   agreement_dt <- data.table(
     Test = c(
       "Equal IVD-MD Names",
@@ -197,12 +241,14 @@ if (isTRUE(is.list(params$diagnostics_both))) {
     )
   )
   
+  # Generate the table
   kbl(
     x = agreement_dt,
     format = "latex",
     caption = "Structural Agreement Tests",
     booktabs = TRUE,
-    align = "lc"
+    align = "lc",
+    position = "H",
   ) |>
     row_spec(
       row = 0,
@@ -217,19 +263,19 @@ if (isTRUE(is.list(params$diagnostics_both))) {
     kable_styling(latex_options = c("scale_down", "striped"))
 }
 
-if (isTRUE(is.list(params$diagnostics_both))) {
-  message_to_user <- NULL
+if (isTRUE(is.na(params$diagnostics_both))) {
+  message_to_user <- paste0(
+    "Diagnostics for structural agreement between CS data and ",
+    "EQAM data could not be generated. ",
+    "You have either not uploaded necessary data or the uploaded data are not valid."
+  )
 }
 
 ```
 
 `r message_to_user`
 
-\newpage
-
 # Analysis Parameters
-
-This section outlines the parameters selected by the user to perform the commutability evaluation.
 
 ```{r dins-parameters}
 
@@ -237,27 +283,84 @@ This section outlines the parameters selected by the user to perform the commuta
 message_to_user <- NULL
 
 if (isTRUE(is.list(params$dins_params))) {
+  
+  selected_transformation <- switch(params$dins_params$transformation,
+                                    "identity" = "None",
+                                    "ln" = "Natural Logarithm",
+                                    "boxcox" = "Box-Cox",
+                                    "None"
+  )
+  
+  selected_model <- switch(params$dins_params$pi_method,
+                           "fg" = "Deming",
+                           "ss" = "Smoothing Spline",
+                           "ssw" = "Weighted Smoothing Spline",
+                           "Unknown"
+  )
+  
+  message_to_user <- paste0(
+    "This section outlines the difference in nonselectivity parameters ",
+    "selected to perform the commutability evaluation. ",
+    ifelse(
+      selected_transformation == "None",
+      "You have selected not to transform the data.",
+      paste0(
+        "You have selected to transform the data using a ",
+        params$dins_params$transformation,
+        " transformation."
+      )
+    ),
+    ifelse(
+      selected_model == "Deming",
+      paste0(
+        "You have implicitly selected using the Ordinary Least Squares regression model ",
+        "to estimate $\\zeta$, and to use Deming regression to estimate the ",
+        "prediction intervals."
+      ),
+      paste0(
+        " The ",
+        selected_model,
+        " Regression model is selected to estimate $\\zeta$ and the prediction intervals."
+      )
+    ),
+    " A value of $M(\\%)$",
+    sprintf(
+      "$= %s$",
+      paste0(params$dins_params$M * 100, "\\%")
+    ),
+    " is used as the maximum tolerable magnitude of differences in nonselectivity. ",
+    "Based on this value of $M(\\%)$ and on your data, the critical value ",
+    "for acceptable differences in nonselectivity is then ",
+    sprintf(
+      "$\\zeta_{\\mathrm{upper}} \\approx %s$",
+      format(params$dins_params$zeta_upper, nsmall = 2L, digits = 2L)
+    ),
+    "."
+  )
+  
+  
   params_dt <- data.table(
     Parameter = c(
       "Data Transformation",
       "Prediction Interval Method",
       "Differences in Nonselectivity Tolerance $M(\\%)$",
-      "Recommended $\\zeta_{\\mathrm{upper}}$"
+      "Determined $\\zeta_{\\mathrm{upper}}$"
     ),
     Value = c(
-      params$dins_params$transformation,
-      params$dins_params$pi_method,
+      selected_transformation,
+      selected_model,
       paste0(params$dins_params$M * 100, "\\%"),
-      round(params$dins_params$zeta_upper, 3)
+      format(params$dins_params$zeta_upper, nsmall = 2L, digits = 2L)
     )
   )
   kbl(
     x = params_dt,
     format = "latex",
-    caption = "Core Analysis Parameters",
+    caption = "Differences in Nonselectivity Parameters",
     booktabs = TRUE,
     align = "lc",
-    escape = FALSE
+    escape = FALSE,
+    position = "H"
   ) |>
     row_spec(
       row = 0,
@@ -268,20 +371,25 @@ if (isTRUE(is.list(params$dins_params))) {
 }
 
 if (isTRUE(is.na(params$dins_params))) {
-  message_to_user <- "Could not generate differences in nonselectivity (DINS) parameters"
+  message_to_user <- paste0(
+    "This section would outline the difference in nonselectivity parameters ",
+    "selected to perform the commutability evaluation. ",
+    "However, these parameters could not be displayed. ",
+    "You have either not uploaded necessary data or the uploaded data ",
+    "are not valid."
+  )
 }
 
 ```
 
 `r message_to_user`
 
-\newpage
-
 # Outlier Analysis
 
-This section displays the results of the outlier analysis performed on the clinical sample data.
 
 ```{r outlier-analysis-params}
+
+message_to_user <- NULL
 
 if (isTRUE(inherits(params$outlier_results, "data.table"))) {
 
@@ -289,6 +397,44 @@ if (isTRUE(inherits(params$outlier_results, "data.table"))) {
     params$outlier_params$outlier_test == "burnett",
     "Between Samples (Burnett's Criterion)", 
     "Within Samples (Studentized Range Q)"
+  )
+  
+  message_to_user <- paste0(
+    "This section displays the selected parameters and corresponding ",
+    "results of the outlier analysis performed on the clinical sample data. ",
+    "You have selected to test for outliers ",
+    ifelse(
+      params$outlier_params$outlier_test == "burnett",
+      paste0(
+        "between samples using Burnett's test with a type I error of ",
+        paste0(
+          "$",
+          format(
+            x = 100 - params$outlier_params$outlier_test_conf_level * 100,
+            nsmall = 1,
+            digits = 1
+          ),
+          "\\%$"
+        ),
+        ". ",
+        "The standardized residuals based on a polynomial model ",
+        "is selected as variable. "
+      ),
+      paste0(
+        "within samples using the studentized range (Q) test with a type I error of ",
+        paste0(
+          "$",
+          format(
+            x = 100 - params$outlier_params$outlier_test_conf_level * 100,
+            nsmall = 1,
+            digits = 1
+          ),
+          "\\%$"
+        ),
+      ". ",
+      "The raw clinical sample measurements are used as the selected variable."
+      )
+    )
   )
   
   # Outlier Parameter Table
@@ -314,7 +460,8 @@ if (isTRUE(inherits(params$outlier_results, "data.table"))) {
       booktabs = TRUE,
       label = "outlier-analysis-params",
       align = "lc",
-      escape = FALSE
+      escape = FALSE,
+      position = "H"
     ) |>
       row_spec(
       row = 0,
@@ -324,12 +471,19 @@ if (isTRUE(inherits(params$outlier_results, "data.table"))) {
     kable_styling(latex_options = c("scale_down", "striped"))
 }
 
+if (isFALSE(inherits(params$outlier_results, "data.table"))) {
+  message_to_user <- paste0(
+    "This section would display the selected parameters and corresponding ",
+    "results of the outlier analysis performed on the clinical sample data. ",
+    "However, these were not chosen to be or could not be generated. "
+  ) 
+}
+
 ```
 
+`r message_to_user`
 
 ```{r outlier-analysis-results}
-
-message_to_user <- NULL
 
 if (isTRUE(inherits(params$outlier_results, "data.table"))) {
 
@@ -353,7 +507,8 @@ if (isTRUE(inherits(params$outlier_results, "data.table"))) {
     caption = test_caption,
     booktabs = TRUE,
     label = "outlier-analysis-results",
-    align = aligning
+    align = aligning,
+    position = "H"
   ) |>
     row_spec(
     row = 0,
@@ -365,25 +520,118 @@ if (isTRUE(inherits(params$outlier_results, "data.table"))) {
   
 }
 
-if (isFALSE(inherits(params$outlier_results, "data.table"))) {
-  message_to_user <- "Outlier analysis results were not generated."
+```
+
+# Model Validation
+
+```{r model-validation}
+
+message_to_user <- NULL
+mv_table_exists <- isTRUE(inherits(params$formal_assessment_results, "data.table"))
+mv_plot_exists <- isTRUE(inherits(params$assessment_plot, "ggplot"))
+
+if (mv_table_exists && mv_plot_exists) {
+  
+  plot_name <- switch(
+    params$assessment_plot_type,
+    "residual_plot" = "residual versus fitted",
+    "residual_histogram" = "histogram of residuals",
+    "qq_plot" = "quantile-quantile normal",
+    "sd_vs_concentration" = "standard deviation versus concentration",
+    "cv_vs_concentration" = "coefficient of variation versus concentration",
+    "unknown"
+  )
+    
+  plot_purpose <- switch(
+    params$assessment_plot_type,
+    "residual_plot" = "validate model linearity and variance homogeneity",
+    "residual_histogram" = "validate normality",
+    "qq_plot" = "validate normality",
+    "sd_vs_concentration" = "validate variance homogeneity",
+    "cv_vs_concentration" = "validate coefficient of variation homogeneity",
+    "something"
+  )
+  
+  message_to_user <- paste0(
+    "This section presents the results from the ",
+    "formal and visual model validation tests. ",
+    "Concerning the formal validation tests, ",
+    "Both normality and variance homogeneity tests ",
+    "are performed on the data (transformed data if selected) ",
+    "using a family-wise type I error of $5\\%$. ",
+    "A hypothesis test is performed on each IVD-MD pair. ",
+    "Concerning the visual validation tests, a ",
+    plot_name,
+    " plot is selected to test for ",
+    plot_purpose,
+    "."
+  )
+}
+
+if (mv_table_exists && (!mv_plot_exists)) {
+  message_to_user <- paste0(
+    "This section presents the results from the ",
+    "formal validation tests. ",
+    "Both normality and variance homogeneity tests ",
+    "are performed on the data (transformed data if selected) ",
+    "using a family-wise type I error of $5\\%$. ",
+    "A test is performed on each IVD-MD pair. "
+  )
+}
+
+if ((!mv_table_exists) && mv_plot_exists) {
+  
+  plot_name <- switch(
+    params$assessment_plot_type,
+    "residual_plot" = "residual versus fitted",
+    "residual_histogram" = "histogram of residuals",
+    "qq_plot" = "quantile-quantile normal",
+    "sd_vs_concentration" = "standard deviation versus concentration",
+    "cv_vs_concentration" = "coefficient of variation versus concentration",
+    "unknown"
+  )
+    
+  plot_purpose <- switch(
+    params$assessment_plot_type,
+    "residual_plot" = "validate model linearity and variance homogeneity",
+    "residual_histogram" = "validate normality",
+    "qq_plot" = "validate normality",
+    "sd_vs_concentration" = "validate variance homogeneity",
+    "cv_vs_concentration" = "validate coefficient of variation homogeneity",
+    "something"
+  )
+  
+  message_to_user <- paste0(
+    "This section presents the results from the ",
+    "visual model validation tests. ",
+    "A ",
+    plot_name,
+    " plot is selected to test for ",
+    plot_purpose,
+    "."
+  )
+}
+
+if ((!mv_table_exists) && (!mv_plot_exists)) {
+  message_to_user <- paste0(
+    "This section would present the results from the ",
+    "model validation tests. ",
+    "However, neither the formal or visual validation tests ",
+    "are generated. This is possible by design by you, or caused by ",
+    "invalid uploaded data."
+    
+  )
 }
 
 ```
 
 `r message_to_user`
 
-\newpage
-
-# Model Validation
-
-This section presents the results from the formal and visual model validation tests.
-
 ## Formal Model Assessment
 
 ```{r formal-assessment}
 
-if (isTRUE(inherits(params$formal_assessment_results, "data.table"))) {
+if (mv_table_exists) {
   
   kbl(
     x = params$formal_assessment_results,
@@ -410,27 +658,42 @@ if (isTRUE(inherits(params$formal_assessment_results, "data.table"))) {
 
 ## Visual Model Assessment Plot
 
-
 ```{r visual-assessment-plot, fig.width = 8, fig.height = 8, out.width = "80%", fig.cap = "Model Assessment Plot"}
 
-if (isTRUE(inherits(params$assessment_plot, "ggplot"))) {
+if (mv_plot_exists) {
   plot(params$assessment_plot)
 }
 
-
-# CORRECTED: Use include_graphics with the file path
-#if (isTRUE(is.character(params$assessment_plot) && file.exists(params$assessment_plot))) {
-#  knitr::include_graphics(params$assessment_plot, dpi = 900)
-#} else {
-#  "No visual model assessment plot was generated."
-#}
 ```
-
-\newpage
 
 # Commutability Evaluation Results
 
-This is the final output of the commutability evaluation, based on the data and parameters provided.
+```{r ce-results-introduction}
+
+message_to_user <- NULL
+ce_table_exists <- isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merged_ce_data, "data.table"))
+ce_plot_exists <- isTRUE(inherits(params$ce_plot, "ggplot"))
+
+if (ce_table_exists || ce_plot_exists) {
+  message_to_user <- paste0(
+    "This section displays commutability evaluation results, ",
+    "based on the data and the parameters (both provided and internally determined). "
+  )
+}
+
+if ((!ce_table_exists) && (!ce_plot_exists)) {
+  message_to_user <- paste0(
+    "This section would display the commutability evaluation results, ",
+    "based on the data and the parameters (both provided and internally determined). ",
+    "Nevertheless, neither tables or plots are generated. ",
+    "This may be design by you or a result of invalid uploaded data."
+  )
+}
+
+
+```
+
+`r message_to_user`
 
 ## Results Table
 
@@ -438,10 +701,14 @@ The table below shows the detailed numerical results of the commutability evalua
 
 ```{r ce-results-table}
 
-if (isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merged_ce_data, "data.table"))) {
+message_to_user <- NULL
+
+if (ce_table_exists) {
   
-  ce_results_dt <- params$ce_results$merged_ce_data |> setDT()
+  # Extract ce_data
+  ce_results_dt <- params$ce_results$merged_ce_data
   
+  # Reformat columns
   ce_results_dt$Zeta <- paste0(
     format(
       x = ce_results_dt$zeta,
@@ -540,6 +807,49 @@ if (isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merg
     )
   )
   
+  list_of_SampleID <- unique(ce_results_display_dt$SampleID)
+  
+  message_to_user <- paste0(
+    "The table below shows the detailed numerical results ",
+    "of the commutability evaluation results of ",
+    ifelse(
+      length(list_of_SampleID) >= 3,
+      ifelse(
+        length(list_of_SampleID) >= 10,
+        paste0(
+          paste0(
+            list_of_SampleID[1:3],
+            collapse = ", "  
+          ),
+          "...",
+          paste0(
+            list_of_SampleID[(length(list_of_SampleID) - 2L):(length(list_of_SampleID) - 1L)],
+            collapse = ", "
+          ),
+          " and ",
+          list_of_SampleID[length(list_of_SampleID)],
+          ". Because ten or more evaluated materials, the list is recycled."
+        ),
+        paste0(
+          paste0(
+            list_of_SampleID[1:(length(list_of_SampleID) - 1L)],
+            collapse = ", "
+          ),
+          " and ",
+          list_of_SampleID[length(list_of_SampleID)],
+          "."
+        )
+      ),
+      paste0(
+        paste0(
+          list_of_SampleID,
+          collapse = " and "  
+        ),
+        "."
+      )  
+    )
+  )
+  
   # Render Table
   kbl(
     x = ce_results_display_dt,
@@ -593,11 +903,37 @@ if (isTRUE(is.list(params$ce_results)) && isTRUE(inherits(params$ce_results$merg
 
 ```
 
+`r message_to_user`
+
 ## Results Plot
 
 The plot below provides a graphical representation of the commutability evaluation.
 
-```{r ce-results-plot, fig.width = 12, fig.height = 10, out.width = "80%", fig.cap = "Commutability Evaluation Plot"}
+```{r setup-ce-plot-dims, include=FALSE}
+
+# This chunk calculates the optimal plot dimensions before the plot chunk is run.
+if (ce_plot_exists && ce_table_exists) {
+  n_panels <- length(unique(params$ce_results$merged_ce_data$comparison))
+  
+  # Determine layout
+  n_cols <- ceiling(sqrt(n_panels))
+  n_rows <- ceiling(n_panels / n_cols)
+  
+  # Calculate dimensions in inches (LaTeX default)
+  plot_width <- 2 + (n_cols * 2.5)
+  plot_height <- 1.5 + (n_rows * 2.5)
+  
+  # Clamp to reasonable min/max values
+  plot_width <- max(6, min(22, plot_width))
+  plot_height <- max(4, min(20, plot_height))
+  
+} else {
+  plot_width <- 12
+  plot_height <- 10
+}
+```
+
+```{r ce-results-plot, fig.width = plot_width, fig.height = plot_height, out.width = "100%", fig.cap = "Commutability Evaluation Plot"}
 
 if (isTRUE(inherits(params$ce_plot, "ggplot"))) {
   plot(params$ce_plot)

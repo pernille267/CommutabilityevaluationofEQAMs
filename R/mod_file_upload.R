@@ -121,25 +121,42 @@ mod_file_upload_ui <- function(id) {
       div(
         class = "card-header",
         icon("stethoscope", class = "header-icon"),
-        h3("Diagnostic Overview of Your Uploaded Data")
+        div(
+          class = "card-header-title-container",
+          h3("Diagnostic Overview of Your Uploaded Data"),
+          # ADDED: A UI output for the dynamic status badge
+          uiOutput(ns("overall_diagnostic_status"))
+        )
       ),
       div(
         class = "card-body",
-        div(
-          class = "diagnostics-section",
-          h4(icon("microscope", class = "section-icon"), "Clinical Sample Data Diagnostics"),
+        box(
+          title = tagList(icon("microscope", class = "section-icon"), "Clinical Sample Data Diagnostics"),
+          collapsible = TRUE,
+          collapsed = TRUE,
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
           div(class = "table-container", shiny::tableOutput(outputId = ns("cs_table_diagnostics"))),
           htmlOutput(outputId = ns("cs_text_diagnostics"))
         ),
-        div(
-          class = "diagnostics-section",
-          h4(icon("flask", class = "section-icon"), "External Quality Assessment Material Data Diagnostics"),
+        box(
+          title = tagList(icon("flask", class = "section-icon"), "External Quality Assessment Material Data Diagnostics"),
+          collapsible = TRUE,
+          collapsed = TRUE,
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
           div(class = "table-container", shiny::tableOutput(outputId = ns("eq_table_diagnostics"))),
           htmlOutput(outputId = ns("eq_text_diagnostics"))
         ),
-        div(
-          class = "diagnostics-section",
-          h4(icon("check-double", class = "section-icon"), "Structural Agreement Between Data Diagnostics"),
+        box(
+          title = tagList(icon("check-double", class = "section-icon"), "Structural Agreement Between Data Diagnostics"),
+          collapsible = TRUE,
+          collapsed = TRUE,
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
           htmlOutput(outputId = ns("both_text_diagnostics"))
         )
       )
@@ -199,11 +216,11 @@ mod_file_upload_server <- function(id) {
       })
     }
 
+    # --- Read Data ---
     current_raw_cs_data_wide <- reactive({ read_data_safely(input$cs_data) })
     current_raw_eq_data_wide <- reactive({ read_data_safely(input$eq_data) })
 
     # --- Diagnostics ---
-
     current_diagnostics_cs <- reactive({
       req(current_raw_cs_data_wide())
       commutability::check_data(data = current_raw_cs_data_wide(), type = "cs")
@@ -225,7 +242,9 @@ mod_file_upload_server <- function(id) {
     })
 
     current_diagnostics_both <- reactive({
-      req(current_raw_cs_data_wide(), current_raw_eq_data_wide(), methods_to_remove_globally())
+      req(current_raw_cs_data_wide(), current_raw_eq_data_wide())
+
+      # Attempt to repair data
       cs_data_repaired <- commutability::repair_data(
         data = current_raw_cs_data_wide(),
         type = "cs",
@@ -239,13 +258,19 @@ mod_file_upload_server <- function(id) {
         include_repair_summary = FALSE
       )
 
-      keep_these_cs <- setdiff(names(cs_data_repaired), methods_to_remove_globally())
-      keep_these_eq <- setdiff(names(eq_data_repaired), methods_to_remove_globally())
+      # --- Remove invalid methods ---
+      if (!is.null(methods_to_remove_globally())) {
 
-      if (length(keep_these_cs) > 0) {
+        # Check which columns to keep
+        keep_these_cs <- setdiff(
+          x = names(cs_data_repaired),
+          y = methods_to_remove_globally()
+        )
+        keep_these_eq <- setdiff(
+          x = names(eq_data_repaired),
+          y = methods_to_remove_globally()
+        )
         cs_data_repaired <- subset(cs_data_repaired, select = keep_these_cs)
-      }
-      if (length(keep_these_eq) > 0) {
         eq_data_repaired <- subset(eq_data_repaired, select = keep_these_eq)
       }
 
@@ -256,7 +281,6 @@ mod_file_upload_server <- function(id) {
     })
 
     # --- Validity Checks ---
-
     current_validity <- reactive({
       req(current_diagnostics_cs(), current_diagnostics_eq(), current_diagnostics_both())
       cs_ok <- current_diagnostics_cs()$badge != "not acceptable"
@@ -265,16 +289,51 @@ mod_file_upload_server <- function(id) {
       return(cs_ok && eq_ok && both_ok)
     })
 
+    # --- ADDED: Server logic for the overall status badge ---
+    output$overall_diagnostic_status <- renderUI({
+      # Require that the diagnostics have been run before showing anything
+      req(current_diagnostics_cs(), current_diagnostics_eq(), current_diagnostics_both())
 
+      is_valid <- current_validity()
+      ignore_issues <- input$ignore_invalid_data == TRUE
+
+      if (is_valid) {
+        status_class <- "status-ok"
+        status_icon <- icon("check-circle")
+        status_text <- "All Checks Passed"
+      } else if (ignore_issues) {
+        status_class <- "status-warning"
+        status_icon <- icon("exclamation-triangle")
+        status_text <- "Proceeding with Issues"
+      } else {
+        status_class <- "status-fail"
+        status_icon <- icon("times-circle")
+        status_text <- "Validation Failed"
+      }
+
+      # Construct the HTML for the badge
+      div(
+        class = paste("diagnostic-status-badge", status_class),
+        status_icon,
+        span(status_text)
+      )
+    })
 
     # --- Dynamic UI Updates ---
 
+    # Update list of valid reference method choices
     observe({
       is_valid <- current_validity()
 
       # Start with potential choices
       choices <- if (is_valid) {
-        cs_data_repaired <- commutability::repair_data(data = current_raw_cs_data_wide(), type = "cs", remove_invalid_methods = FALSE, include_repair_summary = FALSE)
+        cs_data_repaired <- commutability::repair_data(
+          data = current_raw_cs_data_wide(),
+          type = "cs",
+          remove_invalid_methods = FALSE,
+          include_repair_summary = FALSE
+        )
+        # Extract only the method columns
         setdiff(names(cs_data_repaired), c("SampleID", "ReplicateID"))
       } else {
         character(0) # Return empty character vector if not valid
@@ -286,6 +345,7 @@ mod_file_upload_server <- function(id) {
         choices <- setdiff(choices, to_remove)
       }
 
+      # Update list of choices for reference method
       updateVirtualSelect(
         session = session,
         inputId = "reference_method",
@@ -295,6 +355,7 @@ mod_file_upload_server <- function(id) {
       )
     })
 
+    # Deliver warning if user desires to ignore failed validation tests
     output$warning_placeholder <- renderUI({
       if (input$ignore_invalid_data == TRUE) {
         div(
@@ -307,26 +368,49 @@ mod_file_upload_server <- function(id) {
       }
     })
 
-    # --- Render Outputs ---
+    # Add a new reactive to get the post-repair diagnostics
+    post_repair_diagnostics_cs <- reactive({
+      req(current_raw_cs_data_wide())
+      repaired_data <- commutability::repair_data(data = current_raw_cs_data_wide(), type = "cs")
+      commutability::check_data(data = repaired_data, type = "cs")
+    })
 
+    # Do the same for eq_data
+    post_repair_diagnostics_eq <- reactive({
+      req(current_raw_eq_data_wide())
+      repaired_data <- commutability::repair_data(data = current_raw_eq_data_wide(), type = "eqam")
+      commutability::check_data(data = repaired_data, type = "eqam")
+    })
+
+    # --- Render Outputs ---
     output$cs_table_diagnostics <- function() {
-      req(current_diagnostics_cs())
-      render_diagnostic_table(current_diagnostics_cs(), type = "cs")
+      req(current_diagnostics_cs(), post_repair_diagnostics_cs())
+      render_diagnostic_table(
+        diagnostics = current_diagnostics_cs(),
+        type = "cs",
+        is_post_repair_valid = current_diagnostics_cs()$badge != "not acceptable",
+        post_repair_score = post_repair_diagnostics_cs()$score
+      )
     }
 
     output$eq_table_diagnostics <- function() {
-      req(current_diagnostics_eq())
-      render_diagnostic_table(current_diagnostics_eq(), type = "eq")
+      req(current_diagnostics_eq(), post_repair_diagnostics_eq())
+      render_diagnostic_table(
+        diagnostics = current_diagnostics_eq(),
+        type = "eq",
+        is_post_repair_valid = current_diagnostics_eq()$badge != "not acceptable",
+        post_repair_score = post_repair_diagnostics_eq()$score
+      )
     }
 
     output$cs_text_diagnostics <- renderUI({
       req(current_diagnostics_cs())
-      render_diagnostic_text(current_diagnostics_cs(), type = "cs")
+      render_diagnostic_text(current_diagnostics_cs(), current_diagnostics_eq(), type = "cs")
     })
 
     output$eq_text_diagnostics <- renderUI({
       req(current_diagnostics_eq())
-      render_diagnostic_text(current_diagnostics_eq(), type = "eq")
+      render_diagnostic_text(current_diagnostics_eq(), current_diagnostics_cs(), type = "eq")
     })
 
     output$both_text_diagnostics <- renderUI({
@@ -363,7 +447,6 @@ mod_file_upload_server <- function(id) {
     })
 
     # --- Return Values for Other Modules ---
-
     return(
       list(
         raw_cs_data = current_raw_cs_data_wide,
