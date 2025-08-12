@@ -273,8 +273,32 @@ mod_dins_server <- function(id, file_upload_data) {
     imprecision_calculated <- eventReactive(input$calculate_imprecision, {
       req(cs_data_long())
 
+      cs_data_repaired <- commutability::repair_data(
+        data = file_upload_data$raw_cs_data(),
+        type = "cs",
+        remove_invalid_methods = FALSE,
+        include_repair_summary = FALSE
+      )
+
+      keep_these_cols <- setdiff(
+        names(cs_data_repaired),
+        file_upload_data$remove_ivd_mds()
+      )
+
+      cs_data_repaired <- subset(
+        x = cs_data_repaired,
+        select = keep_these_cols
+      )
+
+      ref_method <- file_upload_data$reference_method()
+
+      raw_data <- commutability::get_comparison_data(
+        data = cs_data_repaired,
+        reference = ref_method
+      )
+
       commutability::estimate_imprecision_data(
-        data = cs_data_long(),
+        data = raw_data,
         B = 1000L,
         type = "percentile",
         level = 0.95

@@ -130,7 +130,7 @@ mod_results_ui <- function(id) {
             )
           )
         ),
-        # Results card
+        # Results card 1
         div(
           class = "dashboard-card",
           div(
@@ -153,6 +153,60 @@ mod_results_ui <- function(id) {
             ),
             withSpinner(
               ui_element = DT::DTOutput(outputId = ns("ce_results")),
+              color = "#605ca8", # Changed color to purple to match original
+              type = 4
+            )
+          )
+        ),
+        # Results card 2
+        div(
+          class = "dashboard-card",
+          div(
+            class = "card-header",
+            icon("table-cells", class = "header-icon"),
+            h3("Commutability Evaluation Results For each Material")
+          ),
+          div(
+            class = "card-body",
+            fluidRow(
+              column(
+                width = 5,
+                div(
+                  class = "parameter-section",
+                  h4(icon("arrow-pointer", class = "section-icon"), "Choose a Material"),
+                  virtualSelectInput(
+                    inputId = ns("material"),
+                    label = NULL,
+                    choices = "none",
+                    selected = "none",
+                    multiple = FALSE,
+                    search = TRUE,
+                    disabled = TRUE
+                  ),
+                  div(
+                    class = "input-note",
+                    icon("info-circle"),
+                    "You can only view one material at the time"
+                  )
+                )
+              ),
+              column(
+                width = 5,
+                div(
+                  class = "text-center mt-4 mb-3",
+                  actionBttn(
+                    inputId = ns("calculate_grid"),
+                    label = "Calculate",
+                    icon = icon("calculator"),
+                    size = "lg",
+                    style = "gradient",
+                    color = "royal"
+                  )
+                )
+              )
+            ),
+            withSpinner(
+              ui_element = DT::DTOutput(outputId = ns("ce_results_grid")),
               color = "#605ca8", # Changed color to purple to match original
               type = 4
             )
@@ -462,6 +516,11 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       perform_calculation()
     })
 
+    # Calculation for the table is triggered by second the 'Calculate' button
+    calculate_grid_button_pressed <- eventReactive(input$calculate_grid, {
+      perform_calculation()
+    })
+
     # Calculation for the plot is triggered by the 'Plot' button
     plot_data_reactive <- eventReactive(input$plot, {
       perform_calculation()
@@ -566,6 +625,75 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       )
     })
 
+    output$ce_results_grid <- DT::renderDT({
+      results_list <- calculate_grid_button_pressed()
+
+      if (!is.null(results_list$error)) {
+        return(DT::datatable(data.table("Error:" = results_list$error), options = list(dom = 't')))
+      }
+
+      output_tbl <- results_list$merged_ce_data[, list(
+        "conclusion" = ifelse(
+          pi_inside == 1 & dins_conclusion == 0,
+          "C",
+          ifelse(
+            pi_inside == 0 & dins_conclusion == 0,
+            "NC",
+            ifelse(
+              pi_inside == 1 & dins_conclusion == 1,
+              "EI",
+              "EO"
+            )
+          )
+        )
+      ), by = c("comparison", "SampleID")]
+
+      output_tbl[, c("Method1", "Method2") := tstrsplit(comparison, " - ", fixed = TRUE)]
+      all_methods <- sort(unique(c(output_tbl$Method1, output_tbl$Method2)))
+      output_tbl_list <- lapply(
+        X = split(output_tbl, by = "SampleID"),
+        FUN = function(dt_subset) {
+          dt_subset[, Method1 := factor(Method1, levels = all_methods)]
+          dt_subset[, Method2 := factor(Method2, levels = all_methods)]
+        wide_dt <- dcast.data.table(
+          data = dt_subset,
+          formula = Method1 ~ Method2,
+          value.var = "conclusion",
+          drop = FALSE
+        )
+        return(wide_dt)
+      })
+
+      particular_material <- input$material
+
+      if (particular_material != "none") {
+
+        DT::datatable(
+          output_tbl_list[[particular_material]],
+          rownames = FALSE,
+          extensions = 'Buttons',
+          options = list(
+            scolllX = TRUE,
+            scrollY = "400px",
+            pageLength = 25,
+            dom = "Bfrtip", # B=Buttons, f=filtering, r=processing, t=table, i=info, p=pagination
+            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+            columnDefs = list(
+              list(className = 'dt-center', targets = "_all")
+            ),
+            initComplete = JS(
+              "function(settings, json) {",
+              "  $(this.api().table().container()).find('.dataTables_scrollBody').on('scroll', function() {",
+              "    $(this).prev('.dataTables_scrollHead').scrollLeft($(this).scrollLeft());",
+              "  });",
+              "}"
+            )
+          )
+        )
+      }
+
+    })
+
     # --- Plot Rendering and Download ---
 
     plot_button_pressed <- eventReactive(input$plot, {
@@ -631,6 +759,26 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
         session = session,
         inputId = "height",
         value = dims$height
+      )
+    })
+
+    # --- DYNAMIC LIST OF EQAMs LOGIC ---
+    observe({
+
+      # Start with potential choices
+      choices <- if (file_upload_data$is_valid()) {
+        unique(eq_data_long()$SampleID)
+      } else {
+        "none"
+      }
+
+      # Update list of choices for reference method
+      updateVirtualSelect(
+        session = session,
+        inputId = "material",
+        choices = choices,
+        selected = choices[1],
+        disable = !file_upload_data$is_valid()
       )
     })
 
@@ -714,7 +862,7 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
         file.copy(report_path, temp_report, overwrite = TRUE)
 
         # Gather all necessary parameters to pass to the Rmd file.
-        # Use try() to gracefully handle cases where calculations haven't been run
+        # Use tryCatch() to gracefully handle cases where calculations haven't been run
         params <- list(
           cs_data = tryCatch(file_upload_data$raw_cs_data(), error = function(e) NA),
           eq_data = tryCatch(file_upload_data$raw_eq_data(), error = function(e) NA),

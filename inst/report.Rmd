@@ -48,6 +48,25 @@ library(knitr)
 library(data.table)
 library(kableExtra)
 library(ggplot2)
+library(glue)
+
+# Local functions
+smart_paste <- function(items, bold = FALSE) {
+  # Apply formatting to each item first, if requested
+  if (bold) {
+    items <- paste0("**", items, "**")
+  }
+  
+  n <- length(items)
+  if (n == 0) return("")
+  if (n == 1) return(items[1])
+  if (n == 2) return(paste(items, collapse = " and "))
+  
+  # For 3 or more items, the separators are hard-coded and will not be bold
+  initial_items <- paste(items[1:(n - 1)], collapse = ", ")
+  return(paste0(initial_items, " and ", items[n]))
+}
+
 
 ```
 
@@ -173,8 +192,8 @@ if (isTRUE(is.list(params$diagnostics_eq))) {
     Test = c(
       "Mandatory ID Columns",
       "Numeric IVD-MD Measurements",
-      "Acceptable Missing Values",
-      "Sufficient IVD-MDs"
+      "Number of Missing Values",
+      "Number of IVD-MDs"
     ),
     Status = c(
       ifelse(params$diagnostics_eq$validity$valid_mandatory_id_columns, "PASS", "FAIL"),
@@ -658,7 +677,32 @@ if (mv_table_exists) {
 
 ## Visual Model Assessment Plot
 
-```{r visual-assessment-plot, fig.width = 8, fig.height = 8, out.width = "80%", fig.cap = "Model Assessment Plot"}
+```{r setup-vma-plot-dims, include=FALSE}
+
+# This chunk calculates the optimal plot dimensions before the plot chunk is run.
+if (mv_plot_exists) {
+  n_panels <- nlevels(ggplot_build(params$assessment_plot)$data[[1]]$PANEL)
+  
+  # Determine layout
+  n_cols <- ceiling(sqrt(n_panels))
+  n_rows <- ceiling(n_panels / n_cols)
+  
+  # Calculate dimensions in inches (LaTeX default)
+  plot_width <- 2 + (n_cols * 2.5)
+  plot_height <- 1.5 + (n_rows * 2.5)
+  
+  # Clamp to reasonable min/max values
+  plot_width <- max(6, min(22, plot_width))
+  plot_height <- max(4, min(20, plot_height))
+  
+} else {
+  plot_width <- 12
+  plot_height <- 10
+}
+```
+
+
+```{r visual-assessment-plot, fig.width = plot_width, fig.height = plot_height, out.width = "100%", fig.cap = "Model Assessment Plot"}
 
 if (mv_plot_exists) {
   plot(params$assessment_plot)
@@ -697,9 +741,7 @@ if ((!ce_table_exists) && (!ce_plot_exists)) {
 
 ## Results Table
 
-The table below shows the detailed numerical results of the commutability evaluation.
-
-```{r ce-results-table}
+```{r ce-results-table-1}
 
 message_to_user <- NULL
 
@@ -807,49 +849,125 @@ if (ce_table_exists) {
     )
   )
   
-  list_of_SampleID <- unique(ce_results_display_dt$SampleID)
+  list_of_SampleID <- unique(ce_results_dt$SampleID)
+  list_of_comparison <- unique(ce_results_dt$comparison)
+  list_of_dins_conclusion <- tapply(
+    X = ce_results_dt$dins_conclusion,
+    INDEX = ce_results_dt$comparison,
+    FUN = function(x) {
+      x[1]
+    },
+    simplify = TRUE
+  )
+
+  # =================================================================
+  # REFACTORED MESSAGE GENERATION
+  # =================================================================
   
-  message_to_user <- paste0(
-    "The table below shows the detailed numerical results ",
-    "of the commutability evaluation results of ",
-    ifelse(
-      length(list_of_SampleID) >= 3,
-      ifelse(
-        length(list_of_SampleID) >= 10,
-        paste0(
-          paste0(
-            list_of_SampleID[1:3],
-            collapse = ", "  
-          ),
-          "...",
-          paste0(
-            list_of_SampleID[(length(list_of_SampleID) - 2L):(length(list_of_SampleID) - 1L)],
-            collapse = ", "
-          ),
-          " and ",
-          list_of_SampleID[length(list_of_SampleID)],
-          ". Because ten or more evaluated materials, the list is recycled."
-        ),
-        paste0(
-          paste0(
-            list_of_SampleID[1:(length(list_of_SampleID) - 1L)],
-            collapse = ", "
-          ),
-          " and ",
-          list_of_SampleID[length(list_of_SampleID)],
-          "."
-        )
-      ),
-      paste0(
-        paste0(
-          list_of_SampleID,
-          collapse = " and "  
-        ),
-        "."
-      )  
+  # --- Add this line to create a bolded version of the SampleIDs ---
+  bold_samples <- paste0("**", list_of_SampleID, "**")
+    
+  ### PART 1: Generate the list of evaluated materials ###
+  
+  n_samples <- length(list_of_SampleID)
+  
+  if (n_samples >= 10) {
+    # Special case for 10+ samples
+    first_part <- paste(paste0("**", list_of_SampleID[1:4], "**"), collapse = ", ")
+    last_part <- smart_paste(list_of_SampleID[(n_samples - 3):n_samples], bold = TRUE)
+    sample_list_text <- glue(
+      "{first_part}, ..., {last_part}. Because there are ten or more",
+      "evaluated materials, the list is abbreviated."
     )
+  } else {
+    # Standard case for < 10 samples
+    sample_list_text <- glue("{smart_paste(list_of_SampleID, bold = TRUE)}.")
+  }
+  
+  message_part1 <- glue(
+    "The table below shows the detailed numerical results of the commutability ",
+    "evaluation results of these {n_samples} evaluated materials: {sample_list_text}"
   )
   
+  
+  ### PART 2: Report on DINS conclusions ###
+  
+  # Pre-calculate key metrics to simplify the code
+  n_total <- length(list_of_dins_conclusion)
+  n_excessive <- sum(list_of_dins_conclusion == 1)
+  n_acceptable <- n_total - n_excessive
+  prop_excessive <- n_excessive / n_total
+  
+  # Get the names of the comparison groups
+  excessive_comparisons <- list_of_comparison[list_of_dins_conclusion == 1]
+  acceptable_comparisons <- list_of_comparison[list_of_dins_conclusion == 0]
+  
+  # Use a clear if/else if/else block for the logic
+  if (prop_excessive == 0) {
+    # Case 1: All are acceptable
+    message_part2 <- glue(
+      "Concerning differences in nonselectivity, all IVD-MD pairs were deemed ",
+      "to have an acceptable magnitude of differences in nonselectivity. ",
+      "This means that all {n_total} IVD-MD pairs are eligible for commutability ",
+      "evaluation of the evaluated materials. "
+    )
+  } 
+  else if (prop_excessive == 1) {
+    # Case 2: All are excessive
+    message_part2 <- glue(
+      "Concerning differences in nonselectivity, all {n_total} IVD-MD pairs were ",
+      "deemed to have an excessive magnitude of differences in nonselectivity. ",
+      "This means that none of the IVD-MD pairs are eligible for commutability ",
+      "evaluation of the evaluated materials. "
+    )
+  } 
+  else if (prop_excessive <= 0.25) {
+    # Case 3: A minority are excessive (<=25%)
+    message_part2 <- glue(
+    "Concerning differences in nonselectivity, only {n_excessive} out of a total ",
+    "of {n_total} IVD-MD pairs were deemed to have excessive differences ",
+    "in nonselectivity. "
+    )
+    if (n_excessive <= 5) {
+      list_text <- smart_paste(excessive_comparisons)
+      message_part2 <- glue("{message_part2} These IVD-MDs were: {list_text}.")
+    }
+  } 
+  else if (prop_excessive >= 0.75) {
+    # Case 4: A majority are excessive (>=75%)
+    message_part2 <- glue(
+      "Concerning differences in nonselectivity, only {n_acceptable} out of a ",
+      "total of {n_total} IVD-MD pairs were deemed to have acceptable ",
+      "differences in nonselectivity. "
+    )
+    if (n_acceptable <= 5) {
+      list_text <- smart_paste(acceptable_comparisons)
+      message_part2 <- glue("{message_part2} These IVD-MDs were: {list_text}. ")
+    }
+  } else {
+    # Case 5: The "middle" cases (between 25% and 75%)
+    if (prop_excessive >= 0.5) { # 50% to <75% are excessive
+      message_part2 <- glue(
+        "Concerning differences in nonselectivity, most IVD-MD ",
+        "pairs ({n_excessive} out of {n_total}) were deemed to have an ",
+        "excessive magnitude of differences in nonselectivity. ",
+        "None of the IVD-MD pairs with excessive DINS are eligible for ",
+        "commutability evaluation of the evaluated materials. "
+      )
+    }else { # >25% to <50% are excessive (i.e., most are acceptable)
+      message_part2 <- glue(
+        "Concerning differences in nonselectivity, most IVD-MD ",
+        "pairs ({n_acceptable} out of {n_total}) were deemed to have an ",
+        "acceptable magnitude of differences in nonselectivity. ",
+        "All those IVD-MD pairs with acceptable DINS are eligible for ",
+        "commutability evaluation of the evaluated materials. "
+      )
+    }
+  }
+  
+  ### PART 3: Combine and display the final message ###
+  message_to_user <- paste(message_part1, message_part2)
+    
   # Render Table
   kbl(
     x = ce_results_display_dt,
@@ -905,6 +1023,74 @@ if (ce_table_exists) {
 
 `r message_to_user`
 
+```{r ce-results-table-2}
+
+if (ce_table_exists) {
+  
+  # Extract ce_data
+  ce_results_dt <- params$ce_results$merged_ce_data
+  
+  # Generate commutability evaluation summary
+  ce_results_summary_dt <- ce_results_dt[, list(
+    "commutable" = paste0(
+      sum(pi_inside == 1 & dins_conclusion == 0),
+          " / ",
+          length(dins_conclusion)
+    ),
+    "noncommutable" = paste0(
+      sum(pi_inside == 0 & dins_conclusion == 0),
+      " / ",
+      length(dins_conclusion)
+    ),
+    "inside_pi" = paste0(
+      sum(pi_inside == 1 & dins_conclusion == 1),
+      " / ",
+      length(dins_conclusion)
+    ),
+    "outside_pi" = paste0(
+      sum(pi_inside == 0 & dins_conclusion == 1),
+      " / ",
+      length(dins_conclusion)
+    )
+  ), by = SampleID]
+  
+  # Render Table
+  kbl(
+    x = ce_results_summary_dt,
+    format = "latex",
+    col.names = c(
+      "ID of Evaluated Material",
+      "Commutable",
+      "Noncommutable",
+      "Inside PI",
+      "Outside PI"
+    ),
+    align = "lcccc",
+    booktabs = TRUE,
+    caption = "Commutability Evaluation Results Summarized by Evaluated Materials",
+    position = "H",
+    escape = FALSE
+  ) |>
+    add_header_above(
+      header = c(" " = 1, "Acceptable DINS" = 2, "Excessive DINS" = 2),
+      bold = TRUE
+    ) |>
+    row_spec(
+      row = 0,
+      bold = TRUE,
+      color = "white",
+      background = "#605ca8"
+    ) |>
+    kable_styling(
+      latex_options = c(
+        "scale_down",
+        "striped"
+      )
+    )
+}
+
+```
+
 ## Results Plot
 
 The plot below provides a graphical representation of the commutability evaluation.
@@ -912,8 +1098,8 @@ The plot below provides a graphical representation of the commutability evaluati
 ```{r setup-ce-plot-dims, include=FALSE}
 
 # This chunk calculates the optimal plot dimensions before the plot chunk is run.
-if (ce_plot_exists && ce_table_exists) {
-  n_panels <- length(unique(params$ce_results$merged_ce_data$comparison))
+if (ce_plot_exists) {
+  n_panels <- nlevels(ggplot_build(params$ce_plot)$data[[1]]$PANEL)
   
   # Determine layout
   n_cols <- ceiling(sqrt(n_panels))
@@ -935,7 +1121,7 @@ if (ce_plot_exists && ce_table_exists) {
 
 ```{r ce-results-plot, fig.width = plot_width, fig.height = plot_height, out.width = "100%", fig.cap = "Commutability Evaluation Plot"}
 
-if (isTRUE(inherits(params$ce_plot, "ggplot"))) {
+if (ce_plot_exists) {
   plot(params$ce_plot)
 }
 

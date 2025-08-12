@@ -4,15 +4,17 @@
 \alias{render_diagnostic_text}
 \title{Render diagnostic test results as styled HTML text}
 \usage{
-render_diagnostic_text(diagnostics, type = "cs")
+render_diagnostic_text(diagnostics, other_diagnostics, type = "cs")
 }
 \arguments{
-\item{diagnostics}{The diagnostic list object from commutability::check_data()}
+\item{diagnostics}{The diagnostic list object from \code{commutability::check_data()} for the current data type.}
 
-\item{type}{A character string, either "cs" for clinical sample or "eq" for EQA material}
+\item{other_diagnostics}{The diagnostic list object from the other data type.}
+
+\item{type}{A character string, either "cs" for clinical sample or "eq" for EQA material.}
 }
 \value{
-An HTML object
+An HTML object.
 }
 \description{
 Render diagnostic test results as styled HTML text

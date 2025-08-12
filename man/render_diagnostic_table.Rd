@@ -4,7 +4,12 @@
 \alias{render_diagnostic_table}
 \title{Render a styled diagnostic table}
 \usage{
-render_diagnostic_table(diagnostics, type = "cs")
+render_diagnostic_table(
+  diagnostics,
+  type = "cs",
+  is_post_repair_valid = TRUE,
+  post_repair_score = NULL
+)
 }
 \arguments{
 \item{diagnostics}{The diagnostic list object from commutability::check_data()}
