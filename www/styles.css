@@ -1,257 +1,15 @@
 /* ==========================================================================
-   General App Layout & Theme
+   1. GLOBAL TYPOGRAPHY & BRANDING
    ========================================================================== */
 
-/* Main Dashboard Theme */
-.skin-blue .main-header .navbar,
-.skin-blue .main-header .logo {
-  background-color: #28A745;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  border-bottom: none;
-}
-
-.skin-blue .main-header .navbar:hover,
-.skin-blue .main-header .logo:hover {
-  background-color: #1e7e34;
-}
-
-.skin-blue .main-header .navbar .sidebar-toggle:hover {
-  background-color: #1e7e34;
-}
-
-/* Sidebar Menu */
-.skin-blue .sidebar-menu > li:hover > a,
-.skin-blue .sidebar-menu > li.active > a {
-  background-color: #1e7e34;
-  border-left-color: #28A745;
-}
-
-.skin-blue .sidebar a {
-  font-size: large;
-  font-weight: 800;
-}
-
-/* Navigation Pills/Tabs */
-.nav-pills {
-  margin-bottom: 5px;
-  border-bottom: 1px solid #e9ecef!important;
-  border-radius: 6px;
-  padding-bottom: 5px;
-}
-
-.nav-pills > li > a {
-  color: #000000;
-  margin-right: 5px!important;
-  border-radius: 6px!important;
-  background-color: #c2c0de;
-  padding: 10px 25px;      /* Increase vertical and horizontal padding */
-  font-size: large;          /* Make the font slightly larger */
-  font-weight: 600;         /* Make the font bold */
-  text-align: center;       /* Ensure text is centered */
-  min-width: 120px;
-}
-
-.nav-pills > li.active > a,
-.nav-pills > li > a.active {
-  color: #ffffff!important;
-  margin-right: 5px!important;
-  border-radius: 6px!important;
-  background-color: #605CA8;
-  border-top-color: #918ec3;
-}
-
-.nav-pills > li.active > a:focus,
-.nav-pills > li.active > a:hover {
-  background-color: #605CA8;
-  border-top-color: #918ec3;
-  color: white!important;
-}
-
-.nav-pills .nav-link:not(.active):hover,
-.nav-pills .nav-link:not(.active):focus{
-  background-color: #918ec3;
-}
-
-/* ==========================================================================
-   Containers & Layout
-   ========================================================================== */
-
-.page-header {
-  background-color: #f8f9fa; /* A very light grey */
-  padding: 20px;
-  margin-bottom: 25px;
-  border-radius: 10px;
-  border: 1px solid #e9ecef;
-}
-
-.dashboard-card {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 25px;
-  overflow: hidden;
-  position: relative;
-}
-
-.dashboard-card-drop-down {
-  background-color: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 25px;
-  overflow: visible;
-}
-
-.card-header {
-  background-color: #f8f9fa;
-  padding: 15px 20px;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  align-items: center;
-}
-
-.card-body {
-  padding: 20px;
-}
-
-.dashboard-container {
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-
-.upload-section,.diagnostics-section {
-  margin-bottom: 25px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.parameter-section {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.parameter-section:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.parameter-section h5 {
-  color: #495057;
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  font-family: 'Source Sans Pro', sans-serif;
   font-weight: 600;
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-.input-group-container {
-  margin-bottom: 15px;
-}
-
-.switch-container {
-  background-color: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-}
-
-.switch-container h5 {
-  color: #495057;
-  font-weight: 600;
-  margin-bottom: 15px;
-  font-size: 16px;
-}
-
-.button-container {
-  display: flex;
-  gap: 15px;
-  margin: 20px 0;
-  justify-content: center;
-}
-
-.plot-container {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 15px;
-  margin-top: 20px;
-}
-
-/* ==========================================================================
-   Custom Collapsible Box Styling
-   ========================================================================== */
-
-/* Main box container */
-.box.box-solid.box-primary {
-  border: 1px solid #e9ecef;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  margin-bottom: 20px;
-}
-
-/* Box header style */
-.box.box-solid.box-primary > .box-header {
-  background: #f8f9fa; /* Light grey background to match card headers */
-  color: #605CA8; /* Purple text to match main titles */
-  border-bottom: 1px solid #e9ecef;
-  border-radius: 9px 9px 0 0;
-  padding: 12px 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-/* Header hover effect */
-.box.box-solid.box-primary > .box-header:hover {
-  background: #e9ecef;
-}
-
-/* Box title style */
-.box.box-solid.box-primary > .box-header .box-title {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-/* Collapse/Expand button style */
-.box.box-solid.box-primary > .box-header .btn-box-tool {
-  color: #605CA8;
-  font-size: 18px;
-  padding: 5px;
-  transition: transform 0.3s ease;
-}
-
-.box.box-solid.box-primary > .box-header .btn-box-tool:hover {
-  color: #28A745; /* Green on hover */
-  transform: scale(1.1);
-}
-
-/* Rotate the icon when the box is not collapsed */
-.box.box-solid.box-primary:not(.collapsed-box) .fa-plus:before {
-  content: "\f068"; /* Font Awesome minus icon */
-  font-family: "Font Awesome 5 Free";
-  font-weight: 900;
-}
-
-/* Box body style */
-.box.box-solid.box-primary > .box-body {
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 0 0 9px 9px;
-}
-
-
-/* ==========================================================================
-   Typography
-   ========================================================================== */
-
-.h1,.h2,.h3,.h4,.h5,.h6, h1, h2, h3, h4, h5, h6 {
-  font-family: 'Source Sans Pro';
-  font-weight: 600;
-  color: #605CA8;
+  color: #605CA8; /* Brand Purple */
 }
 
 .p, p {
-  font-family: 'Source Sans Pro';
+  font-family: 'Source Sans Pro', sans-serif;
 }
 
 .main-title {
@@ -263,22 +21,240 @@
 
 .version-badge {
   display: inline-block;
-  font-size: 12px; /* A little smaller */
+  font-size: 12px;
   font-weight: 600;
   padding: 5px 7px;
-  background-color: #f8f9fa; /* A very light grey */
-  color: #28A745; /* Match the title color */
-  border-radius: 15px; /* More rounded pill shape */
+  background-color: #f8f9fa;
+  color: #28A745; /* Brand Green */
+  border-radius: 15px;
   border-bottom: 1px solid #e9ecef;
+}
+
+/* ==========================================================================
+   2. MAIN APP SHELL (Sidebar & Navbar)
+   ========================================================================== */
+
+/* Navbar Header Background */
+.skin-blue .main-header .navbar,
+.skin-blue .main-header .logo {
+  background-color: #28A745;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  border-bottom: none;
+}
+
+/* Navbar Hover States */
+.skin-blue .main-header .navbar:hover,
+.skin-blue .main-header .logo:hover,
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+  background-color: #1e7e34;
+}
+
+/* Sidebar Menu Items */
+.skin-blue .sidebar-menu > li:hover > a,
+.skin-blue .sidebar-menu > li.active > a {
+  background-color: #1e7e34;
+  border-left-color: #28A745;
+}
+
+.skin-blue .sidebar a {
+  font-size: large;
+  font-weight: 800;
+}
+
+/* ==========================================================================
+   3. NAVIGATION (Pills & Tabs)
+   ========================================================================== */
+
+.nav-pills {
+  margin-bottom: 0;
+  border-bottom: 1px solid #e9ecef !important;
+  border-radius: 6px;
+  padding-bottom: 0;
+}
+
+.nav-pills > li > a {
+  color: #000000;
+  margin-right: 5px !important;
+  border-radius: 6px !important;
+  background-color: #c2c0de;
+  padding: 10px 25px;
+  font-size: large;
+  font-weight: 600;
+  text-align: center;
+  min-width: 120px;
+}
+
+/* Active Tab Styling */
+.nav-pills > li.active > a,
+.nav-pills > li > a.active,
+.nav-pills > li.active > a:focus,
+.nav-pills > li.active > a:hover {
+  background-color: #605CA8;
+  border-top-color: #918ec3;
+  color: #ffffff !important;
+}
+
+/* Inactive Tab Hover */
+.nav-pills .nav-link:not(.active):hover,
+.nav-pills .nav-link:not(.active):focus {
+  background-color: #918ec3;
+}
+
+/* ==========================================================================
+   4. PAGE HEADER (The "Command Center" Bar)
+   ========================================================================== */
+
+/* Main Container with Scientific Gradient */
+.page-header {
+  background: linear-gradient(to bottom, #ffffff 0%, #f4f4f7 100%);
+  padding: 15px 25px;
+  border-radius: 8px;
+  border-bottom: 2px solid #dcdce6;
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
+
+/* Header Title Typography & Layout */
+.page-header h1 {
+  margin: 0;
+  margin-right: auto; /* Pushes button to far right */
+  color: #605CA8;
+  font-weight: 600;
+  font-size: 22px;    /* Slight reduction for better fit */
+  display: flex;
+  align-items: center;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+/* Main Icon Styling (Bubble Effect) */
+/* Target ONLY the icon inside the H1 to avoid breaking buttons */
+.page-header h1 i {
+  font-size: 24px;
+  color: #605CA8;
+  margin-right: 15px;
+  background-color: rgba(96, 92, 168, 0.1);
+  padding: 10px;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Header Button Styling (The Green Pill) */
+.page-header button.bttn {
+  white-space: nowrap !important;
+  min-width: 180px;
+  height: 45px !important; /* Match height of Icon Bubble */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  border-radius: 25px !important;
+  margin-left: 15px !important;
+}
+
+/* Fix Icon inside the Header Button */
+.page-header button.bttn i {
+  margin-right: 8px !important;
+  background-color: transparent !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+}
+
+/* ==========================================================================
+   5. DASHBOARD CARDS & CONTAINERS
+   ========================================================================== */
+
+.dashboard-card,
+.dashboard-card-drop-down {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.dashboard-card { overflow: hidden; }
+.dashboard-card-drop-down { overflow: visible; } /* Allows dropdowns to spill out */
+
+.dashboard-container {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+/* Card Headers */
+.card-header {
+  background-color: #f8f9fa;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
   align-items: center;
 }
 
+/* Auto Margin Trick for Card Headers */
+.card-header h3 {
+  margin: 0;
+  margin-right: auto; /* Pushes actions to the right */
+  line-height: 1;
+}
+
+.card-header .header-icon {
+  color: #28A745;
+  margin-right: 10px;
+  font-size: 18px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Sections within Cards */
+.upload-section, .diagnostics-section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.parameter-section {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.parameter-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.parameter-section h5,
+.switch-container h5 {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.switch-container {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
 
 /* ==========================================================================
-   Buttons
+   6. STANDARD BUTTONS
    ========================================================================== */
 
-/* Default Button (e.g., File Upload "Browse...") */
+/* Default Button (Base style, e.g., generic actions) */
 .btn-default {
   background-color: #28A745;
   color: #FFFFFF;
@@ -289,7 +265,6 @@
   font-size: 16px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  position: relative;
   min-height: 44px;
   min-width: 44px;
 }
@@ -301,11 +276,6 @@
   transform: translateY(-2px);
 }
 
-.btn-default:focus {
-  outline: 3px solid #5dd879;
-  outline-offset: 2px;
-}
-
 .btn-default:active {
   background-color: #1e7e34;
   border-color: #1c7430;
@@ -313,12 +283,7 @@
   transform: translateY(2px);
 }
 
-.btn-default:active:hover {
-  background-color: #1c7430;
-  border-color: #1a6d2c;
-}
-
-/* Primary Button (e.g., Radio Group Buttons) */
+/* Primary Button (e.g., Radio Group selections) */
 .btn-primary {
   background-color: #28A745;
   border: 1px solid #1e7e34;
@@ -336,476 +301,444 @@
   background-color: #218838;
   border-color: #1e7e34;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.btn-primary:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
-}
-
-.btn-primary:active,.btn-primary.active {
-  background-color: #1e7e34!important;
+.btn-primary:active, .btn-primary.active {
+  background-color: #1e7e34 !important;
   border-color: #1c7430;
   transform: translateY(1px);
   box-shadow: 0 1px 2px rgba(0,0,0,0.2) inset;
   font-weight: 700;
 }
 
-.btn-primary:active:hover,.btn-primary.active:hover {
-  background-color: #1c7430;
-  border-color: #1a6d2c;
-}
-
-.btn-primary.math-symbol {
-  font-weight: 700;
-  text-shadow: 0 1px 1px rgba(0,0,0,0.2);
-}
-
 /* ==========================================================================
-   DataTables Custom Styling (Corrected)
+   7. INPUTS & CONTROLS
    ========================================================================== */
 
-/* Table Header - More specific selector to override defaults */
-.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th {
-  background-color: #605CA8 !important; /* Purple header to match theme */
-  color: white !important;
-  font-weight: 600;
-  border-bottom: 2px solid #4d4a8e !important;
-  transition: background-color 0.2s ease-in-out; /* Added for smooth hover effect */
-  box-shadow: inset 0px 1px 4px rgba(0,0,0,0.3); /* Added subtle inset shadow */
-}
-
-/* Add border-radius to the first and last header cells for smoothed corners */
-.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th:first-child {
-  border-top-left-radius: 8px;
-}
-
-.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th:last-child {
-  border-top-right-radius: 8px;
-}
-
-
-/* Table Header Hover & Active Sort Column Style */
-.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th:hover,
-.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th.sorting_asc,
-.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th.sorting_desc {
-  background-color: #7976c8 !important; /* Lighter purple for hover and active sort */
-}
-
-
-/* Row Hover Style */
-.table-hover > tbody > tr:hover {
-  background-color: #f0f0f8 !important; /* Light purple hover */
-}
-
-/* FIX: Force no wrapping to enable horizontal scrolling */
-.dataTables_wrapper table.dataTable th,
-.dataTables_wrapper table.dataTable td {
-  white-space: nowrap;
-}
-
-/* Search and Length-Change Inputs */
-.dataTables_wrapper .dataTables_filter input,
-.dataTables_wrapper .dataTables_length select {
-  border: 1px solid #28A745;
-  border-radius: 6px;
-  padding: 6px 12px;
-  transition: all 0.3s ease;
-}
-
-.dataTables_wrapper .dataTables_filter input:focus,
-.dataTables_wrapper .dataTables_length select:focus {
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-  border-color: #28a745;
-  outline: none;
-}
-
-/* Pagination Buttons */
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-  border-radius: 6px !important;
-  margin: 0 3px;
-  border: 1px solid transparent !important; /* Remove default borders */
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current,
-.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-  background: #605CA8 !important;
-  border-color: #4d4a8e !important;
-  color: white !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-  background: #e9ecef !important;
-  border-color: #ddd !important;
-  color: #333 !important;
-}
-
-/* Export Buttons (Copy, CSV, etc.) - More specific selector */
-.dt-buttons .dt-button {
-  background-color: #28A745 !important; /* Main App Green */
-  background-image: none !important; /* Remove default gradient */
-  color: white !important;
-  font-weight: bold !important;
-  border: 1px solid #1e7e34 !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-  transition: background-color 0.2s ease-in-out !important;
-  padding: 6px 16px !important;
-}
-
-.dt-buttons .dt-button:hover {
-  background-color: #218838 !important; /* Darker green on hover */
-  border-color: #1e7e34 !important;
-}
-
-
-/* ==========================================================================
-   Inputs & Controls
-   ========================================================================== */
-
-/* General Form Controls */
 .form-control {
   border: 1px solid #28A745;
-  border-color: #28a745;
   padding: 8px 12px;
   transition: all 0.3s ease;
   height: 44px;
   max-width: 100%;
 }
 
-.form-control:hover,
-.form-control:focus {
+.form-control:hover, .form-control:focus {
   box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
   border-color: #28a745;
   background-color: #f8f9fa;
 }
 
-.form-group.shiny-input-container {
-  max-width: 600px;
-  width: auto;
-}
-
-/* Input Addons (for numericInputIcon) */
+/* Input Addons (Icons attached to text inputs) */
 .input-group.input-group-addon {
   background-color: #28A745;
   border-color: #1e7e34;
   color: white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1) inset;
   border-radius: 0 6px 6px 0;
   padding: 6px 12px;
   font-weight: 500;
 }
 
-/* SliderTextInput */
-.irs-bar,.irs-bar-edge,.irs-single,.irs-grid-pol.small {
-  background: #28A745!important;
-  border-color: #28A745!important;
+/* SliderTextInput Customization */
+.irs-bar, .irs-bar-edge, .irs-single, .irs-grid-pol.small {
+  background: #28A745 !important;
+  border-color: #28A745 !important;
 }
 .irs-from, .irs-to, .irs-single {
-  background: #605CA8!important;
+  background: #605CA8 !important;
 }
-
 .irs-handle.single {
-  border: 2px solid #605CA8 !important; /* Main App Purple border */
+  border: 2px solid #605CA8 !important;
   background: white !important;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-  transition: transform 0.2s ease-in-out;
 }
-
 .irs-handle.single:hover {
   transform: scale(1.1);
 }
 
-.irs-min, .irs-max {
-  background-color: #f8f9fa; /* Light grey background */
-  color: #495057 !important; /* Dark grey text */
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid #e9ecef;
-}
-
-.irs-slider {
-  border: 2px solid #28A745!important;
-  background: white!important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1)!important;
-}
-
-.irs-slider:hover, .irs-slider.state_hover {
-  background: #f9f9f9!important;
-  transform: scale(1.1);
-}
-.irs-grid-text {
-  color: #666!important;
-  font-weight: 500!important;
-  font-size: 11px!important;
-}
-
-.irs-grid-pol {
-  background: #28A745!important;
-}
-
-.irs {
-  height: 50px!important;
-}
-
-.irs-with-grid {
-  margin-top: 10px!important;
-  margin-bottom: 20px!important;
-}
-
-
-
-
-
 /* ==========================================================================
-   Specific Components
+   8. SLEEK FILE UPLOAD COMPONENT (Scoped)
    ========================================================================== */
+/* NOTE: This section uses :has(.btn-file) to ensure we ONLY style
+   file inputs and do not break other text inputs (like Plot Titles).
+*/
 
-/* Progress Bar */
-.progress {
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  height: 20px;
-  margin-bottom: 15px;
-  max-width: 600px;
-  overflow: hidden;
+/* FORCE UPLOAD SECTION TO BE FULL WIDTH */
+/* This overrides Shiny's default 300px/600px limit on input containers */
+.upload-section .shiny-input-container {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* 1. The Main Flex Container (Targeted) */
+.upload-section .input-group {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100% !important;
   position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  border-radius: 6px;
+  transition: box-shadow 0.3s ease;
+}
+.upload-section .input-group:hover {
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.15);
 }
 
-.progress:hover {
-  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+/* Ensure the form control fills that space */
+.upload-section .input-group .form-control {
+  width: 100% !important; /* Force it to fill the flexible space */
+  flex: 1 1 auto !important;
 }
 
-.progress-bar {
-  background-color: #28a745;
-  color: #fff;
-  font-weight: 600;
-  font-size: 14px;
-  text-align: center;
-  height: 100%;
-  line-height: 20px;
-  transition: width 0.4s ease;
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.15) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.15) 50%,
-    rgba(255, 255, 255, 0.15) 75%,
-    transparent 75%,
-    transparent
-  );
-  background-size: 1rem 1rem;
+/* 2. The Button Wrapper (Prevent Shrinking) */
+.upload-section .input-group-btn {
+  display: flex !important;
+  flex: 0 0 auto !important;      /* Don't shrink */
+  width: auto !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+  z-index: 5 !important;
 }
 
-/* Diagnostic Test Items */
-.section-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  font-weight: 600;
-  color: #333;
+/* 3. The "Browse" Button (Outline Style) */
+.upload-section .input-group-btn .btn-default {
+  background-color: #ffffff !important;
+  color: #28A745 !important;
+  border: 1px solid #e9ecef !important;
+  border-right: none !important;  /* Merge with input */
+  border-radius: 6px 0 0 6px !important;
+  font-weight: 600 !important;
+  height: 44px !important;
+  padding: 8px 20px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
 }
 
-.section-header i {
-  margin-right: 10px;
+.upload-section .input-group-btn .btn-default:hover {
+  background-color: #f1f9f1 !important;
+  color: #1e7e34 !important;
+  border-color: #28A745 !important;
 }
 
-.section-icon {
-  color: #605ca8;
+/* 4. The Text Input Field (Strictly Scoped) */
+.upload-section .input-group-btn + .form-control {
+  flex: 1 1 auto !important;
+  width: 1% !important;
+  height: 44px !important;
+  border: 1px solid #e9ecef !important;
+  border-left: none !important;   /* Merge with button */
+  border-radius: 0 6px 6px 0 !important;
+  box-shadow: none !important;
+  z-index: 1;
+}
+
+/* 5. Folder Icon */
+.upload-section .input-group-btn .btn-default::before {
+  content: "\f07c";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
   margin-right: 8px;
 }
 
-.header-icon {
-  color: #28A745;
-  margin-right: 10px;
-  font-size: 18px;
+/* 6. Hover Effects (Scoped) */
+.upload-section .input-group:hover .form-control,
+.upload-section .input-group:hover .btn-default {
+  border-color: #28A745 !important;
+}
+
+/* 7. Minimal Progress Bar */
+.upload-section .progress {
+  height: 4px !important;
+  margin-top: 8px !important;
+  background-color: #e9ecef !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+.upload-section .progress-bar {
+  background-color: #28A745 !important;
+  box-shadow: 0 0 8px rgba(40, 167, 69, 0.6); /* Glowing green */
+  border-radius: 2px;
+  /* Removed duplicate/conflicting gradient/text styles */
 }
 
 /* ==========================================================================
-   Diagnostics
+   9. DATATABLES STYLING
    ========================================================================== */
 
+/* Header Styling */
+.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th {
+  background-color: #605CA8 !important;
+  color: white !important;
+  font-weight: 600;
+  border-bottom: 2px solid #4d4a8e !important;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.3);
+}
+.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th:first-child {
+  border-top-left-radius: 8px;
+}
+.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th:last-child {
+  border-top-right-radius: 8px;
+}
 
-.test-item,.repair-item {
+/* Hover Effects */
+.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th:hover,
+.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th.sorting_asc,
+.dataTables_wrapper .dataTables_scrollHead .dataTables_scrollHeadInner table.dataTable thead th.sorting_desc {
+  background-color: #7976c8 !important;
+}
+.table-hover > tbody > tr:hover {
+  background-color: #f0f0f8 !important;
+}
+
+/* Avoiding Text Wrapping to Enable Horizontal Scrolling */
+.dataTables_wrapper table.dataTable th,
+.dataTables_wrapper table.dataTable td {
+  white-space: nowrap;
+}
+
+/* Inputs & Pagination */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+  border: 1px solid #28A745;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+  background: #605CA8 !important;
+  border-color: #4d4a8e !important;
+  color: white !important;
+}
+.dt-buttons .dt-button {
+  background-color: #28A745 !important;
+  border: 1px solid #1e7e34 !important;
+  color: white !important;
+  border-radius: 6px !important;
+}
+
+/* ==========================================================================
+   10. DIAGNOSTICS & HELP MODULES
+   ========================================================================== */
+
+/* --- 6. Diagnostic Items (Results) --- */
+.test-item, .repair-item {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 14px 18px;
+  border-radius: 8px;
   background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+  transition: transform 0.2s ease;
+  font-size: 15px !important; /* Readable test items */
 }
 
-.test-number,.repair-number {
+.test-item:hover, .repair-item:hover {
+  transform: translateX(3px); /* Micro-interaction */
+  border-color: #ddd;
+}
+
+.test-number, .repair-number {
   font-weight: 600;
   margin-right: 5px;
   color: #495057;
 }
-
-.test-title,.repair-text {
+.test-title, .repair-text {
   flex-grow: 1;
   color: #495057;
 }
 
-.test-badge {
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-  text-align: center;
-  min-width: 60px;
-  margin-left: 10px;
-}
-
-.test-badge.pass {
-  background-color: #28a745;
-  color: white;
-  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
-}
-
-.test-badge.fail {
-  background-color: #dc3545;
-  color: white;
-  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-}
-
-.test-badge.unknown {
-  background-color: #6c757d;
-  color: white;
-  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
-}
-
-.repair-item.success {
-  background-color: #f1f9f1;
-  border-left: 4px solid #28a745;
-}
-
-.repair-item.warning {
-  background-color: #fff9e6;
-  border-left: 4px solid #ffc107;
-}
-
-/* ==========================================================================
-   Overall Diagnostic Status Badge
-   ========================================================================== */
-
-/* For aligning the main card title and the new status badge */
-.card-header-title-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* Pushes title and badge to opposite ends */
-  width: 100%;
-}
-
-/* Base style for the new status badge */
+/* Diagnostic Status Badges */
 .diagnostic-status-badge {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  border-radius: 20px; /* Pill shape */
+  padding: 4px 12px;
+  border-radius: 20px;
   font-weight: 700;
   font-size: 14px;
-  margin-left: 20px; /* Space between title and badge */
+  margin-left: 20px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
+.diagnostic-status-badge.status-ok { background: #e9f5ea; color: #258e3e; border: none; }
+.diagnostic-status-badge.status-fail { background: #fdecea; color: #c0392b; border: none; }
+.diagnostic-status-badge.status-warning { background: #fff8e1; color: #d35400; border: none; }
 
-/* Green 'OK' status */
-.diagnostic-status-badge.status-ok {
-  background-color: #e9f5ea; /* Light green */
-  color: #28a745; /* Dark green */
-  border: 1px solid #28a745;
+.test-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  min-width: 50px;
+  text-align: center;
+  margin-left: auto; /* Pushes badge to far right */
+  color: white;
 }
+.test-badge.pass { background-color: #28a745; }
+.test-badge.fail { background-color: #dc3545; }
+.test-badge.unknown { background-color: #95a5a6; }
 
-/* Red 'Fail' status */
-.diagnostic-status-badge.status-fail {
-  background-color: #fdecea; /* Light red */
-  color: #dc3545; /* Dark red */
-  border: 1px solid #dc3545;
-}
-
-/* Yellow 'Warning' status */
-.diagnostic-status-badge.status-warning {
-  background-color: #fff8e1; /* Light yellow */
-  color: #ffab00; /* Dark yellow */
-  border: 1px solid #ffab00;
-}
-
-/* ==========================================================================
-   Help Text Panel Styles
-   ========================================================================== */
-
+/* Help Panels */
+/* --- 1. The Container (Glass-like card) --- */
 .help-container {
   background-color: #ffffff;
-  border: 1px solid #e9ecef;
-  border-radius: 10px;
-  padding: 25px;
-  margin-bottom: 20px;
-  font-family: 'Source Sans Pro', sans-serif;
+  border-radius: 12px; /* Softer corners */
+  box-shadow: 0 10px 30px rgba(96, 92, 168, 0.08); /* Beautiful, diffuse purple shadow */
+  margin-bottom: 30px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.02);
 }
+
+/* --- 1. The Container (Glass-like card) --- */
+.help-container {
+  background-color: #ffffff;
+  border-radius: 12px; /* Softer corners */
+  box-shadow: 0 10px 30px rgba(96, 92, 168, 0.08); /* Beautiful, diffuse purple shadow */
+  margin-bottom: 30px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.02);
+}
+
+/* --- 2. The Header --- */
 .help-header {
-  color: #605CA8;
-  font-weight: 600;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e9ecef;
-  display: flex;
-  align-items: center;
+  background-color: #ffffff; /* Clean white header */
+  padding: 20px 25px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex !important;
+  align-items: center !important;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.5px; /* Tighter, modern tracking */
+  color: #2c3e50;         /* Dark slate, not pure black */
 }
+
 .help-header i {
-  margin-right: 12px;
-  font-size: 1.2em;
-}
-.help-section {
-  margin-bottom: 25px;
-}
-.help-step {
+  margin-right: 15px !important;
+  color: #605CA8;
+  font-size: 24px !important; /* Larger Icon */
+  background: rgba(96, 92, 168, 0.1);
+  padding: 8px;
+  border-radius: 8px;
+  width: 42px;  /* Slightly larger bubble */
+  height: 42px;
   display: flex;
-  align-items: flex-start;
-  margin-bottom: 18px;
-  line-height: 1.6;
-}
-.help-step-number {
-  background-color: #605CA8;
-  color: white;
-  font-weight: bold;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  margin-right: 15px;
-  margin-top: 3px;
+  align-items: center;
 }
+
+/* --- 4. The Timeline Steps (The "Neat" Factor) --- */
+.help-section {
+  padding: 25px 30px;
+  position: relative;
+}
+
+.help-step {
+  display: flex !important;
+  position: relative; /* For the connector line */
+  padding-bottom: 25px; /* Space for the line */
+}
+
+/* The Vertical Connector Line */
+.help-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 14px; /* Center of the 30px circle */
+  top: 30px;
+  bottom: 0;
+  width: 2px;
+  background-color: #e9ecef;
+  z-index: 0;
+}
+
+.help-step-number {
+  width: 32px;  /* Slightly larger circle */
+  height: 32px;
+  background-color: #ffffff;
+  border: 2px solid #605CA8;
+  color: #605CA8;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 15px; /* Larger number */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin-right: 20px !important;
+  z-index: 1;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
 .help-step-content {
-  color: #555555;
+  color: #444; /* Darker text for better contrast */
+  font-size: 15px !important; /* Readable Body Text */
+  line-height: 1.6;
+  padding-top: 0px;
 }
+
+/* Highlights inside text */
+.help-step-content b {
+  color: #2c3e50;
+  font-weight: 700;
+  font-size: 17px !important; /* Larger Step Titles */
+  display: block; /* Forces title to its own line */
+  margin-bottom: 4px;
+}
+
 .help-step-content .help-detail {
-  font-size: 0.9em;
+  font-size: 1.0em;
   color: #6c757d;
   margin-top: 4px;
   padding-left: 5px;
   border-left: 2px solid #e9ecef;
 }
-.help-tip {
-  background-color: #fdf8e4;
-  border: 1px solid #fceec9;
-  color: #c48200;
-  padding: 15px;
+
+/* --- 5. Info Boxes (Refined) --- */
+.help-info-box {
+  background-color: #fbfbfc;
+  border: 1px solid #eee;
   border-radius: 8px;
-  margin-bottom: 25px;
-  display: flex;
-  align-items: center;
+  padding: 20px;
+  margin-top: 10px;
+}
+
+.help-info-item {
+  display: flex !important;
+  align-items: flex-start !important;
+  margin-bottom: 12px;
+  font-size: 15px !important; /* Readable list items */
+  color: #555;
+}
+.help-info-item:last-child { margin-bottom: 0; }
+
+.help-info-item i {
+  margin-right: 12px !important;
+  margin-top: 4px; /* Visual alignment */
+  font-size: 10px; /* Smaller, cleaner dots */
+}
+
+.help-tip {
+  background: linear-gradient(to right, #f4f0f8, #ffffff);
+  border-left: 4px solid #605CA8;
+  padding: 15px 25px;
+  color: #555;
+  font-size: 15px !important;
+  line-height: 1.5;
+  display: flex !important;
+  align-items: center !important;
+  border-bottom: 1px solid #f0f0f0;
 }
 .help-tip i {
-  margin-right: 10px;
-  font-size: 1.1em;
+  color: #605CA8;
+  margin-right: 12px;
+  font-size: 18px !important;
 }
+
 .help-important-note {
   background-color: #f0f0f8;
   border-left: 4px solid #605CA8;
@@ -814,55 +747,132 @@
   color: #555555;
   line-height: 1.6;
 }
-.help-info-box {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  margin: 20px 0;
-  border-left: 4px solid #28A745;
-}
-.help-info-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  color: #555555;
-}
-.help-info-item i {
-  margin-right: 12px;
-  width: 20px;
-  text-align: center;
-}
-.code-text {
-  font-family: monospace;
-  background-color: #e9ecef;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-}
 
-/* Note style for below input fields */
+/* Notes & Warnings */
 .input-note {
   display: flex;
   align-items: center;
-  gap: 8px; /* Adds space between the icon and text */
-  font-size: 1.25rem; /* 14px */
-  color: #6c757d; /* A standard subtle gray color */
+  gap: 8px;
+  font-size: 1.25rem;
+  color: #6c757d;
   margin-top: 8px;
   font-style: italic;
 }
 
-/* Warning note style for below input fields */
 .input-warning-note {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.25rem; /* 14px */
-  font-weight: 600; /* Bolder for emphasis */
-  color: #c48200; /* A strong warning yellow/orange */
-  background-color: #fdf8e4; /* Light yellow background */
-  border-left: 4px solid #ffc107; /* Accent border */
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #c48200;
+  background-color: #fdf8e4;
+  border-left: 4px solid #ffc107;
   padding: 8px 12px;
   border-radius: 4px;
   margin-top: 8px;
 }
 
+/* Collapsible Boxes (shinydashboard) */
+.box.box-solid.box-primary {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.box.box-solid.box-primary > .box-header {
+  background: #f8f9fa;
+  color: #605CA8;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 9px 9px 0 0;
+  padding: 15px 20px 15px 25px !important;
+}
+.box.box-solid.box-primary > .box-body {
+  border-radius: 0 0 9px 9px;
+}
+
+/* We use !important to override Shinydashboard's default white color */
+.box.box-solid.box-primary > .box-header .btn-box-tool {
+  color: #605CA8 !important; /* Force Purple */
+  opacity: 1 !important;     /* Ensure it's not transparent */
+  font-size: 16px;
+}
+
+.box.box-solid.box-primary > .box-header .btn-box-tool:hover {
+  color: #28A745 !important; /* Green on hover */
+  background: rgba(40, 167, 69, 0.1); /* Subtle hover bubble */
+  border-radius: 50%;
+}
+
+/* This tells the box: "Ignore the parent's 20px padding and stretch to the edge" */
+.dashboard-card .box {
+  margin-bottom: 0 !important;    /* Removes vertical gaps between boxes */
+  max-width: none !important; /* Remove any Bootstrap constraints *
+  border-radius: 0 !important;    /* Square corners to look like a list */
+  box-shadow: none !important;    /* Remove shadow to look flat */
+  border: none !important;        /* Remove border */
+  border-bottom: 1px solid #e9ecef !important; /* Add separator line */
+}
+
+/* Remove the border from the very last box so it looks clean */
+.card-body .box:last-child {
+  border-bottom: none !important;
+}
+
+/* This tells the box: "Ignore the parent's 15px horizontal padding" */
+.dashboard-card-drop-down .col-sm-12,
+.dashboard-card .col-sm-12 {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/* This tells the box: "Ignore the parent's 20px padding and stretch to the edge" */
+.dashboard-card-drop-down .box.box-solid.box-primary > .box-header,
+.dashboard-card .box.box-solid.box-primary > .box-header,
+.dashboard-card-drop-down .box.box-solid.box-primary > .box-body,
+.dashboard-card .box.box-solid.box-primary > .box-body {
+  padding: 10px 20px !important;
+  margin-bottom: 0 !important;    /* Removes vertical gaps between boxes */
+  border-bottom: 1px solid #e9ecef !important; /* Add separator line */
+}
+
+/* ==========================================================================
+   11. MODERN DIAGNOSTIC CONTENT STYLING
+   ========================================================================== */
+
+/* 1. The Section Headers (Validation Tests / Repairing) */
+.section-header {
+  display: flex;
+  align-items: center;
+
+  /* Spacing Logic */
+  margin-top: 35px;       /* Pushes text away from the Table above it */
+  margin-bottom: 20px;    /* Pushes the green bars away from the Header */
+
+  /* Typography */
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 18px;        /* Much larger text */
+  font-weight: 700;       /* Bold */
+  color: #2c3e50;         /* Dark Slate Color */
+
+  /* Visual Divider */
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+/* Remove top margin for the very first item if needed,
+   but usually, we want that space after the table. */
+.section-header:first-child {
+  margin-top: 20px;
+}
+
+/* 2. The Icons inside the Headers */
+.section-header i {
+  margin-right: 15px;     /* More breathing room between icon and text */
+  font-size: 22px;        /* Larger Icon */
+  width: 30px;            /* Fixed width ensures alignment if icon shapes differ */
+  text-align: center;     /* Centers icon within its fixed width */
+
+  /* Vertical Alignment Fix */
+  position: relative;
+  top: -1px;
+}

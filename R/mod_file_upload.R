@@ -21,7 +21,7 @@ mod_file_upload_ui <- function(id) {
       h1(
         class = "main-title",
         icon("upload"),
-        "Upload and Check Data for Commutability Evaluation"
+        "Data Upload & Validation"
       ),
       actionBttn(
         inputId = ns("show_file_input_explanation"),
@@ -40,13 +40,19 @@ mod_file_upload_ui <- function(id) {
           div(
             class = "card-header",
             icon("file-upload", class = "header-icon"),
-            h3("Upload Data from Your Device")
+            h3("File Selection")
           ),
           div(
             class = "card-body",
             div(
               class = "upload-section",
-              h4(icon("vial", class = "section-icon"), "Upload Clinical Sample Data"),
+              h4(
+                icon(
+                  "vial",
+                  class = "section-icon"
+                ),
+                "Clinical Samples"
+              ),
               fileInput(
                 inputId = ns("cs_data"),
                 label = NULL,
@@ -57,13 +63,35 @@ mod_file_upload_ui <- function(id) {
             ),
             div(
               class = "upload-section",
-              h4(icon("chart-line", class = "section-icon"), "Upload External Quality Assessment Material Data"),
+              h4(
+                icon("chart-line", class = "section-icon"),
+                "EQAM Data",
+                div(
+                  class = "input-note",
+                  # --- Force the Icon to the Right ---
+                  style = "display: inline-block; margin-left: 5px;",
+                  icon(name = "info-circle"),
+                  id = ns("eqam_explanation_tool_tip")
+                )
+              ),
               fileInput(
                 inputId = ns("eq_data"),
                 label = NULL,
                 accept = c(".xlsx", ".csv"),
                 buttonLabel = "Browse...",
                 placeholder = "No file selected"
+              ),
+              bsTooltip(
+                id = ns("eqam_explanation_tool_tip"),
+                title = paste0(
+                  "EQAM is an abbreviation for external quality assessment ",
+                  "material. However, it does not have to be EQAM data. It ",
+                  "can also be certified reference material (CRM) data, or ",
+                  "other materials that is sensible to evaluate for ",
+                  "commutability."
+                ),
+                placement = "top",
+                trigger = "hover"
               )
             )
           )
@@ -76,13 +104,19 @@ mod_file_upload_ui <- function(id) {
           div(
             class = "card-header",
             icon("hammer", class = "header-icon"),
-            h3("Additional Options for Uploaded Data")
+            h3("Configuration")
           ),
           div(
             class = "card-body",
             div(
               class = "parameter-section",
-              h4(icon("arrow-pointer", class = "section-icon"), "Choose a Reference Method"),
+              h4(
+                icon(
+                  "arrow-pointer",
+                  class = "section-icon"
+                ),
+                "Reference Method"
+              ),
               virtualSelectInput(
                 inputId = ns("reference_method"),
                 label = NULL,
@@ -121,44 +155,38 @@ mod_file_upload_ui <- function(id) {
       div(
         class = "card-header",
         icon("stethoscope", class = "header-icon"),
-        div(
-          class = "card-header-title-container",
-          h3("Diagnostic Overview of Your Uploaded Data"),
-          # ADDED: A UI output for the dynamic status badge
-          uiOutput(ns("overall_diagnostic_status"))
-        )
+        h3("Diagnostic Overview of Your Uploaded Data"),
+        uiOutput(ns("overall_diagnostic_status"))
       ),
-      div(
-        class = "card-body",
-        box(
-          title = tagList(icon("microscope", class = "section-icon"), "Clinical Sample Data Diagnostics"),
-          collapsible = TRUE,
-          collapsed = TRUE,
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
-          div(class = "table-container", shiny::tableOutput(outputId = ns("cs_table_diagnostics"))),
-          htmlOutput(outputId = ns("cs_text_diagnostics"))
-        ),
-        box(
-          title = tagList(icon("flask", class = "section-icon"), "External Quality Assessment Material Data Diagnostics"),
-          collapsible = TRUE,
-          collapsed = TRUE,
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
-          div(class = "table-container", shiny::tableOutput(outputId = ns("eq_table_diagnostics"))),
-          htmlOutput(outputId = ns("eq_text_diagnostics"))
-        ),
-        box(
-          title = tagList(icon("check-double", class = "section-icon"), "Structural Agreement Between Data Diagnostics"),
-          collapsible = TRUE,
-          collapsed = TRUE,
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
-          htmlOutput(outputId = ns("both_text_diagnostics"))
-        )
+      box(
+        title = tagList(icon("microscope", class = "section-icon"), "Clinical Sample Data Diagnostics"),
+        collapsible = TRUE,
+        collapsed = TRUE,
+        width = 12,
+        solidHeader = TRUE,
+        status = "primary",
+        div(class = "table-container", shiny::tableOutput(outputId = ns("cs_table_diagnostics"))),
+        htmlOutput(outputId = ns("cs_text_diagnostics"))
+      ),
+      box(
+        title = tagList(icon("flask", class = "section-icon"), "External Quality Assessment Material Data Diagnostics"),
+        collapsible = TRUE,
+        collapsed = TRUE,
+        width = 12,
+        solidHeader = TRUE,
+        status = "primary",
+        div(class = "table-container", shiny::tableOutput(outputId = ns("eq_table_diagnostics"))),
+        htmlOutput(outputId = ns("eq_text_diagnostics"))
+      ),
+      box(
+        title = tagList(icon("check-double", class = "section-icon"), "Structural Agreement Between Data Diagnostics"),
+        collapsible = TRUE,
+        collapsed = TRUE,
+        width = 12,
+        solidHeader = TRUE,
+        status = "primary",
+        htmlOutput(outputId = ns("both_text_diagnostics"))
+
       )
     )
   )
@@ -180,10 +208,10 @@ mod_file_upload_ui <- function(id) {
 #' @return A list of reactive expressions.
 #' @noRd
 mod_file_upload_server <- function(id) {
+  # --- Create the Module Server for the `File Upload` Section ---
   moduleServer(id, function(input, output, session) {
 
-
-    # --- Help Text Logic ---
+    # --- Help Text Logic ------------------------------------------------------
     hide <- reactiveValues(hide = TRUE)
     observeEvent(input$show_file_input_explanation, {
       hide$hide <- !hide$hide
@@ -195,10 +223,9 @@ mod_file_upload_server <- function(id) {
       }
     })
 
-    # --- File Reading with Error Handling ---
+    # --- File Reading with Error Handling -------------------------------------
     read_data_safely <- function(file_input) {
       req(file_input)
-
       tryCatch({
         ext <- tools::file_ext(file_input$name)
         switch(ext,
@@ -216,47 +243,246 @@ mod_file_upload_server <- function(id) {
       })
     }
 
-    # --- Read Data ---
-    current_raw_cs_data_wide <- reactive({ read_data_safely(input$cs_data) })
-    current_raw_eq_data_wide <- reactive({ read_data_safely(input$eq_data) })
+    # --- Read Data ------------------------------------------------------------
+    current_raw_cs_data_wide <- reactive(
+      x = {
+      read_data_safely(input$cs_data)
+      }
+    )
+    current_raw_eq_data_wide <- reactive(
+      x = {
+        read_data_safely(input$eq_data)
+      }
+    )
 
-    # --- Diagnostics ---
+    # --- Diagnostics ----------------------------------------------------------
+
+    # --- Diagnostics of Clinical Sample Data ----------------------------------
     current_diagnostics_cs <- reactive({
       req(current_raw_cs_data_wide())
       commutability::check_data(data = current_raw_cs_data_wide(), type = "cs")
     })
 
+    # --- Diagnostics of EQAM Data ---------------------------------------------
     current_diagnostics_eq <- reactive({
       req(current_raw_eq_data_wide())
       commutability::check_data(data = current_raw_eq_data_wide(), type = "eqam")
     })
 
-    # --- Methods to Remove Globally ---
+    # --- Methods to Remove Globally -------------------------------------------
     methods_to_remove_globally <- reactive({
-      req(current_diagnostics_cs(), current_diagnostics_eq())
-
+      req(
+        current_diagnostics_cs(),
+        current_diagnostics_eq()
+      )
+      # --- Gather invalid methods from both diagnostics objects ---
       unique(c(
         current_diagnostics_cs()$repair$remove_these_methods,
         current_diagnostics_eq()$repair$remove_these_methods
       ))
     })
 
+    # --- Equivalence Diagnostics of Clinical Sample and EQAM data -------------
     current_diagnostics_both <- reactive({
-      req(current_raw_cs_data_wide(), current_raw_eq_data_wide())
+      req(
+        current_raw_cs_data_wide(),
+        current_raw_eq_data_wide()
+      )
 
-      # Attempt to repair data
-      cs_data_repaired <- commutability::repair_data(
-        data = current_raw_cs_data_wide(),
-        type = "cs",
-        remove_invalid_methods = FALSE,
-        include_repair_summary = FALSE
+      # --- Attempt to repair clinical sample data ---
+      cs_data_repaired <- tryCatch(
+        expr = {
+          commutability::repair_data(
+            data = current_raw_cs_data_wide(),
+            type = "cs",
+            remove_invalid_methods = FALSE,
+            include_repair_summary = FALSE
+          )
+        },
+        error = function(e) NULL,
+        warning = function(e) NULL
       )
-      eq_data_repaired <- commutability::repair_data(
-        data = current_raw_eq_data_wide(),
-        type = "eqam",
-        remove_invalid_methods = FALSE,
-        include_repair_summary = FALSE
+
+      # --- Attempt to repair clinical sample data ---
+      eq_data_repaired <- tryCatch(
+        expr = {
+          commutability::repair_data(
+            data = current_raw_eq_data_wide(),
+            type = "eqam",
+            remove_invalid_methods = FALSE,
+            include_repair_summary = FALSE
+          )
+        }
       )
+
+      # --- Check if an error or a warning occured during attempted repair ---
+      if (is.null(cs_data_repaired) | is.null(eq_data_repaired)) {
+        # --- Check if an invalid IVD-MD is the reason ---
+        # NOTE: The problematic IVD-MD must be both in clinical sample data
+        # and in the EQAM data ...
+        if (!is.null(methods_to_remove_globally())) {
+          invalid_methods_exist_in_cs_data <- all(
+            x = methods_to_remove_globally() %in% names(current_raw_cs_data_wide())
+          )
+          invalid_methods_exist_in_eq_data <- all(
+            x = methods_to_remove_globally() %in% names(current_raw_eq_data_wide())
+          )
+          # Fallback if clinical sample and eqam data do not have the same names
+          if (!(invalid_methods_exist_in_cs_data & invalid_methods_exist_in_eq_data)) {
+            out <- list(
+              "equal_names" = FALSE,
+              "equal_order" = FALSE,
+              "names_in_cs_data_but_not_in_eq_data" = setdiff(
+                x = names(current_raw_cs_data_wide()),
+                y = names(current_raw_eq_data_wide())
+              ),
+              "names_in_eq_data_but_not_in_cs_data" = setdiff(
+                x = names(current_raw_eq_data_wide()),
+                y = names(current_raw_cs_data_wide())
+              ),
+              "order_cs_data" = paste(
+                names(current_raw_cs_data_wide()),
+                collapse = ", "
+              ),
+              "order_eq_data" = paste(
+                names(current_raw_eq_data_wide()),
+                collapse = ", "
+              ),
+              "error" = paste0(
+                "Tried to remove invalid columns, but it appears that some of ",
+                "the invalid columns are not in both datasets."
+              )
+            )
+            # --- Return fallback object ---
+            # Note: Matches syntax-wise output from
+            # commutability::check_equivalence
+            return(out)
+          }
+
+          # Check which columns to keep
+          keep_these_cs <- setdiff(
+            x = names(cs_data_repaired),
+            y = methods_to_remove_globally()
+          )
+          keep_these_eq <- setdiff(
+            x = names(eq_data_repaired),
+            y = methods_to_remove_globally()
+          )
+
+          # Remove invalid methods from both datasets
+          cs_data_repaired <- subset(
+            current_raw_cs_data_wide(),
+            select = keep_these_cs
+          )
+          eq_data_repaired <- subset(
+            current_raw_eq_data_wide(),
+            select = keep_these_eq
+          )
+
+          # --- Attempt to repair clinical sample data (again) ---
+          cs_data_repaired <- tryCatch(
+            expr = {
+              commutability::repair_data(
+                data = cs_data_repaired,
+                type = "cs",
+                remove_invalid_methods = FALSE,
+                include_repair_summary = FALSE
+              )
+            },
+            error = function(e) NULL,
+            warning = function(e) NULL
+          )
+
+          # --- Attempt to repair clinical sample data (again) ---
+          eq_data_repaired <- tryCatch(
+            expr = {
+              commutability::repair_data(
+                data = eq_data_repaired,
+                type = "eqam",
+                remove_invalid_methods = FALSE,
+                include_repair_summary = FALSE
+              )
+            }
+          )
+
+          # --- Fallback if second repair attempt failed ---
+          if (is.null(cs_data_repaired) | is.null(eq_data_repaired)) {
+            out <- list(
+              "equal_names" = FALSE,
+              "equal_order" = FALSE,
+              "names_in_cs_data_but_not_in_eq_data" = setdiff(
+                x = names(current_raw_cs_data_wide()),
+                y = names(current_raw_eq_data_wide())
+              ),
+              "names_in_eq_data_but_not_in_cs_data" = setdiff(
+                x = names(current_raw_eq_data_wide()),
+                y = names(current_raw_cs_data_wide())
+              ),
+              "order_cs_data" = paste(
+                names(current_raw_cs_data_wide()),
+                collapse = ", "
+              ),
+              "order_eq_data" = paste(
+                names(current_raw_eq_data_wide()),
+                collapse = ", "
+              ),
+              "error" = paste0(
+                "Tried to repair data twice, but it still did not ",
+                "work as intended..."
+              )
+            )
+            # --- Return fallback object ---
+            # Note: Matches syntax-wise output from
+            # commutability::check_equivalence
+            return(out)
+          }
+
+          # --- Check equivalence after tried to fix custom issues ---
+          out <- tryCatch(
+            expr = {
+              commutability::check_equivalence(
+                cs_data = cs_data_repaired,
+                eq_data = eq_data_repaired
+              )
+            },
+            error = function(e) NULL,
+            warning = function(w) NULL
+          )
+
+          # --- Fallback if the equivalence check fails ---
+          if (is.null(out)) {
+            out <- list(
+              "equal_names" = FALSE,
+              "equal_order" = FALSE,
+              "names_in_cs_data_but_not_in_eq_data" = setdiff(
+                x = names(current_raw_cs_data_wide()),
+                y = names(current_raw_eq_data_wide())
+              ),
+              "names_in_eq_data_but_not_in_cs_data" = setdiff(
+                x = names(current_raw_eq_data_wide()),
+                y = names(current_raw_cs_data_wide())
+              ),
+              "order_cs_data" = paste(
+                names(current_raw_cs_data_wide()),
+                collapse = ", "
+              ),
+              "order_eq_data" = paste(
+                names(current_raw_eq_data_wide()),
+                collapse = ", "
+              ),
+              "error" = paste0(
+                "Tried to perform equivalence test after working with ",
+                "weird data, but it resulted in some unknown error."
+              )
+            )
+            # --- Return fallback object ---
+            # Note: Matches syntax-wise output from
+            # commutability::check_equivalence
+            return(out)
+          }
+          return(out)
+        }
+      }
 
       # --- Remove invalid methods ---
       if (!is.null(methods_to_remove_globally())) {
@@ -280,32 +506,53 @@ mod_file_upload_server <- function(id) {
       )
     })
 
-    # --- Validity Checks ---
+    # --- Assess General Validity of Uploaded Data -----------------------------
     current_validity <- reactive({
-      req(current_diagnostics_cs(), current_diagnostics_eq(), current_diagnostics_both())
+      # --- Require diagnostics have been run before running ---
+      req(
+        current_diagnostics_cs(),
+        current_diagnostics_eq(),
+        current_diagnostics_both()
+      )
       cs_ok <- current_diagnostics_cs()$badge != "not acceptable"
       eq_ok <- current_diagnostics_eq()$badge != "not acceptable"
-      both_ok <- all(isTRUE(current_diagnostics_both()$equal_names), isTRUE(current_diagnostics_both()$equal_order))
+      both_ok <- all(
+        isTRUE(current_diagnostics_both()$equal_names),
+        isTRUE(current_diagnostics_both()$equal_order),
+        isTRUE(is.null(current_diagnostics_both()$error))
+      )
       return(cs_ok && eq_ok && both_ok)
     })
 
-    # --- ADDED: Server logic for the overall status badge ---
+    # --- Logic for Overall Status Badge ---------------------------------------
+    # --- Notes ----------------------------------------------------------------
+    # This is a single indicator that tells the user whether they can move
+    # forward or not
     output$overall_diagnostic_status <- renderUI({
-      # Require that the diagnostics have been run before showing anything
-      req(current_diagnostics_cs(), current_diagnostics_eq(), current_diagnostics_both())
+      # --- Require diagnostics have been run before showing ---
+      req(
+        current_diagnostics_cs(),
+        current_diagnostics_eq(),
+        current_diagnostics_both()
+      )
 
+      # Record the current validity of uploaded data
       is_valid <- current_validity()
+
+      # Toggle whether failed validation tests should be ignored
       ignore_issues <- input$ignore_invalid_data == TRUE
 
       if (is_valid) {
         status_class <- "status-ok"
         status_icon <- icon("check-circle")
         status_text <- "All Checks Passed"
-      } else if (ignore_issues) {
+      }
+      else if (ignore_issues) {
         status_class <- "status-warning"
         status_icon <- icon("exclamation-triangle")
         status_text <- "Proceeding with Issues"
-      } else {
+      }
+      else {
         status_class <- "status-fail"
         status_icon <- icon("times-circle")
         status_text <- "Validation Failed"
@@ -313,19 +560,23 @@ mod_file_upload_server <- function(id) {
 
       # Construct the HTML for the badge
       div(
-        class = paste("diagnostic-status-badge", status_class),
+        class = paste(
+          "diagnostic-status-badge",
+          status_class
+        ),
         status_icon,
         span(status_text)
       )
     })
 
-    # --- Dynamic UI Updates ---
+    # --- Dynamic UI Updates ---------------------------------------------------
 
-    # Update list of valid reference method choices
+    # --- Observer that updates the list of valid reference method choices -----
     observe({
+      # --- Record current validity at this point in time ---
       is_valid <- current_validity()
 
-      # Start with potential choices
+      # --- Start with all potential choices for reference methods ---
       choices <- if (is_valid) {
         cs_data_repaired <- commutability::repair_data(
           data = current_raw_cs_data_wide(),
@@ -335,56 +586,221 @@ mod_file_upload_server <- function(id) {
         )
         # Extract only the method columns
         setdiff(names(cs_data_repaired), c("SampleID", "ReplicateID"))
-      } else {
+      }
+      else {
         character(0) # Return empty character vector if not valid
       }
 
-      # Filter out methods that should be removed globally
+      # --- Remove methods from the list that are deemed invalid ---
+      # --- Notes ---
+      # (Rationale) Invalid methods should not be eligible as reference methods
       to_remove <- methods_to_remove_globally()
       if (length(to_remove) > 0) {
         choices <- setdiff(choices, to_remove)
       }
 
-      # Update list of choices for reference method
+      # --- Update list of choices for reference method ---
       updateVirtualSelect(
         session = session,
         inputId = "reference_method",
         choices = c("none", choices),
         selected = "none",
-        disable = !is_valid
+        disable = !(is_valid | (input$ignore_invalid_data == TRUE))
       )
     })
 
-    # Deliver warning if user desires to ignore failed validation tests
+    # --- Deliver warning if user desires to ignore failed validation tests ----
     output$warning_placeholder <- renderUI({
       if (input$ignore_invalid_data == TRUE) {
         div(
           class = "input-warning-note",
           icon("exclamation-triangle"),
-          "This is not recommended! Proceeding with invalid data may lead to unreliable results or cause the application to crash."
+          paste0(
+            "This is not recommended! Proceeding with invalid data may lead ",
+            "to unreliable results or cause the application to crash."
+          )
         )
-      } else {
+      }
+      else {
         NULL
       }
     })
 
-    # Add a new reactive to get the post-repair diagnostics
+    # --- Get the Post-Repair Diagnostics for the Clinical Sample Data ---------
     post_repair_diagnostics_cs <- reactive({
-      req(current_raw_cs_data_wide())
-      repaired_data <- commutability::repair_data(data = current_raw_cs_data_wide(), type = "cs")
+      # --- Require uploaded clinical sample data and its diagnostics ---
+      req(
+        current_raw_cs_data_wide(),
+        current_diagnostics_cs()
+      )
+
+      # --- Try to repair clinical sample data ---
+      repaired_data <- tryCatch(
+        expr = {
+          commutability::repair_data(
+            data = current_raw_cs_data_wide(),
+            type = "cs",
+          )
+        },
+        error = function(e) "error",
+        warning = function(w) "warning"
+      )
+
+      # --- if character, either a warning or an error occurred ---
+      if (is.character(repaired_data)) {
+        # --- Return original diagnostics object if error in repair ---
+        if (repaired_data == "error") {
+          return(current_diagnostics_cs())
+        }
+        else if (repaired_data != "warning") {
+          return(current_diagnostics_cs())
+        }
+
+        # --- Try to handle the warning if warning in repair ---
+
+        # --- `not acceptable` can be due to invalid methods ---
+        if (current_diagnostics_cs$badge == "not acceptable") {
+          # --- Check for invalid methods ---
+          if (!is.null(methods_to_remove_globally())) {
+            temp_raw_cs_data_wide <- subset(
+              x = current_raw_cs_data_wide(),
+              selected = setdiff(
+                names(current_raw_cs_data_wide()),
+                methods_to_remove_globally()
+              )
+            )
+            # --- Try repairing data after removing invalid methods ---
+            repaired_data <- tryCatch(
+              expr = {
+                commutability::repair_data(
+                  data = temp_raw_cs_data_wide,
+                  type = "cs"
+                )
+              },
+              error = function(e) NULL,
+              warning = function(w) NULL
+            )
+            # --- Check if second repair is valid ---
+            if (!is.null(repaired_data)) {
+              return(
+                commutability::check_data(
+                  data = repaired_data,
+                  type = "cs"
+                )
+              )
+            }
+            # --- We failed to handle cause of warning, return original ---
+            else {
+              return(
+                current_diagnostics_cs()
+              )
+            }
+          }
+        }
+        # --- `acceptable+` (another UNKNOWN reason for the warning) ---
+        else {
+          return(
+            current_diagnostics_cs()
+          )
+        }
+      }
+
+      # --- If first repair was a success from the start ---
       commutability::check_data(data = repaired_data, type = "cs")
     })
 
-    # Do the same for eq_data
+    # --- Get the Post-Repair Diagnostics for the EQAM Data --------------------
     post_repair_diagnostics_eq <- reactive({
-      req(current_raw_eq_data_wide())
-      repaired_data <- commutability::repair_data(data = current_raw_eq_data_wide(), type = "eqam")
+      # --- Require uploaded EQAM data and its diagnostics ---
+      req(
+        current_raw_eq_data_wide(),
+        current_diagnostics_eq()
+      )
+      # --- Try to repair EQAM data ---
+      repaired_data <- tryCatch(
+        expr = {
+          commutability::repair_data(
+            data = current_raw_eq_data_wide(),
+            type = "eqam"
+          )
+        },
+        error = function(e) "error",
+        warning = function(w) "warning"
+      )
+
+      #browser()
+
+      # --- if character, either a warning or an error occurred ---
+      if (is.character(repaired_data)) {
+        # --- Return original diagnostics object if error in repair ---
+        if (repaired_data == "error") {
+          return(current_diagnostics_eq())
+        }
+        else if (repaired_data != "warning") {
+          return(current_diagnostics_eq())
+        }
+
+        # --- Try to handle the warning if warning in repair ---
+
+        # --- `not acceptable` can be due to invalid methods ---
+        if (current_diagnostics_eq$badge == "not acceptable") {
+          # --- Check for invalid methods ---
+          if (!is.null(methods_to_remove_globally())) {
+            temp_raw_eq_data_wide <- subset(
+              x = current_raw_eq_data_wide(),
+              selected = setdiff(
+                names(current_raw_eq_data_wide()),
+                methods_to_remove_globally()
+              )
+            )
+            # --- Try repairing data after removing invalid methods ---
+            repaired_data <- tryCatch(
+              expr = {
+                commutability::repair_data(
+                  data = temp_raw_eq_data_wide,
+                  type = "eqam"
+                )
+              },
+              error = function(e) NULL,
+              warning = function(w) NULL
+            )
+            # --- Check if second repair is valid ---
+            if (!is.null(repaired_data)) {
+              return(
+                commutability::check_data(
+                  data = repaired_data,
+                  type = "eqam"
+                )
+              )
+            }
+            # --- We failed to handle cause of warning, return original ---
+            else {
+              return(
+                current_diagnostics_eq()
+              )
+            }
+          }
+        }
+        # --- `acceptable+` (another UNKNOWN reason for the warning) ---
+        else {
+          return(
+            current_diagnostics_eq()
+          )
+        }
+      }
+
+      # --- If first repair was a success from the start ---
       commutability::check_data(data = repaired_data, type = "eqam")
     })
 
-    # --- Render Outputs ---
+    # --- Render Diagnostics Tables --------------------------------------------
+
+    # --- Render Clinical Sample Diagnostics Table -----------------------------
     output$cs_table_diagnostics <- function() {
-      req(current_diagnostics_cs(), post_repair_diagnostics_cs())
+      req(
+        current_diagnostics_cs(),
+        post_repair_diagnostics_cs()
+      )
       render_diagnostic_table(
         diagnostics = current_diagnostics_cs(),
         type = "cs",
@@ -393,8 +809,12 @@ mod_file_upload_server <- function(id) {
       )
     }
 
+    # --- Render EQAM Diagnostics Table ----------------------------------------
     output$eq_table_diagnostics <- function() {
-      req(current_diagnostics_eq(), post_repair_diagnostics_eq())
+      req(
+        current_diagnostics_eq(),
+        post_repair_diagnostics_eq()
+      )
       render_diagnostic_table(
         diagnostics = current_diagnostics_eq(),
         type = "eq",
@@ -403,26 +823,41 @@ mod_file_upload_server <- function(id) {
       )
     }
 
+    # --- Render Diagnostics Texts ---------------------------------------------
+
+    # --- Render Clinical Sample Diagnostics Text ------------------------------
     output$cs_text_diagnostics <- renderUI({
       req(current_diagnostics_cs())
-      render_diagnostic_text(current_diagnostics_cs(), current_diagnostics_eq(), type = "cs")
+      render_diagnostic_text(
+        current_diagnostics_cs(),
+        current_diagnostics_eq(),
+        type = "cs"
+      )
     })
 
+    # --- Render EQAM Diagnostics Text -----------------------------------------
     output$eq_text_diagnostics <- renderUI({
       req(current_diagnostics_eq())
-      render_diagnostic_text(current_diagnostics_eq(), current_diagnostics_cs(), type = "eq")
+      render_diagnostic_text(
+        current_diagnostics_eq(),
+        current_diagnostics_cs(),
+        type = "eq"
+      )
     })
 
+    # --- Render Equivalence Diagnostics Text ----------------------------------
     output$both_text_diagnostics <- renderUI({
       req(current_diagnostics_both())
       full_diagnostics <- current_diagnostics_both()
+
       css_unit_test <- function(title, fail = FALSE) {
         if (!fail) {
-          icon_html <- "<i class='fa-solid fa-check-circle' style='color: #28a745; margin-right: 5px;'></i>"
+          icon_html <- "<i class='fa fa-check-circle' style='color: #28a745; margin-right: 5px;'></i>"
           badge_html <- "<span class='test-badge pass'>PASS</span>"
           class_name <- "test-item pass-test"
-        } else {
-          icon_html <- "<i class='fa-solid fa-times-circle' style='color: #dc3545; margin-right: 5px;'></i>"
+        }
+        else {
+          icon_html <- "<i class='fa fa-times-circle' style='color: #dc3545; margin-right: 5px;'></i>"
           badge_html <- "<span class='test-badge fail'>FAIL</span>"
           class_name <- "test-item fail-test"
         }
@@ -430,19 +865,18 @@ mod_file_upload_server <- function(id) {
       }
 
       message_equivalent_names <- css_unit_test("Equal IVD-MD Names", fail = !full_diagnostics$equal_names)
+
       if (full_diagnostics$equal_names) {
         message_equivalent_order <- css_unit_test("Equal IVD-MD Column Order", fail = !full_diagnostics$equal_order)
-      }
-      else {
+      } else {
         message_equivalent_order <- css_unit_test("Equal IVD-MD Column Order", fail = TRUE)
       }
 
+      # --- Removed <div class='dashboard-container'> wrapper ---
       HTML(paste(
-        "<div class='dashboard-container'>",
-        "<div class='section-header'><i class='fa-solid fa-clipboard-list' style='color: #a5682a;'></i><span>Structural Agreement Tests:</span></div>",
+        "<div class='section-header'><i class='fa fa-clipboard-list' style='color: #a5682a;'></i><span>Structural Agreement Tests:</span></div>",
         message_equivalent_names,
-        message_equivalent_order,
-        "</div>"
+        message_equivalent_order
       ))
     })
 

@@ -1,0 +1,115 @@
+/* ==========================================================================
+   CUSTOM GLASS BUTTONS (Action & Download)
+   Theme: Split Capsule | White Icon | Purple Gradient Label
+   ========================================================================== */
+
+/* Target BOTH class names */
+.glass-btn,
+.glass-download-btn {
+  /* Layout: Flex container */
+  display: inline-flex;
+  align-items: stretch; /* Crucial: Forces children to fill height */
+  justify-content: center;
+
+  /* Size & Shape */
+  height: 42px;        /* Fixed height for consistency */
+  min-width: 140px;
+  padding: 0;
+  margin: 6px;
+
+  /* The Outer Shell */
+  border-radius: 50px;
+  border: none;
+  background-color: transparent; /* Important: Background comes from children */
+
+  /* Shadow */
+  box-shadow: 0 4px 15px rgba(96, 92, 168, 0.25);
+
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  overflow: hidden; /* Clips the children to the rounded corners */
+  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s;
+
+  /* Text defaults */
+  font-family: 'Source Sans Pro', sans-serif;
+  text-decoration: none !important;
+  color: transparent;
+}
+
+/* --- PART 1: THE ICON (Left Side) --- */
+.glass-btn-icon {
+  background-color: #ffffff;
+  color: #605CA8;
+
+  /* Centering Magic */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Fixed width prevents off-center issues */
+  width: 48px;
+  min-width: 48px;
+
+  font-size: 1.2em;
+  position: relative;
+  z-index: 2;
+  transition: color 0.2s;
+}
+
+/* --- PART 2: THE LABEL (Right Side) --- */
+.glass-btn-label {
+  background: linear-gradient(135deg, #605CA8 0%, #9e64c2 100%);
+  color: #ffffff;
+
+  /* Fill remaining space */
+  flex-grow: 1;
+  width: 100%; /* Ensures it tries to fill if flex fails */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 20px; /* Padding only for text side */
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  position: relative;
+  z-index: 1;
+  transition: filter 0.2s;
+}
+
+/* --- HOVER EFFECTS --- */
+.glass-btn:hover,
+.glass-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(96, 92, 168, 0.4);
+}
+
+.glass-btn:hover .glass-btn-label,
+.glass-download-btn:hover .glass-btn-label {
+  filter: brightness(1.1);
+}
+
+.glass-btn:hover .glass-btn-icon,
+.glass-download-btn:hover .glass-btn-icon {
+  color: #854ba3;
+}
+
+/* --- ACTIVE/CLICK STATE --- */
+.glass-btn:active, .glass-btn.active,
+.glass-download-btn:active, .glass-download-btn.active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(96, 92, 168, 0.3);
+}
+
+/* --- DISABLED STATE --- */
+.glass-btn.disabled,
+.glass-download-btn.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: grayscale(0.8);
+  pointer-events: none;
+}

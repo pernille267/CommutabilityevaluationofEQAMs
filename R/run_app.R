@@ -47,6 +47,7 @@
 #' @import readxl
 #' @import rmarkdown
 #' @import shiny
+#' @import shinyBS
 #' @import DT
 #' @import shinycssloaders
 #' @import shinydashboard

@@ -1,0 +1,115 @@
+/* ==========================================================================
+   CUSTOM GLASS TABSET ("True Tab" Style)
+   Theme: Anchored Navigation | Glowing Underline
+   ========================================================================== */
+
+.glass-tabset-container {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+/* --- 1. Navigation Strip --- */
+.glass-tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 30px;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: 2px solid #f0f0f0;
+  position: relative;
+}
+
+/* --- 2. Tab Button --- */
+.glass-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 12px 5px;
+  margin-bottom: -2px;
+  min-width: 80px;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #8898aa; /* Muted Grey */
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.glass-tab-btn i {
+  margin-right: 8px;
+  font-size: 1.1em;
+  color: #8898aa;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* --- 3. The Underline Indicator (Default Purple) --- */
+.glass-tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #605CA8 0%, #9e64c2 100%); /* Purple */
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  transform: scaleX(0);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* --- HOVER STATE (Default Purple) --- */
+.glass-tab-btn:hover { color: #605CA8; }
+.glass-tab-btn:hover i { color: #605CA8; transform: translateY(-1px); }
+.glass-tab-btn:hover::after { opacity: 0.4; transform: scaleX(0.6); }
+
+/* --- ACTIVE STATE (Default Purple) --- */
+.glass-tab-btn.active { color: #605CA8; }
+.glass-tab-btn.active i { color: #605CA8; }
+.glass-tab-btn.active::after { opacity: 1; transform: scaleX(1); }
+
+
+/* ==========================================================================
+   THEME OVERRIDE: GREEN
+   Apply class .theme-green to the container to switch colors
+   ========================================================================== */
+
+.glass-tabset-container.theme-green .glass-tab-btn::after {
+  background: linear-gradient(90deg, #28A745 0%, #34ce57 100%); /* Green Gradient */
+}
+
+.glass-tabset-container.theme-green .glass-tab-btn:hover {
+  color: #28A745;
+}
+.glass-tabset-container.theme-green .glass-tab-btn:hover i {
+  color: #28A745;
+}
+
+.glass-tabset-container.theme-green .glass-tab-btn.active {
+  color: #28A745;
+}
+.glass-tabset-container.theme-green .glass-tab-btn.active i {
+  color: #28A745;
+}
+
+/* --- 4. Content Area --- */
+.glass-tab-content-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 10px;
+}
+
+.glass-tab-pane {
+  display: none;
+  animation: slideUpFade 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.glass-tab-pane.active { display: block; }
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}

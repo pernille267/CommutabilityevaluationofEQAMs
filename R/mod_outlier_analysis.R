@@ -30,70 +30,77 @@ mod_outlier_analysis_ui <- function(id) {
 
     htmlOutput(outputId = ns("outlier_analysis_explanation")),
 
-    # Options card
+    # --- Card 1 - Outlier Analysis Options ------------------------------------
     div(
       class = "dashboard-card",
       div(
         class = "card-header",
         icon("sliders", class = "header-icon"),
-        h3("Customizable Outlier Analysis Options")
+        h3("Options")
       ),
       div(
         class = "card-body",
-
-        # Outlier test selection
-        div(class = "parameter-section",
-            h5("Select Outlier Test"),
-            radioGroupButtons(
-              inputId = ns("outlier_test"),
-              label = NULL,
-              choiceNames = c("Between Samples", "Within Samples"),
-              choiceValues = c("burnett", "qrange"),
-              selected = "burnett",
-              status = "primary",
-              justified = TRUE
+        fluidRow(
+          # --- Outlier Test Selection ---
+          column(
+            width = 6,
+            div(
+              class = "parameter-section",
+              h5("Test for Outliers"),
+              radioGroupButtons(
+                inputId = ns("outlier_test"),
+                label = NULL,
+                choiceNames = c("Between Samples", "Within Samples"),
+                choiceValues = c("burnett", "qrange"),
+                selected = "burnett",
+                status = "primary",
+                justified = TRUE
+              )
             )
-        ),
-
-        # Confidence level selection
-        div(class = "parameter-section",
-            h5("Select Desired Confidence Level"),
-            radioGroupButtons(
-              inputId = ns("outlier_test_conf_level"),
-              label = NULL,
-              choiceNames = c("80 %", "90 %", "95 %", "99 %"),
-              choiceValues = c(0.80, 0.90, 0.95, 0.99),
-              selected = 0.95,
-              status = "primary",
-              justified = TRUE
+          ),
+          column(
+            width = 6,
+            # --- Outlier Test Confidence Level Selection ---
+            div(
+              class = "parameter-section",
+              h5("Confidence Level"),
+              radioGroupButtons(
+                inputId = ns("outlier_test_conf_level"),
+                label = NULL,
+                choiceNames = c("80 %", "90 %", "95 %", "99 %"),
+                choiceValues = c(0.80, 0.90, 0.95, 0.99),
+                selected = 0.95,
+                status = "primary",
+                justified = TRUE
+              )
             )
+          )
         )
       )
     ),
 
-    # Results card
+    # --- Card 2 - Outlier Analysis Results ------------------------------------
     div(
       class = "dashboard-card",
       div(
         class = "card-header",
         icon("table", class = "header-icon"),
-        h3("Outlier Analysis Results")
+        h3("Results"),
+        actionBttn(
+          inputId = ns("get_outlier_results"),
+          label = "Analyze",
+          icon = icon("magnifying-glass-chart", class = "fa-solid"),
+          color = "royal",
+          size = "md",
+          style = "gradient"
+        )
       ),
       div(
         class = "card-body",
-        div(
-          class = "text-center mb-4",
-          actionBttn(
-            inputId = ns("get_outlier_results"),
-            label = "Analyze",
-            icon = icon("magnifying-glass-chart", class = "fa-solid"),
-            color = "royal",
-            size = "lg",
-            style = "gradient"
-          )
-        ),
         withSpinner(
-          DT::DTOutput(outputId = ns("outlier_results")),
+          DT::DTOutput(
+            outputId = ns("outlier_results")
+          ),
           type = 4,
           color = "#28A745"
         )
@@ -111,6 +118,7 @@ mod_outlier_analysis_ui <- function(id) {
 #' @return This module does not return any values.
 #' @noRd
 mod_outlier_analysis_server <- function(id, file_upload_data) {
+  # --- Create the Module Server for the `Outlier Analysis` Section ---
   moduleServer(id, function(input, output, session) {
 
     # --- Help Text Logic ---
@@ -126,59 +134,104 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     })
 
     # --- Reactive Data Preparation ---
-    cs_data_long <- reactive({
-      # This reactive depends only on the clinical sample data from the first module
-      req(file_upload_data$raw_cs_data())
 
-      cs_data_repaired <- commutability::repair_data(
-        data = file_upload_data$raw_cs_data(),
-        type = "cs",
-        remove_invalid_methods = FALSE,
-        include_repair_summary = FALSE
+    # --- Clinical Samples - Long-formatted - No Transformation ----------------
+    raw_cs_data_long <- reactive({
+
+      # Requires raw_cs_data and is_valid (to be TRUE) from first module
+      req(
+        file_upload_data$raw_cs_data(),
+        file_upload_data$is_valid() == TRUE
       )
 
-      keep_these_cols <- setdiff(
-        names(cs_data_repaired),
-        file_upload_data$remove_ivd_mds()
+      # Try to Repair Clinical Sample Data
+      cs_data_repaired <- tryCatch(
+        expr = {
+          commutability::repair_data(
+            data = file_upload_data$raw_cs_data(),
+            type = "cs",
+            remove_invalid_methods = FALSE,
+            include_repair_summary = FALSE
+          )
+        },
+        error = function(e) "error",
+        warning = function(w) "warning"
       )
 
-      cs_data_repaired <- subset(
-        x = cs_data_repaired,
-        select = keep_these_cols
-      )
+      # If Repair Failed, it is due to invalid methods are too broken
+      # Remove broken methods first and then attempt to repair again.
+      if (is.character(cs_data_repaired)) {
+        keep_these_cols <- setdiff(
+          names(file_upload_data$raw_cs_data()),
+          file_upload_data$remove_ivd_mds()
+        )
+        cs_data_repaired <- data.table::copy(
+          file_upload_data$raw_cs_data()
+        )[, keep_these_cols, with = FALSE]
+
+        cs_data_repaired <- tryCatch(
+          expr = {
+            commutability::repair_data(
+              data = cs_data_repaired,
+              type = "cs",
+              remove_invalid_methods = FALSE,
+              include_repair_summary = FALSE
+            )
+          },
+          error = function(e) "error",
+          warning = function(w) "warning"
+        )
+        if (is.character(cs_data_repaired)) {
+          return(NULL)
+        }
+      }
+      else {
+        keep_these_cols <- setdiff(
+          names(file_upload_data$raw_cs_data()),
+          file_upload_data$remove_ivd_mds()
+        )
+        cs_data_repaired <- subset(
+          x = cs_data_repaired,
+          select = keep_these_cols
+        )
+      }
 
       ref_method <- file_upload_data$reference_method()
 
-      commutability::get_comparison_data(
+      raw_data <- commutability::get_comparison_data(
         data = cs_data_repaired,
         reference = ref_method
       )
+
+      return(raw_data)
     })
 
-    # --- Server Logic ---
-
-    # Create a reactiveVal to store the results. Initialize with NULL.
+    # --- Create a reactiveVal to Cache Results. -------------------------------
     analysis_results_val <- reactiveVal(NULL)
 
-    # When the button is pressed, run the analysis and update the reactiveVal.
+    # --- Update reactiveVal when `Analyze` Button is Pressed ------------------
     observeEvent(input$get_outlier_results, {
-      req(cs_data_long())
+      # Require `raw_cs_data_long()` to exist
+      req(raw_cs_data_long())
       results <- commutability::do_outlier_analysis(
-        data = cs_data_long(),
+        data = raw_cs_data_long(),
         method = input$outlier_test,
         variable = "influence",
         level = as.numeric(input$outlier_test_conf_level),
         output = "visual"
       )
-      analysis_results_val(results) # Update the value
+      analysis_results_val(results)
     })
 
-    # Render the results table from the reactiveVal.
+    # --- Render Table Using Cached Results from `analysis_results_val` --------
     output$outlier_results <- DT::renderDT({
-      # Require the value to be non-NULL before rendering.
+      # Require cache to be filled before displaying table
       req(analysis_results_val())
+
+      # Extract results from cache
       results <- analysis_results_val()
 
+      # Render the table
       DT::datatable(
         results,
         rownames = FALSE,
@@ -203,6 +256,7 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       )
     })
 
+    # --- Send Relevant Module Components to Other Modules ---------------------
     return(
       list(
         results = analysis_results_val,

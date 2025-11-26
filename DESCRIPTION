@@ -1,5 +1,5 @@
 Package: CommutabilityevaluationofEQAMs
-Title: What the Package Does (One Line, Title Case)
+Title: Commtability and Difference in Nonselectivity Evaluation
 Version: 0.0.0.9000
 Authors@R: 
     person("Pernille", "Fauskanger")
@@ -7,7 +7,7 @@ Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports: 
     bslib,
     commutability,
@@ -19,9 +19,12 @@ Imports:
     readxl,
     rmarkdown,
     shiny,
+    shinyBS,
     shinycssloaders,
     shinydashboard,
     shinyWidgets,
     smooth.commutability,
     tinytex,
-    tools
+    tools,
+    htmltools,
+    jsonlite

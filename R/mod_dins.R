@@ -33,51 +33,88 @@ mod_dins_ui <- function(id) {
       class = "dashboard-card",
       div(
         class = "card-header",
-        icon("exchange-alt", class = "header-icon"),
-        h3("Choose Transformation and Model for Your Uploaded Data")
+        icon(
+          "exchange-alt",
+          class = "header-icon"
+        ),
+        h3("Choose Transformation and Model")
       ),
       div(
         class = "card-body",
-        div(
-          class = "parameter-section",
-          h5("Select Data Transformation Option"),
-          radioGroupButtons(
-            inputId = ns("transformation"),
-            label = NULL,
-            choiceValues = c("identity", "ln", "boxcox"),
-            choiceNames = list(
-              HTML("<i class='fa fa-ban'></i> No Transformation"),
-              HTML("<i class='fa fa-chart-line'></i> Log-transformation"),
-              HTML("<i class='fa fa-divide'></i> Box-Cox")
-            ),
-            selected = "identity",
-            status = "primary",
-            justified = TRUE
+        fluidRow(
+          column(
+            width = 6,
+            div(
+              class = "parameter-section",
+              h5("Transformation"),
+              radioGroupButtons(
+                inputId = ns("transformation"),
+                label = NULL,
+                choiceValues = c("identity", "ln", "boxcox"),
+                choiceNames = list(
+                  HTML("<i class='fa fa-ban'></i>"),
+                  HTML("<i class='fa fa-chart-line'></i> Log"),
+                  HTML("<i class='fa fa-divide'></i> Box-Cox")
+                ),
+                selected = "identity",
+                status = "primary",
+                justified = TRUE
+              )
+            )
+          ),
+          column(
+            width = 6,
+            div(
+              class = "parameter-section",
+              h5("Regression Model"),
+              radioGroupButtons(
+                inputId = ns("pi_method"),
+                label = NULL,
+                choiceValues = c("fg", "ss"),
+                choiceNames = c(
+                  "Deming",
+                  "Smoothing Spline"
+                ),
+                selected = "fg",
+                status = "primary",
+                justified = TRUE
+              )
+            )
           )
         ),
-        div(
-          class = "parameter-section",
-          h5("Select Model Option"),
-          radioGroupButtons(
-            inputId = ns("pi_method"),
-            label = NULL,
-            choiceValues = c("fg", "ss", "ssw"),
-            choiceNames = c(
-              "Deming",
-              "Smoothing Spline",
-              HTML("<i class='fa-solid fa-weight-hanging'></i> Smoothing Spline")
-            ),
-            selected = "fg",
-            status = "primary",
-            justified = TRUE
+        fluidRow(
+          column(
+            width = 6,
+            div(
+              class = "input-note",
+              icon(name = "circle-info"),
+              "The symbol",
+              icon(name = "ban"),
+              "signify that no transformation shoud be applied."
+            )
+          ),
+          column(
+            width = 6,
+            conditionalPanel(
+              condition = sprintf(
+                "input['%s'] == 'ss'",
+                ns("pi_method")
+              ),
+              div(
+                class = "parameter-section",
+                h5("Weighted Smoothing Spline"),
+                radioGroupButtons(
+                  inputId = ns("ss_weighted"),
+                  choiceNames = c("No", "Yes"),
+                  choiceValues = c("No", "Yes"),
+                  selected = "No",
+                  size = "sm",
+                  status = "primary",
+                  justified = TRUE
+                )
+              )
+            )
           )
-        ),
-        div(
-          class = "input-note",
-          icon(name = "circle-info"),
-          "The symbol",
-          icon(name = "weight-hanging"),
-          "means 'weighted'"
         )
       )
     ),
@@ -88,14 +125,11 @@ mod_dins_ui <- function(id) {
       div(
         class = "card-header",
         icon("calculator", class = "header-icon"),
-        h3("Calculate \\(\\hat{\\zeta}\\) Values for Given Transformation and Model")
-      ),
-      div(
-        class = "card-body",
+        h3("Estimate Differences in Nonselectivity"),
         div(
           class = "text-center mb-4",
           actionBttn(inputId = ns("calculate_zetas"),
-                     label = "Calculate \\(\\hat{\\zeta}\\)",
+                     label = "Estimate",
                      icon = icon(name = "calculator"),
                      style = "gradient",
                      color = "royal"),
@@ -105,6 +139,10 @@ mod_dins_ui <- function(id) {
                      style = "gradient",
                      color = "primary")
         ),
+
+      ),
+      div(
+        class = "card-body",
         withSpinner(ui_element = DT::DTOutput(outputId = ns("calculated_zetas")),
                     type = 6,
                     color = "#605CA8",
@@ -118,14 +156,11 @@ mod_dins_ui <- function(id) {
       div(
         class = "card-header",
         icon("bullseye", class = "header-icon"),
-        h3("Calculate IVD-MD Specific Imprecision Estimates")
-      ),
-      div(
-        class = "card-body",
+        h3("Estimate IVD-MD Imprecision"),
         div(
           class = "text-center mb-4",
           actionBttn(inputId = ns("calculate_imprecision"),
-                     label = "Calculate Imprecision",
+                     label = "Estimate",
                      icon = icon("bullseye"),
                      style = "gradient",
                      color = "royal"),
@@ -135,6 +170,9 @@ mod_dins_ui <- function(id) {
                      style = "gradient",
                      color = "primary")
         ),
+      ),
+      div(
+        class = "card-body",
         withSpinner(ui_element = DT::DTOutput(outputId = ns("im_results")),
                     type = 6,
                     color = "#28A745",
@@ -154,10 +192,10 @@ mod_dins_ui <- function(id) {
         class = "card-body",
         fluidRow(
           column(
-            width = 8,
+            width = 6,
             div(
               class = "parameter-section",
-              h5("Set M(%) - Threshold for Maximum Tolerable Differences in Non-Selectivity"),
+              h5("Set M(%) - Threshold for Maximum Tolerable Differences in Nonselectivity"),
               sliderTextInput(
                 inputId = ns("M"),
                 label = NULL,
@@ -170,8 +208,7 @@ mod_dins_ui <- function(id) {
             )
           ),
           column(
-            width = 4,
-            # ADDED: UI output for the recommended zeta value
+            width = 6,
             uiOutput(ns("recommended_zeta_display"))
           )
         )
@@ -189,7 +226,6 @@ mod_dins_ui <- function(id) {
 #' @noRd
 mod_dins_server <- function(id, file_upload_data) {
   moduleServer(id, function(input, output, session) {
-
     ns <- session$ns
 
     # --- Help Text Logic ---
@@ -198,6 +234,7 @@ mod_dins_server <- function(id, file_upload_data) {
       hide$hide <- !hide$hide
     })
 
+    # --- Render Help Text ---
     output$dins_explanation <- renderUI({
       if (!hide$hide) {
         HTML(help_button_page_2_text())
@@ -205,26 +242,67 @@ mod_dins_server <- function(id, file_upload_data) {
     })
 
     # --- Reactive Data Preparation ---
-    cs_data_long <- reactive({
-      # This reactive depends only on the clinical sample data from the first module
-      req(file_upload_data$raw_cs_data())
 
-      cs_data_repaired <- commutability::repair_data(
-        data = file_upload_data$raw_cs_data(),
-        type = "cs",
-        remove_invalid_methods = FALSE,
-        include_repair_summary = FALSE
+    # --- Clinical Samples - Long-formatted - No Transformation ----------------
+    raw_cs_data_long <- reactive({
+
+      # Requires raw_cs_data and is_valid (to be TRUE) from first module
+      req(
+        file_upload_data$raw_cs_data(),
+        file_upload_data$is_valid() == TRUE
       )
 
-      keep_these_cols <- setdiff(
-        names(cs_data_repaired),
-        file_upload_data$remove_ivd_mds()
+      # Try to Repair Clinical Sample Data
+      cs_data_repaired <- tryCatch(
+        expr = {
+          commutability::repair_data(
+            data = file_upload_data$raw_cs_data(),
+            type = "cs",
+            remove_invalid_methods = FALSE,
+            include_repair_summary = FALSE
+          )
+        },
+        error = function(e) "error",
+        warning = function(w) "warning"
       )
 
-      cs_data_repaired <- subset(
-        x = cs_data_repaired,
-        select = keep_these_cols
-      )
+      # If Repair Failed, it is due to invalid methods are too broken
+      # Remove broken methods first and then attempt to repair again.
+      if (is.character(cs_data_repaired)) {
+        keep_these_cols <- setdiff(
+          names(file_upload_data$raw_cs_data()),
+          file_upload_data$remove_ivd_mds()
+        )
+        cs_data_repaired <- data.table::copy(
+          file_upload_data$raw_cs_data()
+        )[, keep_these_cols, with = FALSE]
+
+        cs_data_repaired <- tryCatch(
+          expr = {
+            commutability::repair_data(
+              data = cs_data_repaired,
+              type = "cs",
+              remove_invalid_methods = FALSE,
+              include_repair_summary = FALSE
+            )
+          },
+          error = function(e) "error",
+          warning = function(w) "warning"
+        )
+        if (is.character(cs_data_repaired)) {
+          return(NULL)
+        }
+      }
+      else {
+        keep_these_cols <- setdiff(
+          names(file_upload_data$raw_cs_data()),
+          file_upload_data$remove_ivd_mds()
+        )
+        cs_data_repaired <- subset(
+          x = cs_data_repaired,
+          select = keep_these_cols
+        )
+      }
 
       ref_method <- file_upload_data$reference_method()
 
@@ -232,6 +310,13 @@ mod_dins_server <- function(id, file_upload_data) {
         data = cs_data_repaired,
         reference = ref_method
       )
+
+      return(raw_data)
+    })
+
+    # --- Clinical Samples - Long-formatted - With Transformation --------------
+    cs_data_long <- reactive({
+      req(raw_cs_data_long())
       transformation <- switch(
         input$transformation,
         "identity" = "identity",
@@ -240,23 +325,29 @@ mod_dins_server <- function(id, file_upload_data) {
         "identity"
       )
       commutability::transform_data(
-        data = raw_data,
+        data = raw_cs_data_long(),
         transformation = transformation
       )
     })
 
-    # --- Zeta Calculation Logic ---
-
-    # This eventReactive calculates zetas ONLY when the button is clicked
+    # --- DINS Estimation Logic ------------------------------------------------
+    # --- Activates if Relevant Button is Pressed ---
+    # --- Event Reactive Checks if Estimate DINS Button is Pressed ---
     zetas_calculated <- eventReactive(input$calculate_zetas, {
       req(cs_data_long())
 
-      zeta_method <- switch(
-        input$pi_method,
-        "fg" = "ols",
-        "ss" = "ss",
-        "ssw" = "ssw"
-      )
+      zeta_method <- if (input$pi_method == "fg") {
+        "ols"
+      }
+      else if (input$pi_method == "ss") {
+        # Check if the conditional weighted input is "Yes"
+        if (input$ss_weighted == "Yes") {
+          "ssw"
+        }
+        else {
+          "ss"
+        }
+      }
 
       commutability::estimate_zeta_data(
         data = cs_data_long(),
@@ -267,38 +358,16 @@ mod_dins_server <- function(id, file_upload_data) {
       )
     })
 
-    # --- Imprecision Calculation Logic ---
-
-    # This eventReactive calculates imprecision ONLY when the button is clicked
+    # --- IVD-MD Imprecision Estimation Logic ----------------------------------
+    # --- Activates if Relevant Button is Pressed ---
+    # --- Event Reactive Checks if Estimate Repeatability Button is Pressed ---
     imprecision_calculated <- eventReactive(input$calculate_imprecision, {
-      req(cs_data_long())
-
-      cs_data_repaired <- commutability::repair_data(
-        data = file_upload_data$raw_cs_data(),
-        type = "cs",
-        remove_invalid_methods = FALSE,
-        include_repair_summary = FALSE
+      # Requires raw_cs_data_long() to work
+      req(
+        raw_cs_data_long()
       )
-
-      keep_these_cols <- setdiff(
-        names(cs_data_repaired),
-        file_upload_data$remove_ivd_mds()
-      )
-
-      cs_data_repaired <- subset(
-        x = cs_data_repaired,
-        select = keep_these_cols
-      )
-
-      ref_method <- file_upload_data$reference_method()
-
-      raw_data <- commutability::get_comparison_data(
-        data = cs_data_repaired,
-        reference = ref_method
-      )
-
       commutability::estimate_imprecision_data(
-        data = raw_data,
+        data = raw_cs_data_long(),
         B = 1000L,
         type = "percentile",
         level = 0.95
@@ -306,18 +375,22 @@ mod_dins_server <- function(id, file_upload_data) {
     })
 
     # --- UI Rendering for Tables ---
+    # --- Control visibility of the tables ---
 
-    # Control visibility of the tables
+    # --- Show / Hide Dins Estimates Table ----
     show_zetas <- reactiveVal(FALSE)
     observeEvent(input$calculate_zetas, { show_zetas(TRUE) })
     observeEvent(input$clear_zetas, { show_zetas(FALSE) })
 
+    # --- Show / Hide IVD-MD Repeatability Estimates Table ---
     show_imprecision <- reactiveVal(FALSE)
     observeEvent(input$calculate_imprecision, { show_imprecision(TRUE) })
     observeEvent(input$clear_imprecision, { show_imprecision(FALSE) })
 
-    # Render Zeta Table
+    # --- Render Table of DINS Estimates ---
     output$calculated_zetas <- DT::renderDT({
+
+      # Check first if DINS estimates should be showed
       if (show_zetas()) {
         out <- zetas_calculated()
         out$zeta <- format(
@@ -469,9 +542,15 @@ mod_dins_server <- function(id, file_upload_data) {
     # --- Return values for other modules ---
     return(
       reactive({
+        final_pi_method <- if (input$pi_method == "ss" && input$ss_weighted == "Yes") {
+          "ssw"
+        }
+        else {
+          input$pi_method
+        }
         list(
           transformation = input$transformation,
-          pi_method = input$pi_method,
+          pi_method = final_pi_method,
           M = as.numeric(input$M) / 100,
           zeta_upper = current_recommended_zeta_upper()
         )

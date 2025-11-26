@@ -1,0 +1,141 @@
+/* ==========================================================================
+   CUSTOM GLASS SLIDER CSS
+   Theme: Green Progress | Purple Glass Handle | Source Sans Pro Font
+   ========================================================================== */
+
+.glass-slider-container {
+  position: relative;
+  /* Increased height to accommodate labels on top */
+  height: 44px;
+  width: 100%;
+  user-select: none;
+  touch-action: none;
+  margin-bottom: 0px;
+  font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* 1. The Track (Grey Line) - Pushed down to bottom */
+.glass-slider-track {
+  position: absolute;
+  top: 29px; /* Pushed down to create gap from top labels */
+  left: 0;
+  right: 0;
+  height: 6px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* 2. The Fill (Green Progress) */
+.glass-slider-fill {
+  position: absolute;
+  top: 29px; /* Must match track top */
+  left: 0;
+  height: 8px;
+  background: linear-gradient(to bottom, #34ce57 0%, #28A745 100%);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 3. The Handle (Purple Orb) */
+.glass-slider-handle {
+  position: absolute;
+  top: 29px; /* Must match track top */
+  width: 20px;
+  height: 20px;
+  margin-top: -7px; /* Center on track */
+  margin-left: -10px;
+
+  background: radial-gradient(circle at 30% 30%, #918ec3, #605CA8);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+
+  cursor: grab;
+  z-index: 10;
+  transition: transform 0.1s ease;
+}
+
+.glass-slider-handle:active {
+  cursor: grabbing;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(96, 92, 168, 0.2);
+}
+
+/* 4. The Tooltip (Floating Value) */
+.glass-slider-tooltip {
+  position: absolute;
+  bottom: 29px; /* Floats above the handle */
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: linear-gradient(135deg, #7a76c5 0%, #605CA8 100%);
+  color: white;
+
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 4px 8px rgba(96, 92, 168, 0.3);
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+  z-index: 20; /* Ensure it covers static labels if they overlap */
+}
+
+/* Show tooltip on hover or drag */
+.glass-slider-container:hover .glass-slider-tooltip,
+.glass-slider-handle.active .glass-slider-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.glass-slider-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #605CA8 transparent transparent transparent;
+}
+
+/* 5. Labels (Text) - MOVED TO TOP */
+.glass-slider-label {
+  position: absolute;
+  top: 0; /* Aligned to very top */
+  transform: translateX(-50%);
+  font-size: 13px; /* Slightly larger for readability */
+  color: #666;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  /* Padding to separate it from the track is handled by track's 'top' property */
+  transform: translateX(-50%);
+}
+
+.glass-slider-label.glass-label-first {
+  left: 0 !important;
+  transform: none !important;
+  text-align: left;
+}
+
+/* Last Label: Anchor Right, No Transform */
+.glass-slider-label.glass-label-last {
+  left: auto !important;
+  right: 0 !important;
+  transform: none !important;
+  text-align: right;
+}
+
+.glass-slider-label:hover {
+  color: #28A745;
+}

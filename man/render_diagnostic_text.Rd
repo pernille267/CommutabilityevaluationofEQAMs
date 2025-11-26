@@ -7,11 +7,11 @@
 render_diagnostic_text(diagnostics, other_diagnostics, type = "cs")
 }
 \arguments{
-\item{diagnostics}{The diagnostic list object from \code{commutability::check_data()} for the current data type.}
+\item{diagnostics}{The diagnostic list object}
 
-\item{other_diagnostics}{The diagnostic list object from the other data type.}
+\item{other_diagnostics}{The diagnostic list object from the other data type}
 
-\item{type}{A character string, either "cs" for clinical sample or "eq" for EQA material.}
+\item{type}{A character string, either "cs" or "eq"}
 }
 \value{
 An HTML object.

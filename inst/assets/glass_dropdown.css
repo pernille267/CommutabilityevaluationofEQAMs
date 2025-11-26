@@ -1,0 +1,110 @@
+/* ==========================================================================
+   CUSTOM GLASS DROPDOWN
+   Theme: Green Border | Glassy Menu | Portal-Ready
+   ========================================================================== */
+
+/* Container mostly just holds the button now */
+.glass-dropdown-container {
+  position: relative;
+  display: inline-block;
+  font-family: 'Source Sans Pro', sans-serif;
+  margin-bottom: 5px; /* Spacing in the form */
+}
+
+/* --- THE BUTTON --- */
+.glass-dropdown-btn {
+  background-color: #ffffff;
+  color: #444;
+  padding: 10px 15px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1px solid #28A745;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.3s ease;
+  outline: none;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+
+  /* Flex layout for the icon alignment */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.glass-dropdown-btn:hover, .glass-dropdown-btn.active {
+  border-color: #28A745;
+  color: #28A745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+  transform: translateY(-1px);
+}
+
+/* --- THE MENU --- */
+.glass-dropdown-menu {
+  display: none; /* Hidden by default */
+
+  /* Note: 'position', 'top', 'left', 'width' are now set by JS */
+  background-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  padding: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+
+  /* Animation */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show State */
+.glass-dropdown-menu.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- OPTIONS --- */
+.glass-option {
+  color: #555;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.glass-option:hover {
+  background-color: #f4f3fb;
+  color: #605CA8;
+  transform: translateX(4px);
+}
+
+.glass-option.selected {
+  background: linear-gradient(135deg, #7a76c5 0%, #605CA8 100%);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(96, 92, 168, 0.4);
+}
+
+/* Fade out the container */
+.glass-dropdown-container.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Disable interactions on the button */
+.glass-dropdown-btn.disabled {
+  pointer-events: none;
+  background-color: #f8f9fa; /* Slight grey background */
+  border-color: #e9ecef;     /* Grey border instead of green */
+  color: #999;
+}
+
+/* Also ensure the chevron looks disabled */
+.glass-dropdown-btn.disabled i {
+  color: #ccc;
+}

@@ -1,0 +1,77 @@
+/* ==========================================================================
+   CUSTOM GLASS RADIO GROUP ("Floating Chips")
+   Theme: Green (#28A745) | Responsive | High Contrast
+   ========================================================================== */
+
+/* The Container */
+.glass-radio-group {
+  display: flex;
+  flex-wrap: wrap; /* Allows buttons to flow to next line */
+  gap: 10px;       /* Consistent spacing between chips */
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+/* Individual Radio Chip (Unselected State) */
+.glass-radio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px 20px;     /* Comfortable touch target */
+  min-width: 80px;       /* Minimum width */
+
+  /* Unselected Look: Ghost Style */
+  background-color: #ffffff;
+  border: 1px solid #28A745;
+  color: #28A745;
+
+  border-radius: 50px;   /* Full Pill Shape */
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Hover State */
+.glass-radio-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.15);
+  background-color: #f1f9f1; /* Very faint green tint */
+}
+
+/* --- SELECTED STATE --- */
+.glass-radio-btn.selected {
+  /* Green Gradient */
+  background: linear-gradient(135deg, #34ce57 0%, #28A745 100%);
+  color: #ffffff;
+  border-color: transparent;
+
+  /* Glow/Shadow */
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  font-weight: 700;
+}
+
+.glass-radio-btn.selected:hover {
+  /* Brighten slightly on hover */
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+
+/* --- DISABLED STATE --- */
+.glass-radio-group.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.glass-radio-btn.disabled {
+  border-color: #ccc;
+  color: #999;
+  background-color: #f8f9fa;
+  box-shadow: none;
+  cursor: not-allowed;
+}

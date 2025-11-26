@@ -1,0 +1,152 @@
+/* ==========================================================================
+   GLASS DASHBOARD CARD (REFINED)
+   Theme: Glass Gradient Header | Micro-Interactions | Smooth Collapse
+   ========================================================================== */
+
+.glass-card {
+  background: #ffffff;
+  border-radius: 12px;
+  /* Softer, deeper shadow for a floating effect */
+  box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+  border: 1px solid rgba(96, 92, 168, 0.1); /* Subtle purple tint on border */
+  margin-bottom: 25px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* --- HEADER (THE GLASS LOOK) --- */
+.glass-card-header {
+  /* The Gradient: Faint purple at top fading to white */
+  background: linear-gradient(180deg, rgba(96, 92, 168, 0.06) 0%, rgba(255, 255, 255, 0.6) 100%);
+  padding: 15px 25px;
+  border-bottom: 1px solid rgba(96, 92, 168, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+
+  /* Smooth transition for the hover state */
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* --- INTERACTIVE STATES ("Sparkles") --- */
+
+/* Make sure cursor shows pointer if collapsible */
+.glass-card.collapsible .glass-card-header {
+  cursor: pointer;
+}
+
+/* Hover Effect: Deepen the glass, add glow */
+.glass-card.collapsible .glass-card-header:hover {
+  /* Slightly stronger purple gradient */
+  background: linear-gradient(180deg, rgba(96, 92, 168, 0.12) 0%, rgba(255, 255, 255, 0.8) 100%);
+  /* Inner light glow to make it feel like glass */
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.9);
+}
+
+/* --- TITLE WRAPPER --- */
+.glass-card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* --- THE ICON BUBBLE --- */
+.glass-card-icon {
+  color: #605CA8;
+  background: #ffffff; /* Pure white bg to pop against the gradient */
+  padding: 8px;
+  border-radius: 10px; /* Slightly softer curve */
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+
+  /* Subtle shadow for the icon itself */
+  box-shadow: 0 2px 8px rgba(96, 92, 168, 0.15);
+
+  /* Prepare for animation */
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy transition */
+}
+
+/* Hover Animation: Icon lifts and rotates slightly */
+.glass-card.collapsible .glass-card-header:hover .glass-card-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(96, 92, 168, 0.25);
+  background: #ffffff;
+  color: #4d4a8e; /* Darker purple */
+}
+
+/* --- THE TITLE TEXT --- */
+.glass-card-title {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #605CA8; /* BRAND PURPLE (Requested Change) */
+  margin: 0;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8); /* Etched glass text effect */
+}
+
+/* --- THE TOGGLE CHEVRON --- */
+.glass-card-toggle {
+  color: #adb5bd;
+  font-size: 14px;
+  transition: all 0.3s ease;
+
+  /* Circle container for the chevron */
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* Hover Animation: Chevron turns purple and gets a background */
+.glass-card.collapsible .glass-card-header:hover .glass-card-toggle {
+  color: #605CA8;
+  background-color: rgba(255,255,255,0.5);
+  transform: scale(1.1);
+}
+
+/* Rotate when collapsed (override hover transform slightly) */
+.glass-card.collapsed .glass-card-toggle {
+  transform: rotate(-180deg);
+}
+
+.glass-card.collapsed .glass-card-header:hover .glass-card-toggle {
+  transform: rotate(-180deg) scale(1.1);
+}
+
+/* --- BODY & ANIMATION --- */
+.glass-card-body {
+  padding: 25px;
+  background-color: #ffffff;
+
+  max-height: 2000px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 0.5s ease-in-out,
+              opacity 0.4s ease-in-out,
+              padding 0.4s ease,
+              transform 0.4s ease;
+}
+
+.glass-card.collapsed .glass-card-body {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  transform: translateY(-10px);
+  border: none;
+}
+
+/* --- DISABLED STATE --- */
+.glass-card.disabled {
+  pointer-events: none;
+  filter: grayscale(0.8) opacity(0.7);
+}

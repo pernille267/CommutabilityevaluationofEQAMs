@@ -1,65 +1,103 @@
 #' Generates the HTML content for the help panel on the 'Upload data' page.
-#'
 #' @return An HTML string.
 #' @noRd
 help_button_page_1_text <- function() {
 
   # --- HTML Content ---
+  # Updated to use the modern 'help-tip' style
   tip_section <- paste0(
     "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
+    "<i class='fa fa-info-circle'></i>", # Changed to Info Circle
+    "<div><b>Pro Tip:</b> Click the 'Show Help Text' button again to hide this panel at any time.</div>",
     "</div>"
   )
 
   instructions_section <- paste0(
+    "<div class='help-header'><span>How to Get Started</span></div>",
     "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Get Started</h5>",
+
+    # Step 1
     "<div class='help-step'>",
     "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Upload Clinical Sample Data:</b> Click the first 'Browse...' button to select your clinical sample data file. This application supports both <b style='color:#28A745;'>.xlsx</b> and <b style='color:#28A745;'>.csv</b> files.</div>",
+    "<div class='help-step-content'>",
+    "<b>Upload Clinical Sample Data</b><br>", # Title on own line
+    "Click the first 'Browse...' button to select your clinical sample data file. We support <span style='color:#28A745; font-weight:600;'>.xlsx</span> and <span style='color:#28A745; font-weight:600;'>.csv</span> formats.",
     "</div>",
+    "</div>",
+
+    # Step 2
     "<div class='help-step'>",
     "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Upload EQA Material Data:</b> Click the second 'Browse...' button to select your External Quality Assessment (EQA) data file.</div>",
+    "<div class='help-step-content'>",
+    "<b>Upload EQA Material Data</b><br>",
+    "Click the second 'Browse...' button to select your External Quality Assessment (EQA) data file.",
     "</div>",
+    "</div>",
+
+    # Step 3
     "<div class='help-step'>",
     "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'><b>Review Diagnostics:</b> Once uploaded, the application automatically runs diagnostic checks. A status badge next to the 'Diagnostic Overview' title will summarize the results. For details, uncollapse the diagnostic boxes below.</div>",
+    "<div class='help-step-content'>",
+    "<b>Review Diagnostics</b><br>",
+    "The app automatically runs checks. Look for the status badge next to the 'Diagnostic Overview' title.",
     "</div>",
-    "</div>"
+    "</div>",
+
+    "</div>" # End help-section
   )
 
-  # NEW: Detailed section for interpreting diagnostics
   interpretation_section <- paste0(
+    "<div class='help-header'><span>Interpreting the Diagnostics</span></div>",
     "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-magnifying-glass-chart'></i>Interpreting the Diagnostics</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "The diagnostic tables provide a detailed quality assessment of your data, summarized by a quality badge and a score from 0 to 9.",
-    "</p>",
+    "<p style='color:#666; margin-bottom:15px;'>The diagnostic tables summarize data quality using a 0-9 score.</p>",
 
-    # Quality Indicators
     "<div class='help-info-box'>",
-    "<h6 style='font-weight: 600; margin-bottom: 15px;'>Data Quality Badges</h6>",
-    "<div class='help-info-item'><i class='fa-solid fa-circle' style='color: #7851a9;'></i><div><b style='color: #7851a9;'>Perfect (Score: 9):</b> The data is of exceptional quality with no issues found.</div></div>",
-    "<div class='help-info-item'><i class='fa-solid fa-circle' style='color: #28A745;'></i><div><b style='color: #28A745;'>Acceptable (Score: 4-8):</b> The data meets all necessary requirements for a valid analysis.</div></div>",
-    "<div class='help-info-item'><i class='fa-solid fa-circle' style='color: #FEAB3A;'></i><div><b style='color: #FEAB3A;'>Questionable (Score: 1-3):</b> The data has minor issues. The application will attempt to repair them automatically.</div></div>",
-    "<div class='help-info-item'><i class='fa-solid fa-circle' style='color: #B61F06;'></i><div><b style='color: #B61F06;'>Extremely Poor (Score: 0):</b> The data has significant issues. The application will attempt to repair them by excluding problematic methods.</div></div>",
+
+    "<div class='help-info-item'>",
+    "<i class='fa fa-circle' style='color: #7851a9;'></i>",
+    "<div><b style='color: #7851a9;'>Perfect (9):</b> Exceptional quality. No issues.</div>",
     "</div>",
-    "</div>"
+
+    "<div class='help-info-item'>",
+    "<i class='fa fa-circle' style='color: #28A745;'></i>",
+    "<div><b style='color: #28A745;'>Acceptable (4-8):</b> Meets analysis requirements.</div>",
+    "</div>",
+
+    "<div class='help-info-item'>",
+    "<i class='fa fa-circle' style='color: #FEAB3A;'></i>",
+    "<div><b style='color: #FEAB3A;'>Questionable (1-3):</b> Minor issues (auto-repaired).</div>",
+    "</div>",
+
+    "<div class='help-info-item'>",
+    "<i class='fa fa-circle' style='color: #B61F06;'></i>",
+    "<div><b style='color: #B61F06;'>Extremely Poor (0):</b> Significant issues (exclusions applied).</div>",
+    "</div>",
+
+    "</div>", # End info-box
+    "</div>"  # End help-section
   )
 
   additional_options_section <- paste0(
+    "<div class='help-header'><span>Additional Options</span></div>",
     "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-hammer'></i>Additional Options</h5>",
-    "<div class='help-info-box' style='border-left-color: #605CA8;'>",
-    "<h6 style='font-weight: 600; margin-bottom: 10px;'>Choose a Reference Method</h6>",
-    "<p>This is an <b>optional</b> step. If you designate one of your IVD-MDs as a reference method, all other methods will be compared against it. If left as 'none', all possible pairwise comparisons will be performed.</p>",
+
+    # Using the new 'help-step' style for options too, for consistency
+    "<div class='help-step'>",
+    "<div class='help-step-number'><i class='fa fa-list'></i></div>", # Icon instead of number
+    "<div class='help-step-content'>",
+    "<b>Reference Method (Optional)</b><br>",
+    "Designate one IVD-MD as a reference to compare others against it. Defaults to 'All vs All'.",
     "</div>",
-    "<div class='help-info-box' style='border-left-color: #dc3545; margin-top: 15px;'>",
-    "<h6 style='font-weight: 600; margin-bottom: 10px;'>Ignore Failed Validation Tests</h6>",
-    "<p>This is a high-risk option that is <b>not recommended</b>. Forcing the application to proceed with data that has failed validation may lead to unreliable results or cause the application to crash.</p>",
     "</div>",
+
+    "<div class='help-step'>",
+    "<div class='help-step-number' style='border-color:#dc3545; color:#dc3545;'><i class='fa fa-exclamation'></i></div>",
+    "<div class='help-step-content'>",
+    "<b>Ignore Validation (High Risk)</b><br>",
+    "Forcing analysis on failed data is not recommended and may cause crashes.",
+    "</div>",
+    "</div>",
+
     "</div>"
   )
 
@@ -67,7 +105,7 @@ help_button_page_1_text <- function() {
     "<div class='help-container'>",
     tip_section,
     instructions_section,
-    interpretation_section, # Added the new section here
+    interpretation_section,
     additional_options_section,
     "</div>"
   )
@@ -84,14 +122,14 @@ help_button_page_2_text <- function() {
   # --- HTML Content ---
   tip_section <- paste0(
     "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
+    "<i class='fa fa-lightbulb-o'></i>", # v5 compatible
     "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
     "</div>"
   )
 
   instructions_section <- paste0(
     "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-sliders'></i>Analysis Parameter Guide</h5>",
+    "<h5 class='help-header'><i class='fa fa-sliders'></i>Analysis Parameter Guide</h5>",
     "<p style='color: #555555; line-height: 1.6;'>This page allows you to set the core statistical parameters for the commutability evaluation. The choices you make here will affect the calculations in subsequent tabs.</p>",
 
     "<div class='help-step'>",
@@ -101,7 +139,9 @@ help_button_page_2_text <- function() {
 
     "<div class='help-step'>",
     "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Model Option:</b> Choose the statistical model for calculating prediction intervals. The <b>Deming</b> approach is generally recommended as it accounts for measurement errors in both methods.</div>",
+    "<div class='help-step-content'><b>Model Option:</b> Choose the statistical model for calculating prediction intervals. The <b>Deming</b> approach is generally recommended as it accounts for measurement errors in both methods.",
+    "",
+    "</div>",
     "</div>",
 
     "<div class='help-step'>",
@@ -414,6 +454,67 @@ help_button_page_5B_text <- function() {
   return(help_text)
 }
 
+#' Generates the HTML content for the help panel on the 'Results' page,
+#' specifically for the 'Report' tab.
+#'
+#' @return An HTML string.
+#' @noRd
+help_button_page_5C_text <- function() {
+
+  # --- HTML Content ---
+  tip_section <- paste0(
+    "<div class='help-tip'>",
+    "<i class='fa-solid fa-lightbulb'></i>",
+    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
+    "</div>"
+  )
+
+  intro_section <- paste0(
+    "<div class='help-section'>",
+    "<h5 class='help-header'><i class='fa-solid fa-file-pdf'></i>Report Generation Guide</h5>",
+    "<p style='color: #555555; line-height: 1.6;'>",
+    "This tab allows you to generate a comprehensive, self-contained PDF document that summarizes your entire commutability evaluation session. This report is ideal for documentation, sharing, and archiving your analysis.",
+    "</p>",
+    "</div>"
+  )
+
+  instructions_section <- paste0(
+    "<div class='help-section'>",
+    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Generate the Report</h5>",
+    "<div class='help-step'>",
+    "<div class='help-step-number'>1</div>",
+    "<div class='help-step-content'><b>Download the Report:</b> Simply click the <b style='color: #605CA8;'>Download Report</b> button. The application will gather all inputs, analyses, and results from your current session and compile them into a single PDF file, which will then be downloaded to your device.</div>",
+    "</div>",
+    "</div>"
+  )
+
+  contents_section <- paste0(
+    "<div class='help-section'>",
+    "<h5 class='help-header'><i class='fa-solid fa-book-open'></i>What's Inside the Report?</h5>",
+    "<p style='color: #555555; line-height: 1.6;'>",
+    "The generated report is structured to provide a complete overview of the evaluation, including:",
+    "</p>",
+    "<div class='help-info-box' style='border-left-color: #28A745;'>",
+    "<div class='help-info-item'><i class='fa-solid fa-clipboard-check'></i><div><b>Data Diagnostics:</b> A full summary of the initial validation and quality checks for both your clinical sample and EQA material data.</div></div>",
+    "<div class='help-info-item'><i class='fa-solid fa-sliders'></i><div><b>Analysis Parameters:</b> A record of all the key parameters you selected, such as the data transformation, regression model, and non-selectivity tolerance (M).</div></div>",
+    "<div class='help-info-item'><i class='fa-solid fa-ruler'></i><div><b>Outlier and Model Validation:</b> The results from the outlier analysis and the formal and visual tests used to validate the statistical model.</div></div>",
+    "<div class='help-info-item'><i class='fa-solid fa-table'></i><div><b>Final Results:</b> The complete set of detailed numerical result tables and the final commutability evaluation plots.</div></div>",
+    "</div>",
+    "</div>"
+  )
+
+  help_text <- paste0(
+    "<div class='help-container'>",
+    tip_section,
+    intro_section,
+    instructions_section,
+    contents_section,
+    "</div>"
+  )
+
+  return(help_text)
+}
+
 #' Render a styled diagnostic table
 #' @param diagnostics The diagnostic list object from commutability::check_data()
 #' @param type A character string, either "cs" for clinical sample or "eq" for EQA material
@@ -545,34 +646,34 @@ render_diagnostic_table <- function(diagnostics, type = "cs", is_post_repair_val
 }
 
 #' Render diagnostic test results as styled HTML text
-#'
-#' @param diagnostics The diagnostic list object from `commutability::check_data()` for the current data type.
-#' @param other_diagnostics The diagnostic list object from the other data type.
-#' @param type A character string, either "cs" for clinical sample or "eq" for EQA material.
-#'
+#' @param diagnostics The diagnostic list object
+#' @param other_diagnostics The diagnostic list object from the other data type
+#' @param type A character string, either "cs" or "eq"
 #' @return An HTML object.
 render_diagnostic_text <- function(diagnostics, other_diagnostics, type = "cs") {
 
   data_type_label <- if (type == "cs") "Clinical Sample Data" else "Evaluated Material Data"
   other_data_type_label <- if (type == "cs") "external quality assessment" else "clinical sample"
 
+  # Helper: CSS Unit Test Item
   css_unit_test <- function(title, fail = FALSE) {
     if (is.na(fail)) {
-      icon_html <- "<i class='fa-solid fa-skull-crossbones' style='color: #FF9800; margin-right: 5px;'></i>"
+      icon_html <- "<i class='fa fa-question-circle' style='color: #6c757d; margin-right: 8px;'></i>"
       badge_html <- "<span class='test-badge unknown'>?</span>"
       class_name <- "test-item unknown-test"
     } else if (!fail) {
-      icon_html <- "<i class='fa-solid fa-check-circle' style='color: #28a745; margin-right: 5px;'></i>"
+      icon_html <- "<i class='fa fa-check-circle' style='color: #28a745; margin-right: 8px;'></i>"
       badge_html <- "<span class='test-badge pass'>PASS</span>"
       class_name <- "test-item pass-test"
     } else {
-      icon_html <- "<i class='fa-solid fa-times-circle' style='color: #dc3545; margin-right: 5px;'></i>"
+      icon_html <- "<i class='fa fa-times-circle' style='color: #dc3545; margin-right: 8px;'></i>"
       badge_html <- "<span class='test-badge fail'>FAIL</span>"
       class_name <- "test-item fail-test"
     }
     paste0("<div class='", class_name, "'>", icon_html, "<span class='test-title'>", title, "</span>", badge_html, "</div>")
   }
 
+  # --- Generate Test Items ---
   message_mandatory_id_columns_test <- css_unit_test(
     title = paste("Mandatory ID Columns"),
     fail = !diagnostics$validity$valid_mandatory_id_columns
@@ -590,58 +691,61 @@ render_diagnostic_text <- function(diagnostics, other_diagnostics, type = "cs") 
     fail = !diagnostics$validity$valid_number_remaining_numeric
   )
 
-  # --- NEW LOGIC FOR REPAIR MESSAGES ---
-  # Methods removed due to issues in the CURRENT dataset
+  # --- Repair Messages Logic ---
   methods_removed_locally <- diagnostics$repair$remove_these_methods
-  # Methods removed due to issues in the OTHER dataset
   methods_removed_from_other <- other_diagnostics$repair$remove_these_methods
-
-  # Methods that are removed from this view SOLELY because of issues in the other dataset
   cross_removed_methods <- setdiff(methods_removed_from_other, methods_removed_locally)
 
-  # Build the exclusion message(s)
   exclusion_messages <- c()
 
-  # Message for locally removed methods
   if (!is.null(methods_removed_locally)) {
     bold_methods <- paste0("<b>", methods_removed_locally, "</b>", collapse = ", ")
-    msg <- paste0("<div class='repair-item warning'><i class='fa-solid fa-exclamation-triangle' style='color: #ffc107; margin-right: 5px;'></i><span class='repair-text'>", bold_methods, " removed due to too much invalid data.</span></div>")
+    msg <- paste0("<div class='repair-item warning'><i class='fa fa-exclamation-triangle' style='color: #ffc107; margin-right: 8px;'></i><span class='repair-text'>", bold_methods, " removed due to too much invalid data.</span></div>")
     exclusion_messages <- c(exclusion_messages, msg)
   }
 
-  # Message for cross-removed methods
   if (length(cross_removed_methods) > 0) {
     bold_methods <- paste0("<b>", cross_removed_methods, "</b>", collapse = ", ")
-    msg <- paste0("<div class='repair-item warning'><i class='fa-solid fa-exclamation-triangle' style='color: #ffc107; margin-right: 5px;'></i><span class='repair-text'>", bold_methods, " removed due to too much invalid data in the ", other_data_type_label, " data.</span></div>")
+    msg <- paste0("<div class='repair-item warning'><i class='fa fa-exclamation-triangle' style='color: #ffc107; margin-right: 8px;'></i><span class='repair-text'>", bold_methods, " removed due to issues in the ", other_data_type_label, " data.</span></div>")
     exclusion_messages <- c(exclusion_messages, msg)
   }
 
-  # Final exclusion message
   if (length(exclusion_messages) == 0) {
-    repair_message_exclude_ivd_md <- "<div class='repair-item success'><i class='fa-solid fa-check-circle' style='color: #28a745; margin-right: 5px;'></i><span class='repair-text'>No column exclusion performed in data repair.</span></div>"
+    repair_message_exclude_ivd_md <- "<div class='repair-item success'><i class='fa fa-check-circle' style='color: #28a745; margin-right: 8px;'></i><span class='repair-text'>No column exclusion performed in data repair.</span></div>"
   } else {
     repair_message_exclude_ivd_md <- paste(exclusion_messages, collapse = "")
   }
-  # --- END OF NEW LOGIC ---
 
   repair_message_convert_data <- if (is.null(diagnostics$repair$convert_these_methods_to_numeric)) {
-    "<div class='repair-item success'><i class='fa-solid fa-check-circle' style='color: #28a745; margin-right: 5px;'></i><span class='repair-text'>No conversion of invalid values was necessary.</span></div>"
+    "<div class='repair-item success'><i class='fa fa-check-circle' style='color: #28a745; margin-right: 8px;'></i><span class='repair-text'>No conversion of invalid values was necessary.</span></div>"
   } else {
     bold_methods <- paste0("<b>", diagnostics$repair$convert_these_methods_to_numeric, "</b>", collapse = ", ")
-    paste0("<div class='repair-item warning'><i class='fa-solid fa-exclamation-triangle' style='color: #ffc107; margin-right: 5px;'></i><span class='repair-text'>Attempted to convert ", bold_methods, " because they were not recognized as numeric.</span></div>")
+    paste0("<div class='repair-item warning'><i class='fa fa-exclamation-triangle' style='color: #ffc107; margin-right: 8px;'></i><span class='repair-text'>Attempted to convert ", bold_methods, " because they were not recognized as numeric.</span></div>")
   }
 
+  # --- RETURN HTML (Modernized Headers) ---
+  # Note: I removed inline styles for colors/margins because the CSS class .section-header now handles it
   HTML(paste(
-    "<div class='dashboard-container'>",
-    "<div class='section-header'><i class='fa-solid fa-clipboard-list' style='color: #a5682a;'></i><span>Validation Tests for ", data_type_label, ":</span></div>",
+
+    # Header 1: Validation Tests
+    "<div class='section-header'>",
+    "<i class='fa fa-clipboard-list' style='color: #a5682a;'></i>", # Keep color, let CSS handle size/spacing
+    "<span>Validation Tests for ", data_type_label, "</span>",
+    "</div>",
+
     message_mandatory_id_columns_test,
     message_numeric_columns_test,
     message_number_of_nas_test,
     message_number_of_ivd_mds_test,
-    "<div class='section-header' style='margin-top: 20px;'><i class='fa-solid fa-screwdriver-wrench' style='color: #5D5D5D;'></i><span>Repairing of ", data_type_label, ":</span></div>",
+
+    # Header 2: Repairing
+    "<div class='section-header'>",
+    "<i class='fa fa-wrench' style='color: #605CA8;'></i>",
+    "<span>Repairing of ", data_type_label, "</span>",
+    "</div>",
+
     repair_message_exclude_ivd_md,
-    repair_message_convert_data,
-    "</div>"
+    repair_message_convert_data
   ))
 }
 

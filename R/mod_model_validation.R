@@ -12,7 +12,7 @@ mod_model_validation_ui <- function(id) {
       icon("flask"),
       "Commutability Evaluation: Beta Version S1.0"
     ),
-    # Header Information
+    # --- Dashboard Tab Header -------------------------------------------------
     div(
       class = "page-header",
       h1(
@@ -29,48 +29,48 @@ mod_model_validation_ui <- function(id) {
       )
     ),
 
-    # Help text output
+    # --- Help text output -----------------------------------------------------
     htmlOutput(outputId = ns("model_validation_explanation")),
 
-    # Tabset Panels
+    # --- Create Tabset Panels for Model Assessment ----------------------------
     tabsetPanel(
       id = ns("model_validation_tabs"),
       type = "pills",
-
-      # Formal tests Panel
+      # --- Panel 1 - Formal Assesment ---
       tabPanel(
-        title = "Formal Model Assessment",
+        title = "Formal Assessment",
         value = "formal_tests",
         icon = icon("clipboard"),
-        # Results card
+        # --- Panel 1 - Card 1 - Results ---
         div(
           class = "dashboard-card",
           div(
             class = "card-header",
             icon("table", class = "header-icon"),
-            h3("Formal Model Assessment Analysis Results")
+            h3(
+              "Formal Assessment Results"
+            ),
+            div(
+              class = "text-center mt-4 mb-3",
+              actionBttn(
+                inputId = ns("run_tests"),
+                label = "Run tests",
+                icon = icon(name = "list-check"),
+                style = "gradient",
+                size = "md",
+                color = "royal"
+              ),
+              actionBttn(
+                inputId = ns("clear_test_results"),
+                label = NULL,
+                icon = icon("trash"),
+                style = "gradient",
+                color = "primary"
+              )
+            )
           ),
           div(
             class = "card-body",
-            div(class = "text-center mt-4 mb-3",
-                actionBttn(
-                  inputId = ns("run_tests"),
-                  label = "Run tests",
-                  icon = icon(name = "list-check"),
-                  style = "gradient",
-                  size = "lg",
-                  color = "royal"
-                ),
-                actionBttn(
-                  inputId = ns("clear_test_results"),
-                  label = NULL,
-                  icon = icon("trash"),
-                  style = "gradient",
-                  color = "primary"
-                )
-            ),
-
-            # Test results output
             withSpinner(
               DT::DTOutput(outputId = ns("formal_assessment_tests")),
               type = 4,
@@ -80,124 +80,192 @@ mod_model_validation_ui <- function(id) {
         )
       ),
 
-      # Visual tests Panel
+      # --- Panel 2 - Visual Assesment ---
       tabPanel(
-        title = "Model Assessment Plots",
+        title = "Visual Assessment",
         value = "assessment_plots",
         icon = icon("chart-line"),
         div(
-          class = "dashboard-card",
+          class = "dashboard-card-drop-down",
           div(
             class = "card-header",
             icon("chart-line", class = "header-icon"),
-            h3("Visualizing Model Assessment: Customizable Plot Options")
+            h3("Plotting Options")
+          ),
+          box(
+            title = tagList(
+              icon("sliders", class = "section-icon"),
+              "Customize Appearance & Advanced Options"
+            ),
+            collapsible = TRUE,
+            collapsed = TRUE,
+            width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            # Customization Inputs
+            fluidRow(
+              column(
+                width = 4,
+                h4("Set Labels"),
+                div(
+                  class = "parameter-section",
+                  h5("Plot Title"),
+                  textInputIcon(
+                    inputId = ns("ap_title"),
+                    label = NULL,
+                    placeholder = "Title...",
+                    icon = icon("heading")
+                  ),
+                  h5("X-Axis"),
+                  textInputIcon(
+                    inputId = ns("ap_x_title"),
+                    label = NULL,
+                    placeholder = "Auto",
+                    icon = icon("arrows-left-right")
+                  ),
+                  h5("Y-Axis"),
+                  textInputIcon(
+                    inputId = ns("ap_y_title"),
+                    label = NULL,
+                    placeholder = "Auto",
+                    icon = icon("arrows-up-down")
+                  )
+                )
+              ),
+              column(
+                width = 4,
+                h4("Download Dimensions"),
+                div(
+                  class = "parameter-section",
+                  h5("Width (cm)"),
+                  numericInputIcon(
+                    inputId = ns("ap_width"),
+                    label = NULL,
+                    value = 15,
+                    min = 5,
+                    icon = icon("ruler-horizontal")
+                  ),
+                  h5("Height (cm)"),
+                  numericInputIcon(
+                    inputId = ns("ap_height"),
+                    label = NULL,
+                    value = 9.3,
+                    min = 5,
+                    icon = icon("ruler-vertical")
+                  )
+                )
+              ),
+              column(
+                width = 4,
+                h4("Additional Download Options"),
+                div(
+                  class = "parameter-section",
+                  h5("Format"),
+                  radioGroupButtons(
+                    inputId = ns("plot_download_file_type"),
+                    label = NULL,
+                    choiceNames = c("PDF", "PNG", "TIF"),
+                    choiceValues = c(".pdf", ".png", ".tif"),
+                    selected = ".png",
+                    status = "primary",
+                    justified = TRUE,
+                    size = "normal"
+                  ),
+                  h5("Quality (DPI)"),
+                  numericInputIcon(
+                    inputId = ns("plot_download_quality"),
+                    label = NULL,
+                    value = 300,
+                    min = 72,
+                    max = 1500,
+                    icon = icon("image")
+                  )
+                )
+              )
+            )
           ),
           div(
             class = "card-body",
             # Plot type selection
             fluidRow(
               column(
-                width = 5,
-                div(class = "parameter-section",
-                    h5("Model Assessment Plot to Display"),
-                    radioGroupButtons(
-                      inputId = ns("which_plot"),
-                      label = NULL,
-                      choiceValues = c(
-                        "residual_plot",
-                        "residual_histogram",
-                        "qq_plot",
-                        "sd_vs_concentration",
-                        "cv_vs_concentration"
-                      ),
-                      choiceNames = c(
-                        "Residuals Versus Fitted Values",
-                        "Histogram of Residuals",
-                        "QQ Normal Plot",
-                        "SD Versus Concentration Plot",
-                        "CV Versus Concentration Plot"),
-                      selected = "residual_plot",
-                      status = "primary",
-                      direction = "vertical",
-                      justified = TRUE
+                width = 6,
+                div(
+                  class = "parameter-section",
+                  h5(
+                    "Select Diagnostic Plot",
+                    div(
+                      class = "input-note",
+                      # --- Force the Icon to the Right ---
+                      style = "display: inline-block; margin-left: 5px;",
+                      icon(name = "info-circle"),
+                      id = ns("plot_explanation_tool_tip")
                     )
+                  ),
+                  virtualSelectInput(
+                    inputId = ns("which_plot"),
+                    label = NULL,
+                    choices = c(
+                      "Residuals vs Fitted Values" = "residual_plot",
+                      "Histogram of Residuals" = "residual_histogram",
+                      "QQ Normal Plot" = "qq_plot",
+                      "SD vs Concentration" = "sd_vs_concentration",
+                      "CV vs Concentration" = "cv_vs_concentration"
+                    ),
+                    selected = "residual_plot",
+                    search = FALSE,
+                    multiple = FALSE
+                  )
                 )
               ),
               column(
-                width = 5,
+                width = 6,
                 div(
-                  class = "input-note",
-                  icon("info-circle"),
-                  "Abbreviations"
-                ),
-                div(
-                  class = "input-note",
-                  "QQ is short for Quantile-Quantile"
-                ),
-                div(
-                  class = "input-note",
-                  "SD is short for Standard Deviation"
-                ),
-                div(
-                  class = "input-note",
-                  "CV is short for Coefficient of Variation"
-                )
-              )
-            ),
-
-            # Plot customization options
-            fluidRow(
-              column(
-                width = 5,
-                div(class = "input-group-container",
-                    h5("Plot Title"),
-                    textInputIcon(inputId = ns("ap_title"), label = NULL, placeholder = "Some title ...", icon = icon("pen")),
-                    h5("X-Axis Title"),
-                    textInputIcon(inputId = ns("ap_x_title"), label = NULL, placeholder = "automatic", icon = icon("pen")),
-                    h5("Y-Axis Title"),
-                    textInputIcon(inputId = ns("ap_y_title"), label = NULL, placeholder = "automatic", icon = icon("pen"))
-                ),
-                div(class = "switch-container",
-                    h5("Additional Plotting Options"),
-                    materialSwitch(inputId = ns("include_se_band"), label = "Include Error Ribbon", value = FALSE, status = "success"),
-                    materialSwitch(inputId = ns("cv_percent"), label = "CV in Percent (%)", value = FALSE, status = "success"),
-                    materialSwitch(inputId = ns("var_instead"), label = "Use Variance Instead", value = FALSE, status = "success")
-                )
-              ),
-              column(
-                width = 5,
-                div(class = "input-group-container",
-                    h5("Plot Width (cm)"),
-                    numericInputIcon(inputId = ns("ap_width"), label = NULL, value = 15, min = 2, max = 100, step = 0.5, icon = icon("arrows-left-right")),
-                    h5("Plot Height (cm)"),
-                    numericInputIcon(inputId = ns("ap_height"), label = NULL, value = 9.3, min = 2, max = 100, step = 0.5, icon = icon("arrows-up-down")),
-                    h5("On-Screen Resolution (PPI)"),
-                    numericInputIcon(inputId = ns("ap_res"), label = NULL, value = 96, min = 72, max = 300, step = 12, icon = icon("star"))
-                ),
-                div(
-                  class = "switch-container",
-                  h5("Download Options"),
-                  radioGroupButtons(
-                    inputId = ns("plot_download_file_type"),
-                    choiceNames = c("PDF", "PNG", "TIF"),
-                    choiceValues = c(".pdf", ".png", ".tif"),
-                    status = "primary",
-                    justified = TRUE
-                  ),
-                  radioGroupButtons(
-                    inputId = ns("plot_download_quality"),
-                    choiceNames = c("300 dpi", "600 dpi", "1200 dpi"),
-                    choiceValues = c("300", "600", "1200"),
-                    status = "primary",
-                    justified = TRUE
-                  ),
+                  class = "parameter-section",
+                  h5("Display Options"),
                   div(
-                    class = "input-note",
-                    icon("info-circle"),
-                    "dpi (dots per inch) refers to the quality of the downloaded plot"
+                    class = "switch-container",
+                    materialSwitch(
+                      inputId = ns("include_se_band"),
+                      label = "Include Error Ribbon",
+                      value = FALSE,
+                      status = "success"
+                    ),
+                    conditionalPanel(
+                      condition = sprintf(
+                        "input['%s'] == 'sd_vs_concentration'",
+                        ns("which_plot")
+                      ),
+                      materialSwitch(
+                        inputId = ns("var_instead"),
+                        label = "Use Variance",
+                        value = FALSE,
+                        status = "success"
+                      )
+                    ),
+                    conditionalPanel(
+                      condition = sprintf(
+                        "input['%s'] == 'cv_vs_concentration'",
+                        ns("which_plot")
+                      ),
+                      materialSwitch(
+                        inputId = ns("cv_percent"),
+                        label = "CV %",
+                        value = FALSE,
+                        status = "success"
+                      ),
+                    )
                   )
                 )
               )
+            ),
+            shinyBS::bsTooltip(
+              id = ns("plot_explanation_tool_tip"),
+              title = paste0(
+                "QQ, SD, and CV are abbreviations for Quantile-Quantile, ",
+                "Standard Deviation, and Coefficient of Variation, Respectively."
+              ),
+              placement = "right"
             )
           )
         ),
@@ -206,31 +274,27 @@ mod_model_validation_ui <- function(id) {
           div(
             class = "card-header",
             icon("chart-line", class = "header-icon"),
-            h3("Generate Model Assessment Plot")
+            h3("Generate Model Assessment Plot"),
+            actionBttn(
+              inputId = ns("plot_assessment_plots"),
+              label = "Plot",
+              icon = icon("magnifying-glass-chart"),
+              style = "gradient",
+              color = "royal",
+              size = "md"
+            ),
+            downloadBttn(
+              outputId = ns("download_assessment_plots"),
+              label = "Download",
+              icon = icon("download"),
+              style = "gradient",
+              color = "royal",
+              size = "md"
+            )
           ),
           div(
             class = "card-body",
             div(
-              # Plot and download buttons
-              div(class = "button-container",
-                  actionBttn(
-                    inputId = ns("plot_assessment_plots"),
-                    label = "Plot",
-                    icon = icon("magnifying-glass-chart"),
-                    style = "gradient",
-                    color = "royal",
-                    size = "lg"
-                  ),
-                  downloadBttn(
-                    outputId = ns("download_assessment_plots"),
-                    label = "Download",
-                    icon = icon("download"),
-                    style = "gradient",
-                    color = "royal",
-                    size = "lg"
-                  )
-              ),
-
               # Plot output
               div(
                 class = "plot-container",
@@ -269,9 +333,9 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
       req(input$model_validation_tabs)
       if (!hide$hide) {
         if (input$model_validation_tabs == "formal_tests") {
-          wellPanel(HTML(help_button_page_4A_text()))
+          HTML(help_button_page_4A_text())
         } else if (input$model_validation_tabs == "assessment_plots") {
-          wellPanel(HTML(help_button_page_4B_text()))
+          HTML(help_button_page_4B_text())
         }
       }
     })
