@@ -20,17 +20,18 @@ mod_model_validation_ui <- function(id) {
         icon("clipboard"),
         "Model Validation and Verification Tests"
       ),
-      actionBttn(
+      glassButton(
         inputId = ns("show_model_validation_explanation"),
         label = "Show Help Text",
-        icon = icon(name = "circle-question"),
-        style = "gradient",
-        color = "success"
+        icon = icon(name = "circle-question")
       )
     ),
 
     # --- Help text output -----------------------------------------------------
-    htmlOutput(outputId = ns("model_validation_explanation")),
+    glassTogglePanel(
+      triggerId = ns("show_model_validation_explanation"),
+      help_button_page_4A_text()
+    ),
 
     # --- Create Tabset Panels for Model Assessment ----------------------------
     tabsetPanel(
@@ -323,22 +324,7 @@ mod_model_validation_ui <- function(id) {
 mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
   moduleServer(id, function(input, output, session) {
 
-    # --- Help Text Logic ---
-    hide <- reactiveValues(hide = TRUE)
-    observeEvent(input$show_model_validation_explanation, {
-      hide$hide <- !hide$hide
-    })
 
-    output$model_validation_explanation <- renderUI({
-      req(input$model_validation_tabs)
-      if (!hide$hide) {
-        if (input$model_validation_tabs == "formal_tests") {
-          HTML(help_button_page_4A_text())
-        } else if (input$model_validation_tabs == "assessment_plots") {
-          HTML(help_button_page_4B_text())
-        }
-      }
-    })
 
     # --- Reactive Data Preparation ---
     cs_data_long <- reactive({

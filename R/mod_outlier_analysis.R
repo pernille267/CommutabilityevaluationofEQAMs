@@ -19,16 +19,17 @@ mod_outlier_analysis_ui <- function(id) {
         icon("ruler"),
         "Perform Outlier Analysis"
       ),
-      actionBttn(
+      glassButton(
         inputId = ns("show_outlier_analysis_explanation"),
         label = "Show Help Text",
-        icon = icon(name = "circle-question"),
-        style = "gradient",
-        color = "success"
+        icon = icon(name = "circle-question")
       )
     ),
 
-    htmlOutput(outputId = ns("outlier_analysis_explanation")),
+    glassTogglePanel(
+      triggerId = ns("show_outlier_analysis_explanation"),
+      help_button_page_3_text()
+    ),
 
     # --- Card 1 - Outlier Analysis Options ------------------------------------
     div(
@@ -120,18 +121,6 @@ mod_outlier_analysis_ui <- function(id) {
 mod_outlier_analysis_server <- function(id, file_upload_data) {
   # --- Create the Module Server for the `Outlier Analysis` Section ---
   moduleServer(id, function(input, output, session) {
-
-    # --- Help Text Logic ---
-    hide <- reactiveValues(hide = TRUE)
-    observeEvent(input$show_outlier_analysis_explanation, {
-      hide$hide <- !hide$hide
-    })
-
-    output$outlier_analysis_explanation <- renderUI({
-      if (!hide$hide) {
-        HTML(help_button_page_3_text())
-      }
-    })
 
     # --- Reactive Data Preparation ---
 

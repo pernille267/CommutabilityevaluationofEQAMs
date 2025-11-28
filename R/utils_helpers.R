@@ -1,116 +1,69 @@
-#' Generates the HTML content for the help panel on the 'Upload data' page.
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Upload data' page.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_1_text <- function() {
 
-  # --- HTML Content ---
-  # Updated to use the modern 'help-tip' style
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa fa-info-circle'></i>", # Changed to Info Circle
-    "<div><b>Pro Tip:</b> Click the 'Show Help Text' button again to hide this panel at any time.</div>",
-    "</div>"
+  glassHelpCard(
+    # 1. Tip Section
+    glassHelpTip(
+      text = "<b>Pro Tip:</b> Click the 'Show Help Text' button again to hide this panel at any time."
+    ),
+
+    # 2. Instructions
+    glassHelpSection(
+      title = "How to Get Started",
+
+      glassHelpStep(
+        number = 1,
+        title = "Upload Clinical Sample Data",
+        description = "Click the first 'Browse...' button to select your clinical sample data file. We support <span style='color:#28A745; font-weight:600;'>.xlsx</span> and <span style='color:#28A745; font-weight:600;'>.csv</span> formats."
+      ),
+
+      glassHelpStep(
+        number = 2,
+        title = "Upload EQA Material Data",
+        description = "Click the second 'Browse...' button to select your External Quality Assessment (EQA) data file."
+      ),
+
+      glassHelpStep(
+        number = 3,
+        title = "Review Diagnostics",
+        description = "The app automatically runs checks. Look for the status badge next to the 'Diagnostic Overview' title."
+      )
+    ),
+
+    # 3. Interpretation
+    glassHelpSection(
+      title = "Interpreting the Diagnostics",
+      htmltools::p(style = "color:#666; margin-bottom:15px;",
+                   "The diagnostic tables summarize data quality using a 0-9 score."),
+
+      glassHelpInfoBox(
+        glassHelpInfoItem("Perfect (9)", "Exceptional quality. No issues.", color = "#7851a9"),
+        glassHelpInfoItem("Acceptable (4-8)", "Meets analysis requirements.", color = "#28A745"),
+        glassHelpInfoItem("Questionable (1-3)", "Minor issues (auto-repaired).", color = "#FEAB3A"),
+        glassHelpInfoItem("Extremely Poor (0)", "Significant issues (exclusions applied).", color = "#B61F06")
+      )
+    ),
+
+    # 4. Additional Options
+    glassHelpSection(
+      title = "Additional Options",
+
+      glassHelpStep(
+        number = icon("list"),
+        title = "Reference Method (Optional)",
+        description = "Designate one IVD-MD as a reference to compare others against it. Defaults to 'All vs All'."
+      ),
+
+      glassHelpStep(
+        number = icon("exclamation"),
+        title = "Ignore Validation (High Risk)",
+        description = "Forcing analysis on failed data is not recommended and may cause crashes.",
+        color = "#dc3545"
+      )
+    )
   )
-
-  instructions_section <- paste0(
-    "<div class='help-header'><span>How to Get Started</span></div>",
-    "<div class='help-section'>",
-
-    # Step 1
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'>",
-    "<b>Upload Clinical Sample Data</b><br>", # Title on own line
-    "Click the first 'Browse...' button to select your clinical sample data file. We support <span style='color:#28A745; font-weight:600;'>.xlsx</span> and <span style='color:#28A745; font-weight:600;'>.csv</span> formats.",
-    "</div>",
-    "</div>",
-
-    # Step 2
-    "<div class='help-step'>",
-    "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'>",
-    "<b>Upload EQA Material Data</b><br>",
-    "Click the second 'Browse...' button to select your External Quality Assessment (EQA) data file.",
-    "</div>",
-    "</div>",
-
-    # Step 3
-    "<div class='help-step'>",
-    "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'>",
-    "<b>Review Diagnostics</b><br>",
-    "The app automatically runs checks. Look for the status badge next to the 'Diagnostic Overview' title.",
-    "</div>",
-    "</div>",
-
-    "</div>" # End help-section
-  )
-
-  interpretation_section <- paste0(
-    "<div class='help-header'><span>Interpreting the Diagnostics</span></div>",
-    "<div class='help-section'>",
-    "<p style='color:#666; margin-bottom:15px;'>The diagnostic tables summarize data quality using a 0-9 score.</p>",
-
-    "<div class='help-info-box'>",
-
-    "<div class='help-info-item'>",
-    "<i class='fa fa-circle' style='color: #7851a9;'></i>",
-    "<div><b style='color: #7851a9;'>Perfect (9):</b> Exceptional quality. No issues.</div>",
-    "</div>",
-
-    "<div class='help-info-item'>",
-    "<i class='fa fa-circle' style='color: #28A745;'></i>",
-    "<div><b style='color: #28A745;'>Acceptable (4-8):</b> Meets analysis requirements.</div>",
-    "</div>",
-
-    "<div class='help-info-item'>",
-    "<i class='fa fa-circle' style='color: #FEAB3A;'></i>",
-    "<div><b style='color: #FEAB3A;'>Questionable (1-3):</b> Minor issues (auto-repaired).</div>",
-    "</div>",
-
-    "<div class='help-info-item'>",
-    "<i class='fa fa-circle' style='color: #B61F06;'></i>",
-    "<div><b style='color: #B61F06;'>Extremely Poor (0):</b> Significant issues (exclusions applied).</div>",
-    "</div>",
-
-    "</div>", # End info-box
-    "</div>"  # End help-section
-  )
-
-  additional_options_section <- paste0(
-    "<div class='help-header'><span>Additional Options</span></div>",
-    "<div class='help-section'>",
-
-    # Using the new 'help-step' style for options too, for consistency
-    "<div class='help-step'>",
-    "<div class='help-step-number'><i class='fa fa-list'></i></div>", # Icon instead of number
-    "<div class='help-step-content'>",
-    "<b>Reference Method (Optional)</b><br>",
-    "Designate one IVD-MD as a reference to compare others against it. Defaults to 'All vs All'.",
-    "</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number' style='border-color:#dc3545; color:#dc3545;'><i class='fa fa-exclamation'></i></div>",
-    "<div class='help-step-content'>",
-    "<b>Ignore Validation (High Risk)</b><br>",
-    "Forcing analysis on failed data is not recommended and may cause crashes.",
-    "</div>",
-    "</div>",
-
-    "</div>"
-  )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    instructions_section,
-    interpretation_section,
-    additional_options_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
 #' Generates the HTML content for the help panel on the 'Nonselectivity' page.
@@ -119,400 +72,283 @@ help_button_page_1_text <- function() {
 #' @noRd
 help_button_page_2_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa fa-lightbulb-o'></i>", # v5 compatible
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
+
+    glassHelpSection(
+      title = "Analysis Parameter Guide",
+      htmltools::p(style = "color: #555; margin-bottom: 15px;",
+                   "This page allows you to set the core statistical parameters for the commutability evaluation. The choices you make here will affect the calculations in subsequent tabs."
+      ),
+
+      glassHelpStep(
+        number = 1,
+        title = "Data Transformation",
+        description = "Select a transformation for your data. This can help stabilize variance and meet model assumptions. Try different options to see which yields zeta values closest to 1."
+      ),
+
+      glassHelpStep(
+        number = 2,
+        title = "Model Option",
+        description = "Choose the statistical model for calculating prediction intervals. The <b>Deming</b> approach is generally recommended as it accounts for measurement errors in both methods."
+      ),
+
+      glassHelpStep(
+        number = 3,
+        title = "Calculate Zetas & Imprecision",
+        description = "Click the 'Calculate zetas' and 'Calculate Imprecision' buttons to see estimates based on your chosen model and transformation. These tables help you assess the suitability of your choices."
+      ),
+
+      glassHelpStep(
+        number = 4,
+        title = "Set Non-Selectivity Tolerance (M)",
+        description = "This value represents the average relative increase in the prediction interval's length you are willing to tolerate due to non-selectivity. A larger M means accepting more non-selectivity differences."
+      )
+    )
   )
-
-  instructions_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa fa-sliders'></i>Analysis Parameter Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>This page allows you to set the core statistical parameters for the commutability evaluation. The choices you make here will affect the calculations in subsequent tabs.</p>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Data Transformation:</b> Select a transformation for your data. This can help stabilize variance and meet model assumptions. Try different options to see which yields zeta values closest to 1.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Model Option:</b> Choose the statistical model for calculating prediction intervals. The <b>Deming</b> approach is generally recommended as it accounts for measurement errors in both methods.",
-    "",
-    "</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'><b>Calculate Zetas & Imprecision:</b> Click the 'Calculate zetas' and 'Calculate Imprecision' buttons to see estimates based on your chosen model and transformation. These tables help you assess the suitability of your choices.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>4</div>",
-    "<div class='help-step-content'><b>Set Non-Selectivity Tolerance (M):</b> This value represents the average relative increase in the prediction interval's length you are willing to tolerate due to non-selectivity. A larger M means accepting more non-selectivity differences.</div>",
-    "</div>",
-
-    "</div>"
-  )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    instructions_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
-#' Generates the HTML content for the help panel on the 'Outlier Analysis' page.
-#'
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Outlier Analysis' page.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_3_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
+
+    glassHelpSection(
+      title = "Outlier Analysis Guide",
+      htmltools::p(style = "color: #555;",
+                   "This section is dedicated to identifying potential outliers within your <b>Clinical Sample Data</b>. Outliers are data points that deviate significantly from other observations and can unduly influence the results of your analysis."
+      )
+    ),
+
+    glassHelpSection(
+      title = "How to Perform the Analysis",
+
+      glassHelpStep(
+        number = 1,
+        title = "Select Outlier Test",
+        description = paste0(
+          "Choose the statistical criterion for identifying outliers.<br>",
+          "<span style='color:#6c757d; font-size:0.9em;'>&bull; <b>Between Samples:</b> Uses Burnett's criterion to identify entire samples that are outliers compared to others.</span><br>",
+          "<span style='color:#6c757d; font-size:0.9em;'>&bull; <b>Within Samples:</b> Uses the Studentized Range (Q) to identify outlier replicates within a single sample.</span>"
+        )
+      ),
+
+      glassHelpStep(
+        number = 2,
+        title = "Select Confidence Level",
+        description = "Set the statistical confidence for the test. This determines how extreme a point must be to be flagged as an outlier. A higher confidence level (e.g., 99%) makes the test stricter."
+      ),
+
+      glassHelpStep(
+        number = 3,
+        title = "Run the Analysis",
+        description = "Click the <b style='color: #605CA8;'>Analyze</b> button to perform the outlier detection."
+      )
+    ),
+
+    glassHelpSection(
+      title = "Interpreting the Results",
+      # Using a step with a warning color to highlight the important note
+      glassHelpStep(
+        number = icon("exclamation-triangle"),
+        title = "Important Note",
+        description = "Any sample flagged as an <b style='color: #dc3545;'>outlier</b> will be highlighted in the results table. <br><br>This tool only identifies potential outliers; it does not automatically remove them. If you wish to proceed without these outliers, you must manually remove them from your source file and <b>re-upload the cleaned dataset</b> on the 'Upload Data' tab.",
+        color = "#dc3545"
+      )
+    )
   )
-
-  intro_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-ruler'></i>Outlier Analysis Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "This section is dedicated to identifying potential outliers within your <b>Clinical Sample Data</b>. Outliers are data points that deviate significantly from other observations and can unduly influence the results of your analysis.",
-    "</p>",
-    "</div>"
-  )
-
-  instructions_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Perform the Analysis</h5>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Select Outlier Test:</b> Choose the statistical criterion for identifying outliers.",
-    "<div class='help-detail'><b>Between Samples:</b> Uses Burnett's criterion to identify entire samples that are outliers compared to others.</div>",
-    "<div class='help-detail'><b>Within Samples:</b> Uses the Studentized Range (Q) to identify outlier replicates within a single sample.</div>",
-    "</div></div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Select Confidence Level:</b> Set the statistical confidence for the test. This determines how extreme a point must be to be flagged as an outlier. A higher confidence level (e.g., 99%) makes the test stricter.</div>",
-    "</div></div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'><b>Run the Analysis:</b> Click the <b style='color: #605CA8;'>Analyze</b> button to perform the outlier detection.</div>",
-    "</div></div>"
-  )
-
-  interpretation_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-magnifying-glass-chart'></i>Interpreting the Results</h5>",
-    "<div class='help-important-note' style='background-color: #f0f0f8; border-left-color: #605CA8;'>",
-    "Any sample flagged as an <b style='color: #dc3545;'>outlier</b> will be highlighted in the results table.",
-    "<br><br><b>Important:</b> This tool only identifies potential outliers; it does not automatically remove them. If you wish to proceed without these outliers, you must manually remove them from your source file and <b>re-upload the cleaned dataset</b> on the 'Upload Data' tab.",
-    "</div>",
-    "</div>"
-  )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    intro_section,
-    instructions_section,
-    interpretation_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
-#' Generates the HTML content for the help panel on the 'Model Validation' page,
-#' specifically for the 'Formal Model Assessment' tab.
-#'
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Formal Model Assessment' tab.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_4A_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
-  )
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
 
-  intro_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-clipboard-check'></i>Formal Model Assessment Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "This section allows you to perform formal hypothesis tests to validate the assumptions of the chosen regression model. These tests provide statistical evidence to assess the model's suitability for your data.",
-    "</p>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "Simply click the <b style='color: #605CA8;'>Run tests</b> button to execute a standard set of validation tests for normality and homoscedasticity (constant variance) for each IVD-MD comparison.",
-    "</p>",
-    "</div>"
+    glassHelpSection(
+      title = "Formal Model Assessment Guide",
+      htmltools::p(style = "color: #555; margin-bottom: 10px;",
+                   "This section allows you to perform formal hypothesis tests to validate the assumptions of the chosen regression model. These tests provide statistical evidence to assess the model's suitability for your data."
+      ),
+      htmltools::p(style = "color: #555;",
+                   "Simply click the <b style='color: #605CA8;'>Run tests</b> button to execute a standard set of validation tests for normality and homoscedasticity (constant variance) for each IVD-MD comparison."
+      )
+    )
   )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    intro_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
-
-#' Generates the HTML content for the help panel on the 'Model Validation' page,
-#' specifically for the 'Model Assessment Plots' tab.
-#'
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Model Assessment Plots' tab.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_4B_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
+
+    glassHelpSection(
+      title = "Model Assessment Plots Guide",
+      htmltools::p(style = "color: #555;",
+                   "This section provides graphical tools for the visual assessment of the regression model assumptions. Plots can often reveal patterns or issues that are not obvious from formal tests alone."
+      )
+    ),
+
+    glassHelpSection(
+      title = "How to Generate Plots",
+
+      glassHelpStep(
+        number = 1,
+        title = "Choose Plot Type",
+        description = "Select one of the five available diagnostic plots to check for issues like non-linearity, non-constant variance, or non-normality of residuals."
+      ),
+
+      glassHelpStep(
+        number = 2,
+        title = "Customize Your Plot",
+        description = "Use the options to add curves, customize titles and labels, and adjust the plot dimensions for downloaded files."
+      ),
+
+      glassHelpStep(
+        number = 3,
+        title = "Generate and Save",
+        description = "Click the <b style='color: #605CA8;'>Plot</b> button to generate the visual. Click it again to update after changing options. Use the <b style='color: #605CA8;'>Download</b> button to save the plot to your device."
+      )
+    )
   )
-
-  intro_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-chart-line'></i>Model Assessment Plots Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "This section provides graphical tools for the visual assessment of the regression model assumptions. Plots can often reveal patterns or issues that are not obvious from formal tests alone.",
-    "</p>",
-    "</div>"
-  )
-
-  instructions_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Generate Plots</h5>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Choose Plot Type:</b> Select one of the five available diagnostic plots to check for issues like non-linearity, non-constant variance, or non-normality of residuals.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Customize Your Plot:</b> Use the options to add curves, customize titles and labels, and adjust the plot dimensions for downloaded files.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'><b>Generate and Save:</b> Click the <b style='color: #605CA8;'>Plot</b> button to generate the visual. Click it again to update after changing options. Use the <b style='color: #605CA8;'>Download</b> button to save the plot to your device.</div>",
-    "</div>",
-
-    "</div>"
-  )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    intro_section,
-    instructions_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
-#' Generates the HTML content for the help panel on the 'Results' page,
-#' specifically for the 'Tables' tab.
-#'
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Results Tables' tab.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_5A_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
+
+    glassHelpSection(
+      title = "Results Table Guide",
+      htmltools::p(style = "color: #555;",
+                   "This section presents the detailed numerical results of the commutability evaluation. Use the options below to customize the analysis before generating the output table."
+      )
+    ),
+
+    glassHelpSection(
+      title = "How to Generate the Table",
+
+      glassHelpStep(
+        number = 1,
+        title = "Select Confidence Level",
+        description = "Choose the confidence level for the prediction intervals, which are used to determine commutability. A 99% level is generally recommended."
+      ),
+
+      glassHelpStep(
+        number = 2,
+        title = "Apply Filters (Optional)",
+        description = "You can narrow down the results based on whether materials fall inside or outside the prediction intervals, or by whether the difference in non-selectivity (DINS) was acceptable."
+      ),
+
+      glassHelpStep(
+        number = 3,
+        title = "Choose Format",
+        description = "Select 'Compact' for a concise view or 'Expanded' for a wide-format table with all data points in separate columns."
+      ),
+
+      glassHelpStep(
+        number = 4,
+        title = "Generate the Table",
+        description = "Click the <b style='color: #605CA8;'>Calculate</b> button to perform the final analysis and display the results."
+      )
+    )
   )
-
-  intro_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-table-list'></i>Results Table Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "This section presents the detailed numerical results of the commutability evaluation. Use the options below to customize the analysis before generating the output table.",
-    "</p>",
-    "</div>"
-  )
-
-  instructions_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Generate the Table</h5>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Select Confidence Level:</b> Choose the confidence level for the prediction intervals, which are used to determine commutability. A 99% level is generally recommended.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Apply Filters (Optional):</b> You can narrow down the results based on whether materials fall inside or outside the prediction intervals, or by whether the difference in non-selectivity (DINS) was acceptable.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'><b>Choose Format:</b> Select 'Compact' for a concise view or 'Expanded' for a wide-format table with all data points in separate columns.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>4</div>",
-    "<div class='help-step-content'><b>Generate the Table:</b> Click the <b style='color: #605CA8;'>Calculate</b> button to perform the final analysis and display the results.</div>",
-    "</div>",
-
-    "</div>"
-  )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    intro_section,
-    instructions_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
-
-#' Generates the HTML content for the help panel on the 'Results' page,
-#' specifically for the 'Plots' tab.
-#'
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Results Plots' tab.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_5B_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
+
+    glassHelpSection(
+      title = "Results Plot Guide",
+      htmltools::p(style = "color: #555;",
+                   "This section provides a powerful way to visualize the commutability evaluation results. Plots offer a complementary perspective to the numerical tables, making it easier to interpret relationships and identify patterns."
+      )
+    ),
+
+    glassHelpSection(
+      title = "How to Customize and Generate Plots",
+
+      glassHelpStep(
+        number = 1,
+        title = "Set Plotting Options",
+        description = "Adjust the axis tick density for readability and choose a pattern curve to overlay on the clinical sample data to highlight trends."
+      ),
+
+      glassHelpStep(
+        number = 2,
+        title = "Customize Labels and Dimensions",
+        description = "Provide custom titles for the plot and its axes. The width and height inputs control the dimensions of the downloaded plot."
+      ),
+
+      glassHelpStep(
+        number = 3,
+        title = "Prepare for Download",
+        description = "Select the desired file format (PDF, PNG, TIF) and resolution (DPI) for the saved image."
+      ),
+
+      glassHelpStep(
+        number = 4,
+        title = "Generate and Save",
+        description = "Click the <b style='color: #605CA8;'>Plot</b> button to render the graph. Click it again to refresh after changing options. Use the <b style='color: #605CA8;'>Download</b> button to save the plot."
+      )
+    )
   )
-
-  intro_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-chart-line'></i>Results Plot Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "This section provides a powerful way to visualize the commutability evaluation results. Plots offer a complementary perspective to the numerical tables, making it easier to interpret relationships and identify patterns.",
-    "</p>",
-    "</div>"
-  )
-
-  instructions_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Customize and Generate Plots</h5>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Set Plotting Options:</b> Adjust the axis tick density for readability and choose a pattern curve to overlay on the clinical sample data to highlight trends.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>2</div>",
-    "<div class='help-step-content'><b>Customize Labels and Dimensions:</b> Provide custom titles for the plot and its axes. The width and height inputs control the dimensions of the downloaded plot.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>3</div>",
-    "<div class='help-step-content'><b>Prepare for Download:</b> Select the desired file format (PDF, PNG, TIF) and resolution (DPI) for the saved image.</div>",
-    "</div>",
-
-    "<div class='help-step'>",
-    "<div class='help-step-number'>4</div>",
-    "<div class='help-step-content'><b>Generate and Save:</b> Click the <b style='color: #605CA8;'>Plot</b> button to render the graph. Click it again to refresh after changing options. Use the <b style='color: #605CA8;'>Download</b> button to save the plot.</div>",
-    "</div>",
-
-    "</div>"
-  )
-
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    intro_section,
-    instructions_section,
-    "</div>"
-  )
-
-  return(help_text)
 }
 
-#' Generates the HTML content for the help panel on the 'Results' page,
-#' specifically for the 'Report' tab.
-#'
-#' @return An HTML string.
+#' Generates the content for the help panel on the 'Report' tab.
+#' @return A glassHelpCard tagList.
 #' @noRd
 help_button_page_5C_text <- function() {
 
-  # --- HTML Content ---
-  tip_section <- paste0(
-    "<div class='help-tip'>",
-    "<i class='fa-solid fa-lightbulb'></i>",
-    "<div>Click the 'Show Help Text' button again to hide this panel.</div>",
-    "</div>"
-  )
+  glassHelpCard(
+    glassHelpTip("Click the 'Show Help Text' button again to hide this panel."),
 
-  intro_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-file-pdf'></i>Report Generation Guide</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "This tab allows you to generate a comprehensive, self-contained PDF document that summarizes your entire commutability evaluation session. This report is ideal for documentation, sharing, and archiving your analysis.",
-    "</p>",
-    "</div>"
-  )
+    glassHelpSection(
+      title = "Report Generation Guide",
+      htmltools::p(style = "color: #555;",
+                   "This tab allows you to generate a comprehensive, self-contained PDF document that summarizes your entire commutability evaluation session. This report is ideal for documentation, sharing, and archiving your analysis."
+      )
+    ),
 
-  instructions_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-list-check'></i>How to Generate the Report</h5>",
-    "<div class='help-step'>",
-    "<div class='help-step-number'>1</div>",
-    "<div class='help-step-content'><b>Download the Report:</b> Simply click the <b style='color: #605CA8;'>Download Report</b> button. The application will gather all inputs, analyses, and results from your current session and compile them into a single PDF file, which will then be downloaded to your device.</div>",
-    "</div>",
-    "</div>"
-  )
+    glassHelpSection(
+      title = "How to Generate the Report",
+      glassHelpStep(
+        number = 1,
+        title = "Download the Report",
+        description = "Simply click the <b style='color: #605CA8;'>Download Report</b> button. The application will gather all inputs, analyses, and results from your current session and compile them into a single PDF file, which will then be downloaded to your device."
+      )
+    ),
 
-  contents_section <- paste0(
-    "<div class='help-section'>",
-    "<h5 class='help-header'><i class='fa-solid fa-book-open'></i>What's Inside the Report?</h5>",
-    "<p style='color: #555555; line-height: 1.6;'>",
-    "The generated report is structured to provide a complete overview of the evaluation, including:",
-    "</p>",
-    "<div class='help-info-box' style='border-left-color: #28A745;'>",
-    "<div class='help-info-item'><i class='fa-solid fa-clipboard-check'></i><div><b>Data Diagnostics:</b> A full summary of the initial validation and quality checks for both your clinical sample and EQA material data.</div></div>",
-    "<div class='help-info-item'><i class='fa-solid fa-sliders'></i><div><b>Analysis Parameters:</b> A record of all the key parameters you selected, such as the data transformation, regression model, and non-selectivity tolerance (M).</div></div>",
-    "<div class='help-info-item'><i class='fa-solid fa-ruler'></i><div><b>Outlier and Model Validation:</b> The results from the outlier analysis and the formal and visual tests used to validate the statistical model.</div></div>",
-    "<div class='help-info-item'><i class='fa-solid fa-table'></i><div><b>Final Results:</b> The complete set of detailed numerical result tables and the final commutability evaluation plots.</div></div>",
-    "</div>",
-    "</div>"
-  )
+    glassHelpSection(
+      title = "What's Inside the Report?",
+      htmltools::p(style = "color: #555; margin-bottom: 15px;",
+                   "The generated report is structured to provide a complete overview of the evaluation, including:"
+      ),
 
-  help_text <- paste0(
-    "<div class='help-container'>",
-    tip_section,
-    intro_section,
-    instructions_section,
-    contents_section,
-    "</div>"
+      glassHelpInfoBox(
+        glassHelpInfoItem("Data Diagnostics", "A full summary of the initial validation and quality checks for both your clinical sample and EQA material data.", icon = "clipboard-check"),
+        glassHelpInfoItem("Analysis Parameters", "A record of all the key parameters you selected, such as the data transformation, regression model, and non-selectivity tolerance (M).", icon = "sliders"),
+        glassHelpInfoItem("Outlier and Model Validation", "The results from the outlier analysis and the formal and visual tests used to validate the statistical model.", icon = "ruler"),
+        glassHelpInfoItem("Final Results", "The complete set of detailed numerical result tables and the final commutability evaluation plots.", icon = "table")
+      )
+    )
   )
-
-  return(help_text)
 }
 
 #' Render a styled diagnostic table

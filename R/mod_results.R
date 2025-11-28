@@ -21,16 +21,17 @@ mod_results_ui <- function(id) {
         "Commutability Evaluation Analysis Results"
       ),
       # --- Button: Displays Help Text for this Module & Panel ---
-      actionBttn(
+      glassButton(
         inputId = ns("show_results_explanation"),
         label = "Show Help Text",
-        icon = icon(name = "circle-question"),
-        style = "gradient",
-        color = "success"
+        icon = icon(name = "circle-question")
       )
     ),
     # --- Help Text Output for this Module (Display After Button is Pressed) ---
-    htmlOutput(outputId = ns("results_explanation")),
+    glassTogglePanel(
+      triggerId = ns("show_results_explanation"),
+      help_button_page_5A_text()
+    ),
     # --- Create Common Card for all Three Result Panels ---
     # --- Titled: 'Customizable Commutability Evaluation Options' ---
     # Includes:
@@ -46,7 +47,7 @@ mod_results_ui <- function(id) {
       width = "100%",
       fluidRow(
         column(
-          width = 6,
+          width = 5,
           div(
             class = "parameter-section",
             h5(
@@ -73,7 +74,7 @@ mod_results_ui <- function(id) {
           )
         ),
         column(
-          width = 6,
+          width = 5,
           div(
             class = "parameter-section",
             h5(
@@ -96,6 +97,18 @@ mod_results_ui <- function(id) {
               inline = TRUE,
               width = "100%",
               disabled = FALSE
+            )
+          )
+        ),
+        column(
+          width = 2,
+          div(
+            style = "margin-top: 25px;", # Vertical alignment with radio groups
+            glassButton(
+              inputId = ns("update_cache"),
+              label = "Run Analysis",
+              icon = icon("rotate"),
+              width = "100%"
             )
           )
         )
@@ -282,15 +295,12 @@ mod_results_ui <- function(id) {
               title = "Commutability Evaluation Analysis Table",
               toolbar = glassButton(
                 inputId = ns("calculate"),
-                label = "Calculate",
-                icon = icon("calculator"),
+                label = "Display",
+                icon = icon("table-list"),
                 width = NULL,
-                disabled = FALSE
+                disabled = TRUE
               ),
               icon = icon("table-list"),
-              uiOutput(
-                outputId = ns("repress_calculate_notification")
-              ),
               withSpinner(
                 ui_element = DT::DTOutput(outputId = ns("ce_results")),
                 color = "#605ca8", # Changed color to purple to match original
@@ -319,13 +329,14 @@ mod_results_ui <- function(id) {
                 ),
                 glassButton(
                   inputId = ns("calculate_grid"),
-                  label = "Calculate",
-                  icon = icon("calculator"),
-                  width = "auto"
+                  label = "Display",
+                  icon = icon("vial"),
+                  width = "auto",
+                  disabled = TRUE
                 )
               ),
               icon = icon("vial"),
-              uiOutput(ns("repress_grid_notification")),
+              #uiOutput(ns("repress_grid_notification")),
               withSpinner(
                 ui_element = DT::DTOutput(outputId = ns("ce_results_grid")),
                 color = "#605ca8", # Changed color to purple to match original
@@ -341,203 +352,167 @@ mod_results_ui <- function(id) {
         title = "Plots",
         value = "show_results_plots",
         icon = icon("chart-line"),
-        div(
-          class = "dashboard-card",
-          div(
-            class = "card-header",
-            icon(name = "vial", class = "header-icon"),
-            h3("Options")
-          ),
-          box(
-            title = tagList(
-              icon("sliders", class = "section-icon"),
-              "Customize Appearance"
-            ),
-            collapsible = TRUE,
-            collapsed = TRUE,
-            width = 12,
-            solidHeader = TRUE,
-            status = "primary",
-            fluidRow(
-              column(
-                width = 4,
-                h4("Labels"),
-                div(
-                  class = "parameter-section",
-                  h5("Plot Title"),
-                  textInputIcon(
-                    inputId = ns("title"),
-                    label = NULL,
-                    placeholder = "Some title ...",
-                    icon = icon("h")
-                  ),
-                  h5("X-Axis Title"),
-                  textInputIcon(
-                    inputId = ns("x_name"),
-                    label = NULL,
-                    placeholder = "Some title ...",
-                    icon = icon("pen")
-                  ),
-                  h5("Y-Axis Title"),
-                  textInputIcon(
-                    inputId = ns("y_name"),
-                    label = NULL,
-                    placeholder = "Some title ...",
-                    icon = icon("pen")
-                  ),
-                )
-              ),
-              column(
-                width = 4,
-                h4(
-                  "Advanced Options"
+        # --- Card 1: Appearance Options (Converted from box) ---
+        glassCard(
+          inputId = ns("card_plot_appearance"),
+          title = "Customize Appearance",
+          icon = icon("sliders"),
+          collapsible = TRUE,
+          collapsed = TRUE,
+          fluidRow(
+            column(
+              width = 4,
+              h4("Labels"),
+              div(
+                class = "parameter-section",
+                h5("Plot Title"),
+                textInputIcon(
+                  inputId = ns("title"),
+                  label = NULL,
+                  placeholder = "Some title ...",
+                  icon = icon("h")
                 ),
-                div(
-                  class = "parameter-section",
-                  h5("Pattern Curve"),
-                  glassDropdown(
-                    inputId = ns("cs_curve"),
-                    choices = c(
-                      "None" = "none",
-                      "Diagonal" = "equivalence_curve",
-                      "Fitted" = "fitted_curve",
-                      "Flexible" = "smooth_curve"
-                    ),
-                    selected = "none",
-                    width = "100%"
+                h5("X-Axis Title"),
+                textInputIcon(
+                  inputId = ns("x_name"),
+                  label = NULL,
+                  placeholder = "Some title ...",
+                  icon = icon("pen")
+                ),
+                h5("Y-Axis Title"),
+                textInputIcon(
+                  inputId = ns("y_name"),
+                  label = NULL,
+                  placeholder = "Some title ...",
+                  icon = icon("pen")
+                )
+              )
+            ),
+            column(
+              width = 4,
+              h4("Advanced Options"),
+              div(
+                class = "parameter-section",
+                h5("Pattern Curve"),
+                glassDropdown(
+                  inputId = ns("cs_curve"),
+                  choices = c(
+                    "None" = "none",
+                    "Diagonal" = "equivalence_curve",
+                    "Fitted" = "fitted_curve",
+                    "Flexible" = "smooth_curve"
                   ),
-                  h5("Axis Ticks"),
-                  glassSlider(
-                    inputId = ns("tick_density"),
-                    label = NULL,
-                    choices = 3:20,
-                    selected = 6,
-                    unit = " Ticks",
-                    width = "100%"
-                  )
+                  selected = "none",
+                  width = "100%"
+                ),
+                h5("Axis Ticks"),
+                glassSlider(
+                  inputId = ns("tick_density"),
+                  label = NULL,
+                  choices = 3:20,
+                  selected = 6,
+                  unit = " Ticks",
+                  width = "100%"
                 )
               )
             )
-          ),
-          box(
-            title = tagList(
-              icon("sliders", class = "section-icon"),
-              "Download Options"
-            ),
-            collapsible = TRUE,
-            collapsed = TRUE,
-            width = 12,
-            solidHeader = TRUE,
-            status = "primary",
-            fluidRow(
-              column(
-                width = 4,
-                h4(
-                  "Dimensions"
-                ),
-                div(
-                  class = "parameter-section",
-                  h5("Width (cm)"),
-                  numericInputIcon(
-                    inputId = ns("width"),
-                    label = NULL,
-                    value = 17.6,
-                    min = 2,
-                    max = 42,
-                    step = 0.2,
-                    icon = icon("arrows-left-right")
-                  ),
-                  h5("Height (cm)"),
-                  numericInputIcon(
-                    inputId = ns("height"),
-                    label = NULL,
-                    value = 11.7,
-                    min = 2,
-                    max = 59.4,
-                    step = 0.5,
-                    icon = icon("arrows-up-down")
-                  )
-                )
-              ),
-              column(
-                width = 4,
-                h4(
-                  "Format & Quality"
-                ),
-                div(
-                  class = "parameter-section",
-                  h5("Format"),
-                  glassDropdown(
-                    inputId = ns("plot_download_file_type"),
-                    choices = c(
-                      "PDF" = ".pdf",
-                      "PNG" = ".png",
-                      "TIF" = ".tif",
-                      "TIFF" = ".tiff",
-                      "JPEG" = ".jpeg"
-                    ),
-                    selected = NULL,
-                    width = "100%"
-                  ),
-                  h5("Quality"),
-                  glassSlider(
-                    inputId = ns("plot_download_quality"),
-                    choices = c(
-                      100, 200, 300,
-                      450, 600, 750,
-                      1000, 1250, 1500
-                    ),
-                    selected = 300,
-                    width = "100%",
-                    unit = " dpi"
-                  )
-                )
-              )
-            )
-          ),
-          div(
-            class = "card-body"
           )
         ),
-        div(
-          class = "dashboard-card",
-          div(
-            class = "card-header",
-            icon(name = "chart-line", class = "header-icon"),
-            h3("Generate Commutability Evaluation Plot"),
-            div(
-              class = "button-container",
-              glassButton(
-                inputId = ns("plot"),
-                label = "Plot",
-                icon = icon("chart-line"),
-                width = NULL,
-                disabled = FALSE
-              ),
-              glassDownloadButton(
-                ns("download_ce_plots"),
-                label = "Download",
-                icon = icon("download"),
-                width = NULL,
-                disabled = FALSE
+        # --- Card 2: Download Options (Converted from box) ---
+        glassCard(
+          inputId = ns("card_plot_download"),
+          title = "Download Options",
+          icon = icon("download"),
+          collapsible = TRUE,
+          collapsed = TRUE,
+          fluidRow(
+            column(
+              width = 4,
+              h4("Dimensions"),
+              div(
+                class = "parameter-section",
+                h5("Width (cm)"),
+                numericInputIcon(
+                  inputId = ns("width"),
+                  label = NULL,
+                  value = 17.6,
+                  min = 2,
+                  max = 42,
+                  step = 0.2,
+                  icon = icon("arrows-left-right")
+                ),
+                h5("Height (cm)"),
+                numericInputIcon(
+                  inputId = ns("height"),
+                  label = NULL,
+                  value = 11.7,
+                  min = 2,
+                  max = 59.4,
+                  step = 0.5,
+                  icon = icon("arrows-up-down")
+                )
               )
+            ),
+            column(
+              width = 4,
+              h4("Format & Quality"),
+              div(
+                class = "parameter-section",
+                h5("Format"),
+                glassDropdown(
+                  inputId = ns("plot_download_file_type"),
+                  choices = c(
+                    "PDF" = ".pdf",
+                    "PNG" = ".png",
+                    "TIF" = ".tif",
+                    "TIFF" = ".tiff",
+                    "JPEG" = ".jpeg"
+                  ),
+                  selected = NULL,
+                  width = "100%"
+                ),
+                h5("Quality"),
+                glassSlider(
+                  inputId = ns("plot_download_quality"),
+                  choices = c(
+                    100, 200, 300,
+                    450, 600, 750,
+                    1000, 1250, 1500
+                  ),
+                  selected = 300,
+                  width = "100%",
+                  unit = " dpi"
+                )
+              )
+            )
+          )
+        ),
+        # --- Card 3: Plot Result (Converted to Result Card) ---
+        glassResultCard(
+          inputId = ns("plot_result_card"),
+          title = "Commutability Evaluation Plot",
+          icon = icon("chart-line"),
+          toolbar = tagList(
+            glassButton(
+              inputId = ns("plot"),
+              label = "Plot",
+              icon = icon("chart-line"),
+              disabled = TRUE
+            ),
+            glassDownloadButton(
+              outputId = ns("download_ce_plots"),
+              label = "Download",
+              icon = icon("download")
             )
           ),
-          div(
-            class = "card-body",
-            div(
-              style = "text-align: center;",
-              uiOutput(ns("repress_plot_notification"))
+          withSpinner(
+            ui_element = plotOutput(
+              outputId = ns("ce_plots"),
+              width = "100%",
+              height = "auto"
             ),
-            div(
-              class = "plot-container",
-              style = "max-width: 100%; overflow-x: auto;", # Ensures container itself can scroll if content is too wide
-              withSpinner(
-                ui_element = plotOutput(outputId = ns("ce_plots"), width = "100%", height = "auto"),
-                type = 4,
-                color = "#605ca8"
-              )
-            )
+            type = 4,
+            color = "#605ca8"
           )
         )
       ),
@@ -581,27 +556,6 @@ mod_results_ui <- function(id) {
 #' @noRd
 mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_data, model_validation_data) {
   moduleServer(id, function(input, output, session) {
-
-    # --- Help Text Logic ---
-    hide <- reactiveValues(hide = TRUE)
-    observeEvent(input$show_results_explanation, {
-      hide$hide <- !hide$hide
-    })
-
-    output$results_explanation <- renderUI({
-      if (!hide$hide) {
-        # The active tab determines which help text to show
-        if (input$results_tabs == "show_results_tables") {
-          HTML(help_button_page_5A_text())
-        }
-        else if (input$results_tabs == "show_results_plots"){
-          HTML(help_button_page_5B_text())
-        }
-        else {
-          HTML(help_button_page_5C_text())
-        }
-      }
-    })
 
     # --- Reactive Data Preparation ---
     cs_data_long <- reactive({
@@ -672,37 +626,124 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       )
     })
 
-    # --- Calculation, Caching, and Notification Logic ---
-
+    # --- State Management for Labels & Cache ---
     results_data_cache <- reactiveVal(NULL)
-    repress_calculate_needed <- reactiveVal(FALSE)
-    repress_grid_needed <- reactiveVal(FALSE)
-    repress_plot_needed <- reactiveVal(FALSE)
 
-    # 2. Invalidate the cache if any upstream parameters change. This forces
-    #    re-calculation on the next button press.
+    # Track the "freshness" of the analysis regarding RAW DATA
+    # TRUE = Data changed, FALSE = Just updating params. Both need full rerun
+    btn_state <- reactiveValues(
+      is_fresh_start = TRUE,
+      global_dirty = FALSE
+    )
+
+    # Track Local Button State
+    local_state <- reactiveValues(
+      # Have the buttons been clicked at least once since last Reset?
+      main_clicked = FALSE,
+      grid_clicked = FALSE,
+      plot_clicked = FALSE,
+
+      # Does the current display match the current inputs? (Controls "Enabled/Disabled")
+      main_fresh = FALSE,
+      grid_fresh = FALSE,
+      plot_fresh = FALSE
+    )
+
+    # Raw Data Changes -> Full Reset of Labels
+    observeEvent(c(file_upload_data$raw_cs_data(), file_upload_data$raw_eq_data()), {
+
+      # Mark as a fresh start
+      btn_state$is_fresh_start <- TRUE
+      btn_state$global_dirty <- TRUE
+
+      # Reset Local State
+      local_state$main_clicked <- FALSE
+      local_state$grid_clicked <- FALSE
+      local_state$plot_clicked <- FALSE
+      local_state$main_fresh <- FALSE
+      local_state$grid_fresh <- FALSE
+      local_state$plot_fresh <- FALSE
+
+      # Reset Button Labels
+      updateGlassButton(session, "update_cache", label = "Run Analysis")
+      updateGlassButton(session, "calculate", label = "Display", disabled = TRUE)
+      updateGlassButton(session, "calculate_grid", label = "Display", disabled = TRUE)
+      updateGlassButton(session, "plot", label = "Plot", disabled = TRUE)
+
+      # Invalidate Cache
+      results_data_cache(NULL)
+
+    }, ignoreInit = FALSE)
+
+    # Parameter Changes -> Disable Local Buttons (Not Resetting Labels)
     observeEvent(
-      c(
-        file_upload_data$is_valid(),
-        file_upload_data$raw_cs_data(),
-        file_upload_data$raw_eq_data(),
-        file_upload_data$reference_method(),
-        mod_dins_params(),
-        input$pi_conf_level
-      ),
-      {
-        results_data_cache(NULL)
-        repress_calculate_needed(TRUE)
-        repress_grid_needed(TRUE)
-        repress_plot_needed(TRUE)
+      eventExpr = {
+        c(
+          file_upload_data$is_valid(),
+          file_upload_data$reference_method(),
+          mod_dins_params(),
+          input$pi_conf_level
+        )
+      },
+      handlerExpr = {
+
+        # Require Clicking on Local Buttons
+        btn_state$global_dirty <- TRUE
+
+        # Disable downstream buttons until updated.
+        updateGlassButton(session, "calculate", disabled = TRUE)
+        updateGlassButton(session, "calculate_grid", disabled = TRUE)
+        updateGlassButton(session, "plot", disabled = TRUE)
+
+        # Ensure Update button is enabled
+        updateGlassButton(session, "update_cache", disabled = FALSE)
       },
       ignoreInit = TRUE
     )
 
-    # Run the calculation and populate the cache.
-    observeEvent(c(input$calculate, input$calculate_grid, input$plot), {
-      if (is.null(results_data_cache())) {
-        if (file_upload_data$is_valid()) {
+    # Local Input Changes (Re-Enable Locals if Global not dirty)
+
+    # Helper function to safely enable
+    check_and_enable <- function(id, is_dirty_flag) {
+      if (!btn_state$global_dirty) {
+        local_state[[is_dirty_flag]] <- FALSE # It's no longer fresh (display doesn't match input)
+        updateGlassButton(session, id, disabled = FALSE)
+      }
+    }
+
+    observeEvent(c(input$exclude_extrapolations, input$filter_eq_location, input$filter_by_dins, input$data_format), {
+      check_and_enable("calculate", "main_fresh")
+    })
+
+    observeEvent(c(input$exclude_extrapolations, input$filter_eq_location, input$filter_by_dins, input$material), {
+      check_and_enable("calculate_grid", "grid_fresh")
+    })
+
+    observeEvent(
+      eventExpr = {
+        c(
+          input$exclude_extrapolations,
+          input$title,
+          input$x_name,
+          input$y_name,
+          input$cs_curve,
+          input$tick_density,
+          input$width,
+          input$height,
+          input$plot_download_file_type,
+          input$plot_download_quality
+        )
+      },
+      handlerExpr = {
+        check_and_enable("plot", "plot_fresh")
+      }
+    )
+
+    # Global Update Click -> Run Analysis & Update Labels
+    observeEvent(
+      input$update_cache,
+      handlerExpr = {
+        if (isTRUE(file_upload_data$is_valid())) {
           params <- mod_dins_params()
           data_without_NA_values <- na.omit(object = cs_data_long())
           new_data_without_NA_values <- na.omit(object = eq_data_long())
@@ -720,70 +761,62 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
             M = params$M,
             upper_zeta = upper_zeta_val
           )
+
+          # Populate the cache
+          results_data_cache(result)
+
+          # Reset Dirty Flags
+          btn_state$global_dirty <- FALSE
+          local_state$main_fresh <- FALSE
+          local_state$grid_fresh <- FALSE
+          local_state$plot_fresh <- FALSE
+
+
+          # Enable the local buttons now that cache is fresh
+          updateGlassButton(session, "calculate", disabled = FALSE)
+          updateGlassButton(session, "calculate_grid", disabled = FALSE)
+          updateGlassButton(session, "plot", disabled = FALSE)
+
+          # Label Logic for Main Button
+          if (btn_state$is_fresh_start) {
+            updateGlassButton(session, "update_cache", label = "Update Results")
+            btn_state$is_fresh_start <- FALSE
+          }
+
           # --- For debugging (remove after finished product) ---
           debug_ce_results <<- result
-          results_data_cache(result) # Populate the cache
-
         }
         else {
           results_data_cache(
-            list(
-              error = "Validation tests do not pass, so calculations are not possible"
-            )
+            list(error = "Validation tests do not pass, so calculations are not possible")
           )
         }
-      }
-    }, ignoreNULL = TRUE)
+      })
 
-    # Reset flags when buttons are pressed
     observeEvent(input$calculate, {
-      repress_calculate_needed(FALSE)
+      local_state$main_fresh <- TRUE
+      local_state$main_clicked <- TRUE
+      updateGlassButton(session, "calculate", label = "Refresh")
     })
 
     observeEvent(input$calculate_grid, {
-      repress_grid_needed(FALSE)
+      local_state$grid_fresh <- TRUE
+      local_state$grid_clicked <- TRUE
+      updateGlassButton(session, "calculate_grid", disabled = TRUE, label = "Refresh")
     })
 
     observeEvent(input$plot, {
-      repress_plot_needed(FALSE)
-    })
-
-    # Render the notification UIs
-    notification_message <- "Changes detected. Please press the button to update."
-
-    output$repress_calculate_notification <- renderUI({
-      if (repress_calculate_needed()) {
-        div(
-          style = "color: #605CA8; font-weight: bold; margin-top: 8px;",
-          notification_message
-        )
-      }
-    })
-
-    output$repress_grid_notification <- renderUI({
-      if (repress_grid_needed()) {
-        div(
-          style = "color: #605CA8; font-weight: bold; margin-top: 8px;",
-          notification_message
-        )
-      }
-    })
-
-    output$repress_plot_notification <- renderUI({
-      if (repress_plot_needed()) {
-        div(
-          style = "color: #605CA8; font-weight: bold; margin-top: 8px;",
-          notification_message
-        )
-      }
+      local_state$plot_fresh <- TRUE
+      local_state$plot_clicked <- TRUE
+      updateGlassButton(session, "plot", disabled = TRUE, label = "Refresh")
     })
 
     # --- Prepare to Render Main Table -----------------------------------------
     ce_results_display <- eventReactive(input$calculate, {
-      # --- Ensure the calculation has run at least once -----------------------
+      # --- Ensure the calculation has run at least once ---
       req(results_data_cache())
 
-      # --- Get all results from cache -----------------------------------------
+      # --- Get all results from cache ---
       results_list <- results_data_cache()
 
       # --- Double ensure that the `results_list` is valid ---
@@ -873,8 +906,17 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
         display_tbl[, inside_rate := format(inside_rate, nsmall = 3L, digits = 3L)]
 
         setnames(display_tbl,
-                 old = c("comparison", "SampleID", "zeta", "zeta_ci_lwr", "zeta_ci_upr", "zeta_upper", "dins_conclusion", "MP_B", "MP_A", "prediction", "pi_lwr", "pi_upr", "pi_inside", "inside_rate"),
-                 new = c("IVD-MD comparison", "ID of evaluated material", "zeta", "zeta CI lwr", "zeta CI upr", "upper zeta value", "Differences in non-selectivity is", "IVD-MD 1", "IVD-MD 2", "Prediction", "PI lwr", "PI upr", "Evaluated material is", "Conclusion strength")
+                 old = c("comparison", "SampleID",
+                         "zeta", "zeta_ci_lwr", "zeta_ci_upr",
+                         "zeta_upper", "dins_conclusion",
+                         "MP_B", "MP_A", "prediction",
+                         "pi_lwr", "pi_upr", "pi_inside", "inside_rate"),
+                 new = c("IVD-MD comparison", "ID of evaluated material",
+                         "zeta", "zeta CI lwr", "zeta CI upr",
+                         "upper zeta value", "Differences in non-selectivity is",
+                         "IVD-MD 1", "IVD-MD 2", "Prediction",
+                         "PI lwr", "PI upr", "Evaluated material is", "Conclusion strength"),
+                 skip_absent = TRUE
         )
       }
 
@@ -1233,12 +1275,16 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       #)
     })
 
+    # --- Display Commutability Evaluation Plots -------------------------------
     output$ce_plots <- renderPlot(
       res = 120,
       height = function() {
         # --- DYNAMIC HEIGHT CALCULATION ---
         results_list <- results_data_cache()
-        req(results_list, !is.null(results_list$merged_ce_data))
+        req(
+          results_list,
+          !is.null(results_list$merged_ce_data)
+        )
 
         # 1. Get the number of unique panels (comparisons)
         n_panels <- length(unique(results_list$merged_ce_data$comparison))
@@ -1264,11 +1310,22 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
       }
     )
 
+    # --- Download Handler for Downloading Commutability Evaluation Plots ------
     output$download_ce_plots <- downloadHandler(
       filename = function() {
-        paste(
+        paste0(
+          "ce_plots_",
           toupper(mod_dins_params()$pi_method),
-          "_", Sys.Date(), input$plot_download_file_type, sep = ""
+          "_",
+          mod_dins_params()$transformation,
+          "_",
+          paste0(
+            "M_used_",
+            mod_dins_params()$M
+          ),
+          "generated_on_",
+          Sys.Date(),
+          input$plot_download_file_type
         )
       },
       content = function(file) {
@@ -1344,9 +1401,12 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
           from = rendered_report,
           to = file
         )
-
       }
     )
+
+    outputOptions(output, "ce_results", suspendWhenHidden = FALSE)
+    outputOptions(output, "ce_results_grid", suspendWhenHidden = FALSE)
+    outputOptions(output, "ce_plots", suspendWhenHidden = FALSE)
 
   })
 }

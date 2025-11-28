@@ -23,75 +23,56 @@ mod_file_upload_ui <- function(id) {
         icon("upload"),
         "Data Upload & Validation"
       ),
-      actionBttn(
+      glassButton(
         inputId = ns("show_file_input_explanation"),
         label = "Show Help Text",
-        icon = icon("circle-question"),
-        style = "gradient",
-        color = "success"
+        icon = icon("circle-question")
       )
     ),
-    htmlOutput(outputId = ns("file_input_explanation")),
+    glassTogglePanel(
+      triggerId = ns("show_file_input_explanation"),
+      help_button_page_1_text()
+    ),
     fluidRow(
       column(
         width = 6,
-        div(
-          class = "dashboard-card",
+        glassCard(
+          inputId = ns("card_file_selection"),
+          title = "File Selection",
+          icon = icon("file-upload"),
+          collapsible = FALSE,
+          width = "100%",
           div(
-            class = "card-header",
-            icon("file-upload", class = "header-icon"),
-            h3("File Selection")
+            class = "upload-section",
+            glassFileInput(
+              inputId = ns("cs_data"),
+              label = "Clinical Samples",
+              label_icon = icon("vial"),
+              accept = c(".xlsx", ".csv"),
+              button_label = "Browse...",
+              button_label_icon = icon("file-upload"),
+              placeholder = "No clinical samples here",
+              help_text = paste0(
+                "Measurements from Samples that one wish to do."
+              )
+            )
           ),
           div(
-            class = "card-body",
-            div(
-              class = "upload-section",
-              h4(
-                icon(
-                  "vial",
-                  class = "section-icon"
-                ),
-                "Clinical Samples"
-              ),
-              fileInput(
-                inputId = ns("cs_data"),
-                label = NULL,
-                accept = c(".xlsx", ".csv"),
-                buttonLabel = "Browse...",
-                placeholder = "No file selected"
-              )
-            ),
-            div(
-              class = "upload-section",
-              h4(
-                icon("chart-line", class = "section-icon"),
-                "EQAM Data",
-                div(
-                  class = "input-note",
-                  # --- Force the Icon to the Right ---
-                  style = "display: inline-block; margin-left: 5px;",
-                  icon(name = "info-circle"),
-                  id = ns("eqam_explanation_tool_tip")
-                )
-              ),
-              fileInput(
-                inputId = ns("eq_data"),
-                label = NULL,
-                accept = c(".xlsx", ".csv"),
-                buttonLabel = "Browse...",
-                placeholder = "No file selected"
-              ),
-              bsTooltip(
-                id = ns("eqam_explanation_tool_tip"),
-                title = paste0(
-                  "EQAM is an abbreviation for external quality assessment ",
-                  "material. However, it does not have to be EQAM data. It ",
-                  "can also be certified reference material (CRM) data, or ",
-                  "other materials that is sensible to evaluate for ",
-                  "commutability."
-                ),
-                placement = "top",
-                trigger = "hover"
+            class = "upload-section",
+            glassFileInput(
+              inputId = ns("eq_data"),
+              label = "EQAM Data",
+              label_icon = icon("chart-line"),
+              accept = c(".xlsx", ".csv"),
+              button_label = "Browse...",
+              button_label_icon = icon("file-upload"),
+              placeholder = "No EQAM data currently selected",
+              help_text = paste0(
+                "EQAM is an abbreviation for external quality assessment ",
+                "material. However, it does not have to be EQAM data. It ",
+                "can also be certified reference material (CRM) data, or ",
+                "other materials that is sensible to evaluate for ",
+                "commutability."
               )
             )
           )
@@ -99,95 +80,82 @@ mod_file_upload_ui <- function(id) {
       ),
       column(
         width = 6,
-        div(
-          class = "dashboard-card-drop-down",
+        glassCard(
+          inputId = ns("card_configuration"),
+          title = "Configuration",
+          icon = icon("hammer"),
+          collapsible = FALSE,
+          width = "100%",
           div(
-            class = "card-header",
-            icon("hammer", class = "header-icon"),
-            h3("Configuration")
+            class = "parameter-section",
+            h4(
+              icon("arrow-pointer", class = "section-icon"),
+              "Reference Method"
+            ),
+            glassDropdown(
+              inputId = ns("reference_method"),
+              choices = "none",
+              selected = "none",
+              disabled = TRUE,
+              width = "100%"
+            )
           ),
           div(
-            class = "card-body",
-            div(
-              class = "parameter-section",
-              h4(
-                icon(
-                  "arrow-pointer",
-                  class = "section-icon"
-                ),
-                "Reference Method"
-              ),
-              virtualSelectInput(
-                inputId = ns("reference_method"),
-                label = NULL,
-                choices = "none",
-                selected = "none",
-                multiple = FALSE,
-                search = TRUE,
-                disabled = TRUE
-              ),
-              div(
-                class = "input-note",
-                icon("info-circle"),
-                "This is optional. If no method is selected, all pairwise comparisons will be made."
-              )
+            class = "parameter-section",
+            h4(icon("snowflake", class = "section-icon"), "Ignore Failed Validation Tests"),
+            glassRadioButtons(
+              inputId = ns("ignore_invalid_data"),
+              choices = c("Yes", "No"),
+              selected = "No",
+              width = "100%"
             ),
-            div(
-              class = "parameter-section",
-              h4(icon("snowflake", class = "section-icon"), "Ignore Failed Validation Tests"),
-              radioGroupButtons(
-                inputId = ns("ignore_invalid_data"),
-                label = NULL,
-                choiceNames = c("Yes", "No"),
-                choiceValues = c(TRUE, FALSE),
-                selected = FALSE,
-                justified = TRUE,
-                status = "primary"
-              ),
-              uiOutput(ns("warning_placeholder"))
-            )
+            uiOutput(ns("warning_placeholder"))
           )
         )
       )
     ),
-    div(
-      class = "dashboard-card",
-      div(
-        class = "card-header",
-        icon("stethoscope", class = "header-icon"),
-        h3("Diagnostic Overview of Your Uploaded Data"),
-        uiOutput(ns("overall_diagnostic_status"))
-      ),
-      box(
-        title = tagList(icon("microscope", class = "section-icon"), "Clinical Sample Data Diagnostics"),
-        collapsible = TRUE,
-        collapsed = TRUE,
-        width = 12,
-        solidHeader = TRUE,
-        status = "primary",
-        div(class = "table-container", shiny::tableOutput(outputId = ns("cs_table_diagnostics"))),
-        htmlOutput(outputId = ns("cs_text_diagnostics"))
-      ),
-      box(
-        title = tagList(icon("flask", class = "section-icon"), "External Quality Assessment Material Data Diagnostics"),
-        collapsible = TRUE,
-        collapsed = TRUE,
-        width = 12,
-        solidHeader = TRUE,
-        status = "primary",
-        div(class = "table-container", shiny::tableOutput(outputId = ns("eq_table_diagnostics"))),
-        htmlOutput(outputId = ns("eq_text_diagnostics"))
-      ),
-      box(
-        title = tagList(icon("check-double", class = "section-icon"), "Structural Agreement Between Data Diagnostics"),
-        collapsible = TRUE,
-        collapsed = TRUE,
-        width = 12,
-        solidHeader = TRUE,
-        status = "primary",
-        htmlOutput(outputId = ns("both_text_diagnostics"))
 
+    # --- Diagnostic Section ---
+
+    # Overall Status
+    glassResultCard(
+      inputId = ns("card_status"),
+      title = "Diagnostic Overview",
+      icon = icon("stethoscope"),
+      width = "100%",
+      toolbar = uiOutput(
+        outputId = ns("overall_diagnostic_status")
       )
+    ),
+
+    # Detailed Diagnostics (Split into separate collapsible Glass Cards)
+    glassCard(
+      inputId = ns("card_diag_cs"),
+      title = "Clinical Sample Data Diagnostics",
+      icon = icon("microscope"),
+      collapsible = TRUE,
+      collapsed = TRUE,
+      shiny::tableOutput(outputId = ns("cs_table_diagnostics")),
+      htmlOutput(outputId = ns("cs_text_diagnostics"))
+    ),
+
+    glassCard(
+      inputId = ns("card_diag_eq"),
+      title = "External Quality Assessment Material Data Diagnostics",
+      icon = icon("flask"),
+      collapsible = TRUE,
+      collapsed = TRUE,
+      shiny::tableOutput(outputId = ns("eq_table_diagnostics")),
+      htmlOutput(outputId = ns("eq_text_diagnostics"))
+    ),
+
+    glassCard(
+      inputId = ns("card_diag_agreement"),
+      title = "Structural Agreement Between Data Diagnostics",
+      icon = icon("check-double"),
+      collapsible = TRUE,
+      collapsed = TRUE,
+      htmlOutput(outputId = ns("both_text_diagnostics"))
     )
   )
 }
@@ -211,17 +179,6 @@ mod_file_upload_server <- function(id) {
   # --- Create the Module Server for the `File Upload` Section ---
   moduleServer(id, function(input, output, session) {
 
-    # --- Help Text Logic ------------------------------------------------------
-    hide <- reactiveValues(hide = TRUE)
-    observeEvent(input$show_file_input_explanation, {
-      hide$hide <- !hide$hide
-    })
-
-    output$file_input_explanation <- renderUI({
-      if (!hide$hide) {
-        HTML(help_button_page_1_text())
-      }
-    })
 
     # --- File Reading with Error Handling -------------------------------------
     read_data_safely <- function(file_input) {
@@ -244,16 +201,17 @@ mod_file_upload_server <- function(id) {
     }
 
     # --- Read Data ------------------------------------------------------------
-    current_raw_cs_data_wide <- reactive(
-      x = {
-      read_data_safely(input$cs_data)
-      }
-    )
-    current_raw_eq_data_wide <- reactive(
-      x = {
-        read_data_safely(input$eq_data)
-      }
-    )
+    current_raw_cs_data_wide <- reactive({
+      req(input$cs_data)
+      standardized_file <- processGlassFile(input$cs_data)
+      read_data_safely(standardized_file)
+    })
+
+    current_raw_eq_data_wide <- reactive({
+      req(input$eq_data)
+      standardized_file <- processGlassFile(input$eq_data)
+      read_data_safely(standardized_file)
+    })
 
     # --- Diagnostics ----------------------------------------------------------
 
@@ -540,7 +498,7 @@ mod_file_upload_server <- function(id) {
       is_valid <- current_validity()
 
       # Toggle whether failed validation tests should be ignored
-      ignore_issues <- input$ignore_invalid_data == TRUE
+      ignore_issues <- input$ignore_invalid_data == "Yes"
 
       if (is_valid) {
         status_class <- "status-ok"
@@ -599,19 +557,22 @@ mod_file_upload_server <- function(id) {
         choices <- setdiff(choices, to_remove)
       }
 
+      # Handle logical check for character input
+      should_enable <- is_valid | (input$ignore_invalid_data == "Yes")
+
       # --- Update list of choices for reference method ---
-      updateVirtualSelect(
+      updateGlassDropdown(
         session = session,
         inputId = "reference_method",
         choices = c("none", choices),
         selected = "none",
-        disable = !(is_valid | (input$ignore_invalid_data == TRUE))
+        disable = !should_enable
       )
     })
 
     # --- Deliver warning if user desires to ignore failed validation tests ----
     output$warning_placeholder <- renderUI({
-      if (input$ignore_invalid_data == TRUE) {
+      if (isTRUE(input$ignore_invalid_data == "Yes")) {
         div(
           class = "input-warning-note",
           icon("exclamation-triangle"),
@@ -888,7 +849,7 @@ mod_file_upload_server <- function(id) {
         remove_ivd_mds = methods_to_remove_globally,
         reference_method = reactive({ if (input$reference_method == "none") NULL else input$reference_method }),
         is_valid = reactive({
-          if (input$ignore_invalid_data == "TRUE") return(TRUE)
+          if (isTRUE(input$ignore_invalid_data == "Yes")) return(TRUE)
           current_validity()
         }),
         diagnostics_cs = current_diagnostics_cs,

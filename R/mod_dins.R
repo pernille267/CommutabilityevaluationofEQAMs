@@ -18,15 +18,16 @@ mod_dins_ui <- function(id) {
         class = "main-title",
         icon("arrows-left-right-to-line"), "Evaluate Differences in Nonselectivity"
       ),
-      actionBttn(
+      glassButton(
         inputId = ns("show_dins_explanation"),
         label = "Show Help Text",
-        icon = icon(name = "circle-question"),
-        style = "gradient",
-        color = "success"
+        icon = icon("circle-question")
       )
     ),
-    htmlOutput(outputId = ns("dins_explanation")),
+    glassTogglePanel(
+      triggerId = ns("show_dins_explanation"),
+      help_button_page_2_text()
+    ),
 
     # Data Transformation and Model Selection Panel
     div(
@@ -227,20 +228,6 @@ mod_dins_ui <- function(id) {
 mod_dins_server <- function(id, file_upload_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-
-    # --- Help Text Logic ---
-    hide <- reactiveValues(hide = TRUE)
-    observeEvent(input$show_dins_explanation, {
-      hide$hide <- !hide$hide
-    })
-
-    # --- Render Help Text ---
-    output$dins_explanation <- renderUI({
-      if (!hide$hide) {
-        HTML(help_button_page_2_text())
-      }
-    })
-
     # --- Reactive Data Preparation ---
 
     # --- Clinical Samples - Long-formatted - No Transformation ----------------
