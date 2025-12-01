@@ -135,7 +135,7 @@ mod_file_upload_ui <- function(id) {
       icon = icon("microscope"),
       collapsible = TRUE,
       collapsed = TRUE,
-      shiny::tableOutput(outputId = ns("cs_table_diagnostics")),
+      uiOutput(outputId = ns("cs_table_diagnostics")),
       htmlOutput(outputId = ns("cs_text_diagnostics"))
     ),
 
@@ -145,7 +145,7 @@ mod_file_upload_ui <- function(id) {
       icon = icon("flask"),
       collapsible = TRUE,
       collapsed = TRUE,
-      shiny::tableOutput(outputId = ns("eq_table_diagnostics")),
+      uiOutput(outputId = ns("eq_table_diagnostics")),
       htmlOutput(outputId = ns("eq_text_diagnostics"))
     ),
 
@@ -247,221 +247,15 @@ mod_file_upload_server <- function(id) {
         current_raw_eq_data_wide()
       )
 
-      # --- Attempt to repair clinical sample data ---
-      cs_data_repaired <- tryCatch(
-        expr = {
-          commutability::repair_data(
-            data = current_raw_cs_data_wide(),
-            type = "cs",
-            remove_invalid_methods = FALSE,
-            include_repair_summary = FALSE
-          )
-        },
-        error = function(e) NULL,
-        warning = function(e) NULL
+      # --- Perform Structural Agreement Checks (Logic moved to utility function) ---
+      out <- perform_structural_checks(
+        cs_data = current_raw_cs_data_wide(),
+        eq_data = current_raw_eq_data_wide(),
+        methods_to_remove = methods_to_remove_globally()
       )
 
-      # --- Attempt to repair clinical sample data ---
-      eq_data_repaired <- tryCatch(
-        expr = {
-          commutability::repair_data(
-            data = current_raw_eq_data_wide(),
-            type = "eqam",
-            remove_invalid_methods = FALSE,
-            include_repair_summary = FALSE
-          )
-        }
-      )
+      return(out)
 
-      # --- Check if an error or a warning occured during attempted repair ---
-      if (is.null(cs_data_repaired) | is.null(eq_data_repaired)) {
-        # --- Check if an invalid IVD-MD is the reason ---
-        # NOTE: The problematic IVD-MD must be both in clinical sample data
-        # and in the EQAM data ...
-        if (!is.null(methods_to_remove_globally())) {
-          invalid_methods_exist_in_cs_data <- all(
-            x = methods_to_remove_globally() %in% names(current_raw_cs_data_wide())
-          )
-          invalid_methods_exist_in_eq_data <- all(
-            x = methods_to_remove_globally() %in% names(current_raw_eq_data_wide())
-          )
-          # Fallback if clinical sample and eqam data do not have the same names
-          if (!(invalid_methods_exist_in_cs_data & invalid_methods_exist_in_eq_data)) {
-            out <- list(
-              "equal_names" = FALSE,
-              "equal_order" = FALSE,
-              "names_in_cs_data_but_not_in_eq_data" = setdiff(
-                x = names(current_raw_cs_data_wide()),
-                y = names(current_raw_eq_data_wide())
-              ),
-              "names_in_eq_data_but_not_in_cs_data" = setdiff(
-                x = names(current_raw_eq_data_wide()),
-                y = names(current_raw_cs_data_wide())
-              ),
-              "order_cs_data" = paste(
-                names(current_raw_cs_data_wide()),
-                collapse = ", "
-              ),
-              "order_eq_data" = paste(
-                names(current_raw_eq_data_wide()),
-                collapse = ", "
-              ),
-              "error" = paste0(
-                "Tried to remove invalid columns, but it appears that some of ",
-                "the invalid columns are not in both datasets."
-              )
-            )
-            # --- Return fallback object ---
-            # Note: Matches syntax-wise output from
-            # commutability::check_equivalence
-            return(out)
-          }
-
-          # Check which columns to keep
-          keep_these_cs <- setdiff(
-            x = names(cs_data_repaired),
-            y = methods_to_remove_globally()
-          )
-          keep_these_eq <- setdiff(
-            x = names(eq_data_repaired),
-            y = methods_to_remove_globally()
-          )
-
-          # Remove invalid methods from both datasets
-          cs_data_repaired <- subset(
-            current_raw_cs_data_wide(),
-            select = keep_these_cs
-          )
-          eq_data_repaired <- subset(
-            current_raw_eq_data_wide(),
-            select = keep_these_eq
-          )
-
-          # --- Attempt to repair clinical sample data (again) ---
-          cs_data_repaired <- tryCatch(
-            expr = {
-              commutability::repair_data(
-                data = cs_data_repaired,
-                type = "cs",
-                remove_invalid_methods = FALSE,
-                include_repair_summary = FALSE
-              )
-            },
-            error = function(e) NULL,
-            warning = function(e) NULL
-          )
-
-          # --- Attempt to repair clinical sample data (again) ---
-          eq_data_repaired <- tryCatch(
-            expr = {
-              commutability::repair_data(
-                data = eq_data_repaired,
-                type = "eqam",
-                remove_invalid_methods = FALSE,
-                include_repair_summary = FALSE
-              )
-            }
-          )
-
-          # --- Fallback if second repair attempt failed ---
-          if (is.null(cs_data_repaired) | is.null(eq_data_repaired)) {
-            out <- list(
-              "equal_names" = FALSE,
-              "equal_order" = FALSE,
-              "names_in_cs_data_but_not_in_eq_data" = setdiff(
-                x = names(current_raw_cs_data_wide()),
-                y = names(current_raw_eq_data_wide())
-              ),
-              "names_in_eq_data_but_not_in_cs_data" = setdiff(
-                x = names(current_raw_eq_data_wide()),
-                y = names(current_raw_cs_data_wide())
-              ),
-              "order_cs_data" = paste(
-                names(current_raw_cs_data_wide()),
-                collapse = ", "
-              ),
-              "order_eq_data" = paste(
-                names(current_raw_eq_data_wide()),
-                collapse = ", "
-              ),
-              "error" = paste0(
-                "Tried to repair data twice, but it still did not ",
-                "work as intended..."
-              )
-            )
-            # --- Return fallback object ---
-            # Note: Matches syntax-wise output from
-            # commutability::check_equivalence
-            return(out)
-          }
-
-          # --- Check equivalence after tried to fix custom issues ---
-          out <- tryCatch(
-            expr = {
-              commutability::check_equivalence(
-                cs_data = cs_data_repaired,
-                eq_data = eq_data_repaired
-              )
-            },
-            error = function(e) NULL,
-            warning = function(w) NULL
-          )
-
-          # --- Fallback if the equivalence check fails ---
-          if (is.null(out)) {
-            out <- list(
-              "equal_names" = FALSE,
-              "equal_order" = FALSE,
-              "names_in_cs_data_but_not_in_eq_data" = setdiff(
-                x = names(current_raw_cs_data_wide()),
-                y = names(current_raw_eq_data_wide())
-              ),
-              "names_in_eq_data_but_not_in_cs_data" = setdiff(
-                x = names(current_raw_eq_data_wide()),
-                y = names(current_raw_cs_data_wide())
-              ),
-              "order_cs_data" = paste(
-                names(current_raw_cs_data_wide()),
-                collapse = ", "
-              ),
-              "order_eq_data" = paste(
-                names(current_raw_eq_data_wide()),
-                collapse = ", "
-              ),
-              "error" = paste0(
-                "Tried to perform equivalence test after working with ",
-                "weird data, but it resulted in some unknown error."
-              )
-            )
-            # --- Return fallback object ---
-            # Note: Matches syntax-wise output from
-            # commutability::check_equivalence
-            return(out)
-          }
-          return(out)
-        }
-      }
-
-      # --- Remove invalid methods ---
-      if (!is.null(methods_to_remove_globally())) {
-
-        # Check which columns to keep
-        keep_these_cs <- setdiff(
-          x = names(cs_data_repaired),
-          y = methods_to_remove_globally()
-        )
-        keep_these_eq <- setdiff(
-          x = names(eq_data_repaired),
-          y = methods_to_remove_globally()
-        )
-        cs_data_repaired <- subset(cs_data_repaired, select = keep_these_cs)
-        eq_data_repaired <- subset(eq_data_repaired, select = keep_these_eq)
-      }
-
-      commutability::check_equivalence(
-        cs_data = cs_data_repaired,
-        eq_data = eq_data_repaired
-      )
     })
 
     # --- Assess General Validity of Uploaded Data -----------------------------
@@ -595,79 +389,15 @@ mod_file_upload_server <- function(id) {
         current_diagnostics_cs()
       )
 
-      # --- Try to repair clinical sample data ---
-      repaired_data <- tryCatch(
-        expr = {
-          commutability::repair_data(
-            data = current_raw_cs_data_wide(),
-            type = "cs",
-          )
-        },
-        error = function(e) "error",
-        warning = function(w) "warning"
+      out <- post_repair_diagnostics(
+        data = current_raw_cs_data_wide(),
+        prior_repair_diagnostics = current_diagnostics_cs(),
+        methods_to_remove = methods_to_remove_globally(),
+        type = "cs"
       )
+      # Out can be list in future. Make it easy to expand
+      return(out)
 
-      # --- if character, either a warning or an error occurred ---
-      if (is.character(repaired_data)) {
-        # --- Return original diagnostics object if error in repair ---
-        if (repaired_data == "error") {
-          return(current_diagnostics_cs())
-        }
-        else if (repaired_data != "warning") {
-          return(current_diagnostics_cs())
-        }
-
-        # --- Try to handle the warning if warning in repair ---
-
-        # --- `not acceptable` can be due to invalid methods ---
-        if (current_diagnostics_cs$badge == "not acceptable") {
-          # --- Check for invalid methods ---
-          if (!is.null(methods_to_remove_globally())) {
-            temp_raw_cs_data_wide <- subset(
-              x = current_raw_cs_data_wide(),
-              selected = setdiff(
-                names(current_raw_cs_data_wide()),
-                methods_to_remove_globally()
-              )
-            )
-            # --- Try repairing data after removing invalid methods ---
-            repaired_data <- tryCatch(
-              expr = {
-                commutability::repair_data(
-                  data = temp_raw_cs_data_wide,
-                  type = "cs"
-                )
-              },
-              error = function(e) NULL,
-              warning = function(w) NULL
-            )
-            # --- Check if second repair is valid ---
-            if (!is.null(repaired_data)) {
-              return(
-                commutability::check_data(
-                  data = repaired_data,
-                  type = "cs"
-                )
-              )
-            }
-            # --- We failed to handle cause of warning, return original ---
-            else {
-              return(
-                current_diagnostics_cs()
-              )
-            }
-          }
-        }
-        # --- `acceptable+` (another UNKNOWN reason for the warning) ---
-        else {
-          return(
-            current_diagnostics_cs()
-          )
-        }
-      }
-
-      # --- If first repair was a success from the start ---
-      commutability::check_data(data = repaired_data, type = "cs")
     })
 
     # --- Get the Post-Repair Diagnostics for the EQAM Data --------------------
@@ -677,87 +407,21 @@ mod_file_upload_server <- function(id) {
         current_raw_eq_data_wide(),
         current_diagnostics_eq()
       )
-      # --- Try to repair EQAM data ---
-      repaired_data <- tryCatch(
-        expr = {
-          commutability::repair_data(
-            data = current_raw_eq_data_wide(),
-            type = "eqam"
-          )
-        },
-        error = function(e) "error",
-        warning = function(w) "warning"
+
+      out <- post_repair_diagnostics(
+        data = current_raw_eq_data_wide(),
+        prior_repair_diagnostics = current_diagnostics_eq(),
+        methods_to_remove = methods_to_remove_globally(),
+        type = "eqam"
       )
-
-      #browser()
-
-      # --- if character, either a warning or an error occurred ---
-      if (is.character(repaired_data)) {
-        # --- Return original diagnostics object if error in repair ---
-        if (repaired_data == "error") {
-          return(current_diagnostics_eq())
-        }
-        else if (repaired_data != "warning") {
-          return(current_diagnostics_eq())
-        }
-
-        # --- Try to handle the warning if warning in repair ---
-
-        # --- `not acceptable` can be due to invalid methods ---
-        if (current_diagnostics_eq$badge == "not acceptable") {
-          # --- Check for invalid methods ---
-          if (!is.null(methods_to_remove_globally())) {
-            temp_raw_eq_data_wide <- subset(
-              x = current_raw_eq_data_wide(),
-              selected = setdiff(
-                names(current_raw_eq_data_wide()),
-                methods_to_remove_globally()
-              )
-            )
-            # --- Try repairing data after removing invalid methods ---
-            repaired_data <- tryCatch(
-              expr = {
-                commutability::repair_data(
-                  data = temp_raw_eq_data_wide,
-                  type = "eqam"
-                )
-              },
-              error = function(e) NULL,
-              warning = function(w) NULL
-            )
-            # --- Check if second repair is valid ---
-            if (!is.null(repaired_data)) {
-              return(
-                commutability::check_data(
-                  data = repaired_data,
-                  type = "eqam"
-                )
-              )
-            }
-            # --- We failed to handle cause of warning, return original ---
-            else {
-              return(
-                current_diagnostics_eq()
-              )
-            }
-          }
-        }
-        # --- `acceptable+` (another UNKNOWN reason for the warning) ---
-        else {
-          return(
-            current_diagnostics_eq()
-          )
-        }
-      }
-
-      # --- If first repair was a success from the start ---
-      commutability::check_data(data = repaired_data, type = "eqam")
+      # Out can be list in future. Make it easy to expand
+      return(out)
     })
 
     # --- Render Diagnostics Tables --------------------------------------------
 
     # --- Render Clinical Sample Diagnostics Table -----------------------------
-    output$cs_table_diagnostics <- function() {
+    output$cs_table_diagnostics <- renderUI({
       req(
         current_diagnostics_cs(),
         post_repair_diagnostics_cs()
@@ -768,10 +432,10 @@ mod_file_upload_server <- function(id) {
         is_post_repair_valid = current_diagnostics_cs()$badge != "not acceptable",
         post_repair_score = post_repair_diagnostics_cs()$score
       )
-    }
+    })
 
     # --- Render EQAM Diagnostics Table ----------------------------------------
-    output$eq_table_diagnostics <- function() {
+    output$eq_table_diagnostics <- renderUI({
       req(
         current_diagnostics_eq(),
         post_repair_diagnostics_eq()
@@ -782,7 +446,7 @@ mod_file_upload_server <- function(id) {
         is_post_repair_valid = current_diagnostics_eq()$badge != "not acceptable",
         post_repair_score = post_repair_diagnostics_eq()$score
       )
-    }
+    })
 
     # --- Render Diagnostics Texts ---------------------------------------------
 
@@ -809,36 +473,7 @@ mod_file_upload_server <- function(id) {
     # --- Render Equivalence Diagnostics Text ----------------------------------
     output$both_text_diagnostics <- renderUI({
       req(current_diagnostics_both())
-      full_diagnostics <- current_diagnostics_both()
-
-      css_unit_test <- function(title, fail = FALSE) {
-        if (!fail) {
-          icon_html <- "<i class='fa fa-check-circle' style='color: #28a745; margin-right: 5px;'></i>"
-          badge_html <- "<span class='test-badge pass'>PASS</span>"
-          class_name <- "test-item pass-test"
-        }
-        else {
-          icon_html <- "<i class='fa fa-times-circle' style='color: #dc3545; margin-right: 5px;'></i>"
-          badge_html <- "<span class='test-badge fail'>FAIL</span>"
-          class_name <- "test-item fail-test"
-        }
-        paste0("<div class='", class_name, "'>", icon_html, "<span class='test-title'>", title, ":</span>", badge_html, "</div>")
-      }
-
-      message_equivalent_names <- css_unit_test("Equal IVD-MD Names", fail = !full_diagnostics$equal_names)
-
-      if (full_diagnostics$equal_names) {
-        message_equivalent_order <- css_unit_test("Equal IVD-MD Column Order", fail = !full_diagnostics$equal_order)
-      } else {
-        message_equivalent_order <- css_unit_test("Equal IVD-MD Column Order", fail = TRUE)
-      }
-
-      # --- Removed <div class='dashboard-container'> wrapper ---
-      HTML(paste(
-        "<div class='section-header'><i class='fa fa-clipboard-list' style='color: #a5682a;'></i><span>Structural Agreement Tests:</span></div>",
-        message_equivalent_names,
-        message_equivalent_order
-      ))
+      render_agreement_text(current_diagnostics_both())
     })
 
     # --- Return Values for Other Modules ---

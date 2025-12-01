@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_helpers.R
 \name{render_diagnostic_text}
 \alias{render_diagnostic_text}
-\title{Render diagnostic test results as styled HTML text}
+\title{Render diagnostic test results with Glass styling}
 \usage{
 render_diagnostic_text(diagnostics, other_diagnostics, type = "cs")
 }
@@ -13,9 +13,6 @@ render_diagnostic_text(diagnostics, other_diagnostics, type = "cs")
 
 \item{type}{A character string, either "cs" or "eq"}
 }
-\value{
-An HTML object.
-}
 \description{
-Render diagnostic test results as styled HTML text
+Render diagnostic test results with Glass styling
 }

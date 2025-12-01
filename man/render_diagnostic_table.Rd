@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils_helpers.R
 \name{render_diagnostic_table}
 \alias{render_diagnostic_table}
-\title{Render a styled diagnostic table}
+\title{Render a styled diagnostic table using GlassTable}
 \usage{
 render_diagnostic_table(
   diagnostics,
@@ -15,10 +15,14 @@ render_diagnostic_table(
 \item{diagnostics}{The diagnostic list object from commutability::check_data()}
 
 \item{type}{A character string, either "cs" for clinical sample or "eq" for EQA material}
+
+\item{is_post_repair_valid}{Logical}
+
+\item{post_repair_score}{Integer}
 }
 \value{
-A kableExtra HTML table widget
+A GlassTable UI object
 }
 \description{
-Render a styled diagnostic table
+Render a styled diagnostic table using GlassTable
 }

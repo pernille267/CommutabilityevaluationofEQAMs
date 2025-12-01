@@ -351,14 +351,18 @@ help_button_page_5C_text <- function() {
   )
 }
 
-#' Render a styled diagnostic table
+#' Render a styled diagnostic table using GlassTable
+#'
 #' @param diagnostics The diagnostic list object from commutability::check_data()
 #' @param type A character string, either "cs" for clinical sample or "eq" for EQA material
-#' @return A kableExtra HTML table widget
+#' @param is_post_repair_valid Logical
+#' @param post_repair_score Integer
+#' @return A GlassTable UI object
+#' @export
 render_diagnostic_table <- function(diagnostics, type = "cs", is_post_repair_valid = TRUE, post_repair_score = NULL) {
+
   current_badge <- diagnostics$badge
   current_score <- diagnostics$score
-  current_IVD_MDs <- names(diagnostics$quality$number_of_NAs)
 
   badge_colors <- list(
     "perfect" = "#7851a9",
@@ -366,222 +370,337 @@ render_diagnostic_table <- function(diagnostics, type = "cs", is_post_repair_val
     "questionable" = "#FEAB3A",
     "extremely poor" = "#B61F06"
   )
-
   score_color <- badge_colors[[current_badge]]
+  if(is.null(score_color)) score_color <- "#6c757d"
 
-  # Create the styled HTML for the score circle
-  score_circle_html <- if (!is.na(current_score)) {
-    paste0(
-      "<div style='background-color: ", score_color, ";",
-      " color: white; border-radius: 50%; width: 25px; height: fit-content;",
-      " display: flex; align-items: center; justify-content: center;",
-      " font-weight: bold; margin: auto; font-size: 16px;",
-      " border: 1.5px solid #333;'>", # Added a dark border
-      current_score, # Just the score
-      "</div>"
-    )
-  } else {
-    "" # Empty string if score is NA
-  }
-
-  output_tbl <- data.table(
-    "Quality" = c(tools::toTitleCase(current_badge),
-                  score_circle_html,
-                  rep(NA_character_, length(current_IVD_MDs) - 2)),
-    "IVD-MD" = names(diagnostics$quality$number_of_NAs),
-    "Number of Samples" = diagnostics$quality$effective_number_of_samples,
-    "Number of Replicates" = diagnostics$quality$average_number_of_replicates,
-    "Invalid Data Fraction" = format(
-      x = unlist(diagnostics$quality$fraction_of_NAs),
-      nsmall = 2L,
-      digits = 2L)
-  )
-
-  # Identify rows that correspond to repaired methods
-  repaired_methods <- c(diagnostics$repair$remove_these_methods, diagnostics$repair$convert_these_methods_to_numeric)
-  rows_to_highlight <- which(output_tbl[["IVD-MD"]] %in% repaired_methods)
-
-  # Get the default background color for the first column
-  default_bg <- ifelse(current_badge == "extremely poor", "#FFF3CD", "#F8F9FA")
-
-  # Update the call to generate_quality_message
+  # --- 1. Caption ---
   caption_text <- generate_quality_message(
     quality = current_badge,
     sample_type = type,
     is_post_repair_valid = is_post_repair_valid,
-    post_repair_score = post_repair_score # Pass the new score here
+    post_repair_score = post_repair_score
   )
 
-  # Define styles for the caption based on the badge
-  style_colors <- list(
-    "perfect" = c(bg = "#f4f0f8", text = "#7851a9", border = "#7851a9"),
-    "acceptable" = c(bg = "#e9f5ea", text = "#28a745", border = "#28a745"),
-    "questionable" = c(bg = "#fff8e1", text = "#ffab00", border = "#ffab00"),
-    "extremely poor" = c(bg = "#fdecea", text = "#B61F06", border = "#B61F06")
-  )
-  current_style <- style_colors[[current_badge]]
-
-  # Create the styled HTML caption
-  styled_caption <- paste0(
-    "<div style='",
-    "background-color: ", current_style["bg"], "; ",
-    "color: ", current_style["text"], "; ",
-    "border-left: 5px solid ", current_style["border"], "; ",
-    "padding: 12px 15px; ",
-    "text-align: left; ",
-    "font-weight: 600; ",
-    "font-size: 14px;",
-    "'>",
-    caption_text,
-    "</div>"
-  )
-
-  background_color <- badge_colors[[current_badge]]
-
-  k <- kableExtra::kbl(x = output_tbl,
-                       format = "html",
-                       caption = styled_caption,
-                       align = "c",
-                       escape = FALSE) |>
-    kableExtra::kable_styling(
-      bootstrap_options = c("striped", "hover", "condensed"),
-      full_width = TRUE,
-      position = "center"
-    ) |>
-    kableExtra::row_spec(
-      row = 0,
-      background = background_color,
-      color = "white",
-      bold = TRUE,
-      font_size = "16px",
-      extra_css = "box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-radius: 8px 8px 0 0;"
+  # --- 2. Sidebar ---
+  sidebar_content <- NULL
+  if (!is.na(current_score)) {
+    badge_html <- sprintf(
+      '<span class="glass-diag-badge-pill" style="color:%s; border: 1px solid %s;">%s</span>',
+      score_color, score_color, tools::toTitleCase(current_badge)
     )
 
-  # Conditionally apply row highlighting
-  if (length(rows_to_highlight) > 0) {
-    k <- k |> kableExtra::row_spec(
-      rows_to_highlight,
-      background = "#FFF9E6",
-      color = "#555555",
-      bold = TRUE
+    circle_html <- sprintf(
+      '<div class="glass-score-circle" style="background-color: %s;">%s</div>',
+      score_color, current_score
     )
+    sidebar_content <- paste0(badge_html, circle_html)
   }
 
-  k <- k |>
-    kableExtra::column_spec(
-      column = 1,
-      bold = TRUE,
-      background = default_bg, # Use the determined default background
-      color = ifelse(current_badge == "extremely poor", "#856404", "#212529"),
-      border_right = "1px solid #dee2e6",
-      extra_css = "padding: 8px 12px;"
-    ) |>
-    kableExtra::scroll_box(width = "100%", height = "auto")
+  # --- 3. Data Table ---
+  current_IVD_MDs <- names(diagnostics$quality$number_of_NAs)
 
-  return(k)
+  # Format Fraction: "0.0%"
+  raw_fractions <- unlist(diagnostics$quality$fraction_of_NAs)
+  # Ensure it is numeric before formatting
+  formatted_fractions <- sprintf("%.1f%%", as.numeric(raw_fractions) * 100)
+
+  output_tbl <- data.table::data.table(
+    "IVD-MD" = current_IVD_MDs,
+    "Number of Samples" = diagnostics$quality$effective_number_of_samples,
+    "Number of Replicates" = format(diagnostics$quality$average_number_of_replicates, digits=3),
+    "Invalid %" = formatted_fractions
+  )
+
+  repaired_methods <- c(diagnostics$repair$remove_these_methods, diagnostics$repair$convert_these_methods_to_numeric)
+  highlight_idx <- which(output_tbl[["IVD-MD"]] %in% repaired_methods)
+
+  # --- 4. Render ---
+  renderGlassTable(
+    data = output_tbl,
+    # Soft column names (Title Case)
+    col_names = c("IVD-MD", "N Samples", "N Replicates", "Invalid %"),
+    caption = caption_text,
+    sidebar_html = sidebar_content,
+    sidebar_title = NULL,
+    highlight_rows = highlight_idx,
+    sortable = TRUE
+  )
 }
 
-#' Render diagnostic test results as styled HTML text
+#' Render diagnostic test results with Glass styling
+#'
 #' @param diagnostics The diagnostic list object
 #' @param other_diagnostics The diagnostic list object from the other data type
 #' @param type A character string, either "cs" or "eq"
-#' @return An HTML object.
+#'
+#' @importFrom htmltools tagList tags htmlDependency
+#' @export
 render_diagnostic_text <- function(diagnostics, other_diagnostics, type = "cs") {
 
-  data_type_label <- if (type == "cs") "Clinical Sample Data" else "Evaluated Material Data"
-  other_data_type_label <- if (type == "cs") "external quality assessment" else "clinical sample"
+  # --- 1. Setup Labels & Icons ---
+  is_cs <- (type == "cs")
+  label_main <- if (is_cs) "Validation Tests for Clinical Sample Data" else "Validation Tests for Evaluated Material Data"
+  label_repair <- if (is_cs) "Repairing of Clinical Sample Data" else "Repairing of Evaluated Material Data"
+  icon_main <- if (is_cs) "vial" else "chart-line"
 
-  # Helper: CSS Unit Test Item
-  css_unit_test <- function(title, fail = FALSE) {
-    if (is.na(fail)) {
-      icon_html <- "<i class='fa fa-question-circle' style='color: #6c757d; margin-right: 8px;'></i>"
-      badge_html <- "<span class='test-badge unknown'>?</span>"
-      class_name <- "test-item unknown-test"
-    } else if (!fail) {
-      icon_html <- "<i class='fa fa-check-circle' style='color: #28a745; margin-right: 8px;'></i>"
-      badge_html <- "<span class='test-badge pass'>PASS</span>"
-      class_name <- "test-item pass-test"
-    } else {
-      icon_html <- "<i class='fa fa-times-circle' style='color: #dc3545; margin-right: 8px;'></i>"
-      badge_html <- "<span class='test-badge fail'>FAIL</span>"
-      class_name <- "test-item fail-test"
+  other_label <- if (is_cs) "EQA material" else "clinical sample"
+
+  # --- 2. Build Validation Items (Section 1) ---
+
+  # Helper to build a single item row
+  build_item <- function(title, passed) {
+    status_cls <- if (is.na(passed)) "unknown" else if (passed) "success" else "fail"
+    icon_cls   <- if (is.na(passed)) "question-circle" else if (passed) "check-circle" else "times-circle"
+    badge_txt  <- if (is.na(passed)) "?" else if (passed) "PASS" else "FAIL"
+
+    htmltools::tags$div(
+      class = paste("glass-diag-item", status_cls),
+      htmltools::tags$div(
+        class = "glass-diag-item-content",
+        htmltools::tags$i(class = paste("fa fa-", icon_cls, "glass-diag-item-icon")),
+        htmltools::tags$span(class = "glass-diag-item-text", title)
+      ),
+      htmltools::tags$span(class = "glass-diag-badge", badge_txt)
+    )
+  }
+
+  # Define the 4 tests
+  tests <- list(
+    list(t = "Mandatory ID Columns",    p = diagnostics$validity$valid_mandatory_id_columns),
+    list(t = "Valid IVD-MD Measurements", p = diagnostics$validity$valid_numeric_columns),
+    list(t = "Valid Number of Missing Values", p = diagnostics$validity$valid_number_nas),
+    list(t = "Valid Number of IVD-MDs",   p = diagnostics$validity$valid_number_remaining_numeric)
+  )
+
+  # Generate HTML for items
+  test_items_html <- lapply(tests, function(x) build_item(x$t, x$p))
+
+  # --- 3. Calculate Validation Summary (Top Right) ---
+  n_total <- length(tests)
+  n_pass  <- sum(sapply(tests, function(x) isTRUE(x$p)))
+  summary_text <- sprintf("%d/%d validation tests passed", n_pass, n_total)
+
+  summary_cls <- if (n_pass == n_total) "success" else if (n_pass >= (n_total - 1)) "warning" else "fail"
+
+  # --- 4. Build Repair Items (Section 3) ---
+
+  methods_removed_local <- diagnostics$repair$remove_these_methods
+  methods_removed_other <- other_diagnostics$repair$remove_these_methods
+  # Only report cross-removal if it's NOT already removed locally
+  cross_removed <- setdiff(methods_removed_other, methods_removed_local)
+
+  repair_items_html <- list()
+  repair_summary_text <- "No important critical repairs are required"
+  repair_summary_cls <- "success"
+
+  # A. Local Exclusions
+  if (!is.null(methods_removed_local) && length(methods_removed_local) > 0) {
+    bold_m <- paste(methods_removed_local, collapse = ", ")
+    msg <- paste0(bold_m, " removed due to excessive invalid data.")
+
+    repair_items_html[[length(repair_items_html) + 1]] <- htmltools::tags$div(
+      class = "glass-diag-item warning",
+      htmltools::tags$div(
+        class = "glass-diag-item-content",
+        htmltools::tags$i(class = "fa fa-exclamation-triangle glass-diag-item-icon"),
+        htmltools::tags$span(class = "glass-diag-item-text", msg)
+      ),
+      htmltools::tags$span(class = "glass-diag-badge", "ACTION")
+    )
+    repair_summary_text <- "Repair action taken, see below"
+    repair_summary_cls <- "warning"
+  }
+
+  # B. Cross Exclusions
+  if (length(cross_removed) > 0) {
+    bold_m <- paste(cross_removed, collapse = ", ")
+    msg <- paste0(bold_m, " removed due to issues in ", other_label, " data.")
+
+    repair_items_html[[length(repair_items_html) + 1]] <- htmltools::tags$div(
+      class = "glass-diag-item warning",
+      htmltools::tags$div(
+        class = "glass-diag-item-content",
+        htmltools::tags$i(class = "fa fa-link glass-diag-item-icon"),
+        htmltools::tags$span(class = "glass-diag-item-text", msg)
+      ),
+      htmltools::tags$span(class = "glass-diag-badge", "SYNC")
+    )
+    repair_summary_text <- "Repair action taken, see below"
+    repair_summary_cls <- "warning"
+  }
+
+  # C. Conversions
+  if (!is.null(diagnostics$repair$convert_these_methods_to_numeric)) {
+    bold_m <- paste(diagnostics$repair$convert_these_methods_to_numeric, collapse = ", ")
+    msg <- paste0("Attempted to convert ", bold_m, " to numeric.")
+
+    repair_items_html[[length(repair_items_html) + 1]] <- htmltools::tags$div(
+      class = "glass-diag-item warning",
+      htmltools::tags$div(
+        class = "glass-diag-item-content",
+        htmltools::tags$i(class = "fa fa-wrench glass-diag-item-icon"),
+        htmltools::tags$span(class = "glass-diag-item-text", msg)
+      ),
+      htmltools::tags$span(class = "glass-diag-badge", "FIX")
+    )
+    # Only change summary if it wasn't already warning
+    if (repair_summary_cls == "success") {
+      repair_summary_text <- "Minor repairs performed"
+      repair_summary_cls <- "warning"
     }
-    paste0("<div class='", class_name, "'>", icon_html, "<span class='test-title'>", title, "</span>", badge_html, "</div>")
   }
 
-  # --- Generate Test Items ---
-  message_mandatory_id_columns_test <- css_unit_test(
-    title = paste("Mandatory ID Columns"),
-    fail = !diagnostics$validity$valid_mandatory_id_columns
+  # D. Success Message (If list empty)
+  if (length(repair_items_html) == 0) {
+    repair_items_html[[1]] <- htmltools::tags$div(
+      class = "glass-diag-item success",
+      htmltools::tags$div(
+        class = "glass-diag-item-content",
+        htmltools::tags$i(class = "fa fa-check-circle glass-diag-item-icon"),
+        htmltools::tags$span(class = "glass-diag-item-text", "No column exclusion performed in data repair.")
+      ),
+      htmltools::tags$span(class = "glass-diag-badge", "OK")
+    )
+  }
+
+  # --- 5. Assemble the UI ---
+
+  # Dependency
+  dep <- htmltools::htmlDependency(
+    name = "glass-diagnostics",
+    version = "1.0.0",
+    src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
+    script = "glass_diagnostics.js",
+    stylesheet = "glass_diagnostics.css"
   )
-  message_numeric_columns_test <- css_unit_test(
-    title = paste("Valid IVD-MD Measurements"),
-    fail = !diagnostics$validity$valid_numeric_columns
+
+  htmltools::tagList(
+    # --- Section 1: Validation Tests ---
+    htmltools::tags$div(
+      class = "glass-diag-container",
+      # Header
+      htmltools::tags$div(
+        class = "glass-diag-header",
+        htmltools::tags$div(
+          class = "glass-diag-title-wrap",
+          htmltools::tags$div(class = "glass-diag-icon", htmltools::tags$i(class = paste0("fa fa-", icon_main))),
+          htmltools::tags$h4(class = "glass-diag-title", label_main)
+        ),
+        htmltools::tags$div(
+          class = "glass-diag-right",
+          htmltools::tags$span(class = paste("glass-diag-summary", summary_cls), summary_text),
+          htmltools::tags$i(class = "fa fa-chevron-down glass-diag-toggle")
+        )
+      ),
+      # Body
+      htmltools::tags$div(
+        class = "glass-diag-body",
+        htmltools::tagList(test_items_html)
+      )
+    ),
+
+    # --- Section 2: Repairing ---
+    htmltools::tags$div(
+      class = "glass-diag-container",
+      # Header
+      htmltools::tags$div(
+        class = "glass-diag-header",
+        htmltools::tags$div(
+          class = "glass-diag-title-wrap",
+          htmltools::tags$div(class = "glass-diag-icon", htmltools::tags$i(class = "fa fa-wrench")),
+          htmltools::tags$h4(class = "glass-diag-title", label_repair)
+        ),
+        htmltools::tags$div(
+          class = "glass-diag-right",
+          htmltools::tags$span(class = paste("glass-diag-summary", repair_summary_cls), repair_summary_text),
+          htmltools::tags$i(class = "fa fa-chevron-down glass-diag-toggle")
+        )
+      ),
+      # Body
+      htmltools::tags$div(
+        class = "glass-diag-body",
+        htmltools::tagList(repair_items_html)
+      )
+    ),
+    dep
   )
-  message_number_of_nas_test <- css_unit_test(
-    title = "Valid Number of Missing Values",
-    fail = !diagnostics$validity$valid_number_nas
-  )
-  message_number_of_ivd_mds_test <- css_unit_test(
-    title = "Valid Number of IVD-MDs",
-    fail = !diagnostics$validity$valid_number_remaining_numeric
-  )
-
-  # --- Repair Messages Logic ---
-  methods_removed_locally <- diagnostics$repair$remove_these_methods
-  methods_removed_from_other <- other_diagnostics$repair$remove_these_methods
-  cross_removed_methods <- setdiff(methods_removed_from_other, methods_removed_locally)
-
-  exclusion_messages <- c()
-
-  if (!is.null(methods_removed_locally)) {
-    bold_methods <- paste0("<b>", methods_removed_locally, "</b>", collapse = ", ")
-    msg <- paste0("<div class='repair-item warning'><i class='fa fa-exclamation-triangle' style='color: #ffc107; margin-right: 8px;'></i><span class='repair-text'>", bold_methods, " removed due to too much invalid data.</span></div>")
-    exclusion_messages <- c(exclusion_messages, msg)
-  }
-
-  if (length(cross_removed_methods) > 0) {
-    bold_methods <- paste0("<b>", cross_removed_methods, "</b>", collapse = ", ")
-    msg <- paste0("<div class='repair-item warning'><i class='fa fa-exclamation-triangle' style='color: #ffc107; margin-right: 8px;'></i><span class='repair-text'>", bold_methods, " removed due to issues in the ", other_data_type_label, " data.</span></div>")
-    exclusion_messages <- c(exclusion_messages, msg)
-  }
-
-  if (length(exclusion_messages) == 0) {
-    repair_message_exclude_ivd_md <- "<div class='repair-item success'><i class='fa fa-check-circle' style='color: #28a745; margin-right: 8px;'></i><span class='repair-text'>No column exclusion performed in data repair.</span></div>"
-  } else {
-    repair_message_exclude_ivd_md <- paste(exclusion_messages, collapse = "")
-  }
-
-  repair_message_convert_data <- if (is.null(diagnostics$repair$convert_these_methods_to_numeric)) {
-    "<div class='repair-item success'><i class='fa fa-check-circle' style='color: #28a745; margin-right: 8px;'></i><span class='repair-text'>No conversion of invalid values was necessary.</span></div>"
-  } else {
-    bold_methods <- paste0("<b>", diagnostics$repair$convert_these_methods_to_numeric, "</b>", collapse = ", ")
-    paste0("<div class='repair-item warning'><i class='fa fa-exclamation-triangle' style='color: #ffc107; margin-right: 8px;'></i><span class='repair-text'>Attempted to convert ", bold_methods, " because they were not recognized as numeric.</span></div>")
-  }
-
-  # --- RETURN HTML (Modernized Headers) ---
-  # Note: I removed inline styles for colors/margins because the CSS class .section-header now handles it
-  HTML(paste(
-
-    # Header 1: Validation Tests
-    "<div class='section-header'>",
-    "<i class='fa fa-clipboard-list' style='color: #a5682a;'></i>", # Keep color, let CSS handle size/spacing
-    "<span>Validation Tests for ", data_type_label, "</span>",
-    "</div>",
-
-    message_mandatory_id_columns_test,
-    message_numeric_columns_test,
-    message_number_of_nas_test,
-    message_number_of_ivd_mds_test,
-
-    # Header 2: Repairing
-    "<div class='section-header'>",
-    "<i class='fa fa-wrench' style='color: #605CA8;'></i>",
-    "<span>Repairing of ", data_type_label, "</span>",
-    "</div>",
-
-    repair_message_exclude_ivd_md,
-    repair_message_convert_data
-  ))
 }
 
+#' Render agreement diagnostic test results with Glass styling
+#'
+#' @param diagnostics The diagnostic list object from check_equivalence
+#'
+#' @importFrom htmltools tagList tags htmlDependency
+#' @export
+render_agreement_text <- function(diagnostics) {
+
+  # --- 1. Helper to build a single item row ---
+  build_item <- function(title, passed) {
+    status_cls <- if (is.na(passed)) "unknown" else if (passed) "success" else "fail"
+    icon_cls   <- if (is.na(passed)) "question-circle" else if (passed) "check-circle" else "times-circle"
+    badge_txt  <- if (is.na(passed)) "?" else if (passed) "PASS" else "FAIL"
+
+    htmltools::tags$div(
+      class = paste("glass-diag-item", status_cls),
+      htmltools::tags$div(
+        class = "glass-diag-item-content",
+        htmltools::tags$i(class = paste("fa fa-", icon_cls, "glass-diag-item-icon")),
+        htmltools::tags$span(class = "glass-diag-item-text", title)
+      ),
+      htmltools::tags$span(class = "glass-diag-badge", badge_txt)
+    )
+  }
+
+  # --- 2. Build Test Items ---
+  items_html <- list()
+  items_html[[1]] <- build_item("Equal IVD-MD Names", diagnostics$equal_names)
+
+  # Logic: Only show the second test if names are equal, OR if both failed?
+  # Mimicking previous logic:
+  if (diagnostics$equal_names) {
+    items_html[[2]] <- build_item("Equal IVD-MD Column Order", diagnostics$equal_order)
+  } else {
+    items_html[[2]] <- build_item("Equal IVD-MD Column Order", FALSE)
+  }
+
+  # --- 3. Summary ---
+  n_pass <- sum(diagnostics$equal_names, diagnostics$equal_order)
+  summary_text <- sprintf("%d/2 tests passed", n_pass)
+  summary_cls <- if (n_pass == 2) "success" else "fail"
+
+  # --- 4. Dependency ---
+  dep <- htmltools::htmlDependency(
+    name = "glass-diagnostics",
+    version = "1.0.0",
+    src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
+    script = "glass_diagnostics.js",
+    stylesheet = "glass_diagnostics.css"
+  )
+
+  # --- 5. Assemble UI ---
+  htmltools::tagList(
+    htmltools::tags$div(
+      class = "glass-diag-container",
+      # Header
+      htmltools::tags$div(
+        class = "glass-diag-header",
+        htmltools::tags$div(
+          class = "glass-diag-title-wrap",
+          htmltools::tags$div(class = "glass-diag-icon", htmltools::tags$i(class = "fa fa-check-double")),
+          htmltools::tags$h4(class = "glass-diag-title", "Structural Agreement Tests")
+        ),
+        htmltools::tags$div(
+          class = "glass-diag-right",
+          htmltools::tags$span(class = paste("glass-diag-summary", summary_cls), summary_text),
+          htmltools::tags$i(class = "fa fa-chevron-down glass-diag-toggle")
+        )
+      ),
+      # Body
+      htmltools::tags$div(
+        class = "glass-diag-body",
+        htmltools::tagList(items_html)
+      )
+    ),
+    dep
+  )
+}
