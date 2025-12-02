@@ -3,6 +3,39 @@
    Theme: Green Progress | Purple Glass Handle | Source Sans Pro Font
    ========================================================================== */
 
+/* --- Integrated Input Label for glassDropdown --- */
+.glass-slider-label-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 8px 5px; /* Slight padding for alignment */
+  margin-bottom: 0;
+  user-select: none;
+}
+
+/* Label Icon */
+.glass-slider-label-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(96, 92, 168, 0.15);
+}
+
+/* Label Text */
+.glass-slider-label-text {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #495057; /* Dark Grey for Parameter Selections */
+  line-height: 1.2;
+}
+
 .glass-slider-container {
   position: relative;
   /* Increased height to accommodate labels on top */
@@ -139,3 +172,70 @@
 .glass-slider-label:hover {
   color: #28A745;
 }
+
+/* --- Tooltip and Help Text --- */
+/* The Trigger Icon */
+.glass-slider-help-icon {
+    position: absolute;
+    right: 0;
+    font-size: 15px;
+    color: #adb5bd;
+    cursor: help;
+    z-index: 10;
+    transition: color 0.3s ease;
+    padding: 5px;
+}
+
+.glass-slider-help-icon:hover {
+    color: #605CA8;
+}
+
+/* The Tooltip Popup */
+.glass-slider-tooltip-popup {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: auto;
+    bottom: 135%;
+    right: -10px;
+
+    background: #605CA8;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(96, 92, 168, 0.3);
+
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 400;
+    width: max-content;
+    max-width: 250px;
+
+    z-index: 1000;
+    transform: translateY(5px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none;
+}
+
+/* Show state */
+.glass-slider-help-icon:hover .glass-slider-tooltip-popup {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0px);
+}
+
+/* Arrow */
+.glass-slider-tooltip-popup::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    bottom: auto;
+    right: 15px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #605CA8 transparent transparent transparent;
+}
+
+
+

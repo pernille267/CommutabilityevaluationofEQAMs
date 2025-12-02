@@ -2,6 +2,8 @@
 #'
 #' @param inputId The input slot that will be used to access the value.
 #' @param label Optional label for the slider input.
+#' @param label_icon Optional \code{icon()} to display next to the label
+#' @param help_text Optional tooltip text to display on hover.
 #' @param choices Vector of values (numbers or strings).
 #' @param selected The initially selected value.
 #' @param unit Optional string to append to values (e.g. " dpi").
@@ -10,7 +12,14 @@
 #' @importFrom htmltools tagList tags htmlDependency
 #' @importFrom jsonlite toJSON
 #' @export
-glassSlider <- function(inputId, label = NULL, choices, selected = NULL, unit = "", width = "100%") {
+glassSlider <- function(inputId,
+                        label = NULL,
+                        label_icon = NULL,
+                        help_text = NULL,
+                        choices,
+                        selected = NULL,
+                        unit = "",
+                        width = "100%") {
 
   if (is.null(selected)) selected <- choices[1]
   if (!selected %in% choices) stop(paste("Selected value '", selected, "' must be in choices"))
@@ -46,11 +55,28 @@ glassSlider <- function(inputId, label = NULL, choices, selected = NULL, unit = 
     }
   })
 
+  # --- Header Generation ---
+  header_html <- NULL
+  if (!is.null(label) || !is.null(label_icon)) {
+    header_html <- htmltools::tags$div(
+      class = "glass-slider-label-header",
+      if (!is.null(label_icon)) htmltools::tags$div(class = "glass-slider-label-icon", label_icon),
+      if (!is.null(label)) htmltools::tags$span(class = "glass-slider-label-text", label)
+    )
+  }
+
+  # --- Help Icon Generation ---
+  help_icon_html <- create_glass_help_icon(help_text, "slider")
+
   ui_structure <- htmltools::tags$div(
     class = "form-group shiny-input-container",
     style = paste0("width: ", width, "; margin-bottom: 5px;"), # Tighten external margin
 
-    if (!is.null(label)) htmltools::tags$label(class = "control-label", `for` = inputId, label),
+    # Help Icon
+    help_icon_html,
+
+    # Header & Header Icon
+    header_html,
 
     htmltools::tags$div(
       id = paste0("container-", inputId),

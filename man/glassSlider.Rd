@@ -7,6 +7,8 @@
 glassSlider(
   inputId,
   label = NULL,
+  label_icon = NULL,
+  help_text = NULL,
   choices,
   selected = NULL,
   unit = "",
@@ -17,6 +19,10 @@ glassSlider(
 \item{inputId}{The input slot that will be used to access the value.}
 
 \item{label}{Optional label for the slider input.}
+
+\item{label_icon}{Optional \code{icon()} to display next to the label}
+
+\item{help_text}{Optional tooltip text to display on hover.}
 
 \item{choices}{Vector of values (numbers or strings).}
 

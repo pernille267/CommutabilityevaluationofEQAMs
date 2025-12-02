@@ -7,14 +7,16 @@
 #' @param label The label to display.
 #' @param icon An optional icon() to appear in the white section.
 #' @param width The width of the button (e.g., '100%', '200px').
+#' @param color A character string. "purple" (default) or "green".
 #' @param disabled Logical. Should the button be disabled on load?
 #'
 #' @importFrom htmltools tagList tags htmlDependency
 #' @export
-glassButton <- function(inputId, label, icon = NULL, width = NULL, disabled = FALSE) {
+glassButton <- function(inputId, label, icon = NULL, width = NULL, color = "purple", disabled = FALSE) {
 
   # Class String
   class_str <- "glass-btn"
+  if (color == "green") class_str <- paste(class_str, "green")
   if (disabled) class_str <- paste(class_str, "disabled")
 
   # Style String

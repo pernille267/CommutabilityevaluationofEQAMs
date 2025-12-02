@@ -1,6 +1,6 @@
 /* ==========================================================================
    CUSTOM GLASS BUTTONS (Action & Download)
-   Theme: Split Capsule | White Icon | Purple Gradient Label
+   Theme: Split Capsule | White Icon | Purple Gradient Label | Green Option
    ========================================================================== */
 
 /* Target BOTH class names */
@@ -113,3 +113,16 @@
   filter: grayscale(0.8);
   pointer-events: none;
 }
+
+/* --- Green Glass Button Variant */
+.glass-btn.green .glass-btn-label {
+  background: linear-gradient(135deg, #28A745 0%, #34ce57 100%);
+}
+.glass-btn.green .glass-btn-icon {
+  color: #28A745;
+}
+.glass-btn.green:hover .glass-btn-icon {
+  color: #1e7e34;
+}
+
+

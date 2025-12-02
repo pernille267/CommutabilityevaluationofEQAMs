@@ -1,9 +1,42 @@
 /* ==========================================================================
-   CUSTOM GLASS DROPDOWN
+   CUSTOM GLASS DROPDOWN (glassDropdown.R)
    Theme: Green Border | Glassy Menu | Portal-Ready
    ========================================================================== */
 
-/* Container mostly just holds the button now */
+/* --- Integrated Input Label for glassDropdown --- */
+.glass-dropdown-label-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 8px 5px; /* Slight padding for alignment */
+  margin-bottom: 0;
+  user-select: none;
+}
+
+/* Label Icon */
+.glass-dropdown-label-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(96, 92, 168, 0.15);
+}
+
+/* Label Text */
+.glass-dropdown-label-text {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #495057; /* Dark Grey for Parameter Selections */
+  line-height: 1.2;
+}
+
+/* Container Mostly Just Holds the Dropdown Button */
 .glass-dropdown-container {
   position: relative;
   display: inline-block;
@@ -11,7 +44,7 @@
   margin-bottom: 5px; /* Spacing in the form */
 }
 
-/* --- THE BUTTON --- */
+/* --- The Dropdown Button --- */
 .glass-dropdown-btn {
   background-color: #ffffff;
   color: #444;
@@ -26,13 +59,13 @@
   transition: all 0.3s ease;
   outline: none;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-
   /* Flex layout for the icon alignment */
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* Dropdown Button Hover Effects */
 .glass-dropdown-btn:hover, .glass-dropdown-btn.active {
   border-color: #28A745;
   color: #28A745;
@@ -40,11 +73,9 @@
   transform: translateY(-1px);
 }
 
-/* --- THE MENU --- */
+/* --- Dropdown Menu --- */
 .glass-dropdown-menu {
-  display: none; /* Hidden by default */
-
-  /* Note: 'position', 'top', 'left', 'width' are now set by JS */
+  display: none; /* Hidden by default. Visible When Button is Pressed */
   background-color: rgba(255, 255, 255, 0.98);
   box-shadow: 0 15px 35px rgba(0,0,0,0.15);
   border-radius: 12px;
@@ -52,21 +83,20 @@
   padding: 8px;
   max-height: 300px;
   overflow-y: auto;
-
-  /* Animation */
+  /* Animation for the Dropdown Menu */
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* Show State */
+/* Show State for the Dropdown Menu */
 .glass-dropdown-menu.show {
   display: block;
   opacity: 1;
   transform: translateY(0);
 }
 
-/* --- OPTIONS --- */
+/* --- Dropdown Options --- */
 .glass-option {
   color: #555;
   padding: 10px 15px;
@@ -77,12 +107,14 @@
   transition: all 0.2s;
 }
 
+/* Dropdown Options Hover Effects */
 .glass-option:hover {
   background-color: #f4f3fb;
   color: #605CA8;
   transform: translateX(4px);
 }
 
+/* Selected Option */
 .glass-option.selected {
   background: linear-gradient(135deg, #7a76c5 0%, #605CA8 100%);
   color: white;
@@ -90,7 +122,7 @@
   box-shadow: 0 4px 10px rgba(96, 92, 168, 0.4);
 }
 
-/* Fade out the container */
+/* --- Disabled Styling (Slight Grey Background and Grey Border) --- */
 .glass-dropdown-container.disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -108,3 +140,69 @@
 .glass-dropdown-btn.disabled i {
   color: #ccc;
 }
+
+/* --- Tooltip and Help Text --- */
+/* The Trigger Icon */
+.glass-dropdown-help-icon {
+    position: absolute;
+    top: -2px;
+    right: 0;
+    font-size: 15px;
+    color: #adb5bd;
+    cursor: help;
+    z-index: 10;
+    transition: color 0.3s ease;
+    padding: 5px;
+}
+
+.glass-dropdown-help-icon:hover {
+    color: #605CA8;
+}
+
+/* The Tooltip Popup */
+.glass-dropdown-tooltip-popup {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: auto;
+    bottom: 135%;
+    right: -10px;
+
+    background: #605CA8;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 10px rgba(96, 92, 168, 0.3);
+
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 400;
+    width: max-content;
+    max-width: 250px;
+
+    z-index: 1000;
+    transform: translateY(5px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none;
+}
+
+/* Show state */
+.glass-dropdown-help-icon:hover .glass-dropdown-tooltip-popup {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0px);
+}
+
+/* Arrow */
+.glass-dropdown-tooltip-popup::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    bottom: auto;
+    right: 15px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: #605CA8 transparent transparent transparent;
+}
+

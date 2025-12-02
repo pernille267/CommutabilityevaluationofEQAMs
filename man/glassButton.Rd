@@ -4,7 +4,14 @@
 \alias{glassButton}
 \title{Glass Action Button (Split Style)}
 \usage{
-glassButton(inputId, label, icon = NULL, width = NULL, disabled = FALSE)
+glassButton(
+  inputId,
+  label,
+  icon = NULL,
+  width = NULL,
+  color = "purple",
+  disabled = FALSE
+)
 }
 \arguments{
 \item{inputId}{The input slot that will be used to access the value.}
@@ -14,6 +21,8 @@ glassButton(inputId, label, icon = NULL, width = NULL, disabled = FALSE)
 \item{icon}{An optional icon() to appear in the white section.}
 
 \item{width}{The width of the button (e.g., '100\%', '200px').}
+
+\item{color}{A character string. "purple" (default) or "green".}
 
 \item{disabled}{Logical. Should the button be disabled on load?}
 }

@@ -6,6 +6,9 @@
 \usage{
 glassDropdown(
   inputId,
+  label = NULL,
+  label_icon = NULL,
+  help_text = NULL,
   choices,
   selected = NULL,
   disabled = FALSE,
@@ -14,6 +17,12 @@ glassDropdown(
 }
 \arguments{
 \item{inputId}{The input slot that will be used to access the value.}
+
+\item{label}{Optional display label text.}
+
+\item{label_icon}{Optional \code{icon()} for the label.}
+
+\item{help_text}{Optional tooltip text to display on hover.}
 
 \item{choices}{List of values to select from. Can be a named vector c("Label" = "val").}
 

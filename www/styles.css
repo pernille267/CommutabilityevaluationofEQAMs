@@ -876,3 +876,70 @@
   position: relative;
   top: -1px;
 }
+
+
+/* --- Fallback Tooltips --- */
+
+/* The Trigger Icon */
+.glass-help-icon {
+    position: absolute;
+    top: -2px;
+    right: 0;
+    font-size: 15px;
+    color: #adb5bd;
+    cursor: help;
+    z-index: 10;
+    transition: color 0.3s ease;
+    padding: 5px;
+}
+
+.glass-help-icon:hover {
+    color: #605CA8;
+}
+
+/* The Tooltip Popup */
+.glass-tooltip-popup {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 100%;
+    right: -10px;
+
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 20px rgba(96, 92, 168, 0.15);
+
+    color: #495057;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 500;
+    width: max-content;
+    max-width: 280px;
+
+    z-index: 1000;
+    transform: translateY(5px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    pointer-events: none;
+}
+
+/* Show state */
+.glass-help-icon:hover .glass-tooltip-popup {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(10px);
+}
+
+/* Arrow */
+.glass-tooltip-popup::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    right: 15px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent rgba(255, 255, 255, 0.95) transparent;
+}

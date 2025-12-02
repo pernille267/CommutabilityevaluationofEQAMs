@@ -1,6 +1,9 @@
 #' Glass Dropdown Input
 #'
 #' @param inputId The input slot that will be used to access the value.
+#' @param label Optional display label text.
+#' @param label_icon Optional \code{icon()} for the label.
+#' @param help_text Optional tooltip text to display on hover.
 #' @param choices List of values to select from. Can be a named vector c("Label" = "val").
 #' @param selected The initially selected value (must match the value, not the label).
 #' @param disabled Logical. If \code{TRUE}, the dropdown is disabled on load.
@@ -8,9 +11,16 @@
 #'
 #' @importFrom htmltools tagList tags htmlDependency
 #' @export
-glassDropdown <- function(inputId, choices, selected = NULL, disabled = FALSE, width = "100%") {
+glassDropdown <- function(inputId,
+                          label = NULL,
+                          label_icon = NULL,
+                          help_text = NULL,
+                          choices,
+                          selected = NULL,
+                          disabled = FALSE,
+                          width = "100%") {
 
-  # 1. Handle Named Vectors
+  # --- Handle Named Vectors ---
   if (!is.null(names(choices))) {
     values <- as.character(choices)
     labels <- names(choices)
@@ -19,9 +29,8 @@ glassDropdown <- function(inputId, choices, selected = NULL, disabled = FALSE, w
     labels <- as.character(choices)
   }
 
-  # 2. Default Selection
+  # --- Setting Default Selection ---
   if (is.null(selected)) selected <- values[1]
-
   selected_idx <- which(values == selected)[1]
   if (is.na(selected_idx)) {
     warning(paste("Selected value '", selected, "' not found in choices. Defaulting to first."))
@@ -30,7 +39,7 @@ glassDropdown <- function(inputId, choices, selected = NULL, disabled = FALSE, w
   }
   selected_label <- labels[selected_idx]
 
-  # 3. Handle Disabled State Classes
+  # --- Handle Disabled State Classes ---
   container_cls <- "glass-dropdown-container"
   btn_cls       <- "glass-dropdown-btn"
 
@@ -39,7 +48,17 @@ glassDropdown <- function(inputId, choices, selected = NULL, disabled = FALSE, w
     btn_cls       <- paste(btn_cls, "disabled")
   }
 
-  # 4. Generate Options
+  # --- Header Generation ---
+  header_html <- NULL
+  if (!is.null(label) || !is.null(label_icon)) {
+    header_html <- htmltools::tags$div(
+      class = "glass-dropdown-label-header",
+      if (!is.null(label_icon)) htmltools::tags$div(class = "glass-dropdown-label-icon", label_icon),
+      if (!is.null(label)) htmltools::tags$span(class = "glass-dropdown-label-text", label)
+    )
+  }
+
+  # --- Generate Options ---
   options_html <- lapply(seq_along(values), function(i) {
     val <- values[i]
     lbl <- labels[i]
@@ -54,30 +73,42 @@ glassDropdown <- function(inputId, choices, selected = NULL, disabled = FALSE, w
     )
   })
 
-  # 5. Build UI
+  # Help Icon
+  help_icon_html <- create_glass_help_icon(help_text, "dropdown")
+
+  # --- Build UI (Wrap in a parent div to hold Header + Dropdown) ---
   ui_structure <- htmltools::tags$div(
-    class = container_cls,
-    style = paste0("width: ", width, ";"),
-    id = paste0("container-", inputId),
-    `data-selected` = selected,
+    style = paste0("width: ", width, "; margin-bottom: 20px;"),
+    # Help Icon
+    help_icon_html,
+    # The Header & Header Icon
+    header_html,
 
-    htmltools::tags$button(
-      id = paste0("btn-", inputId),
-      class = btn_cls,
-      # Prevent toggle if disabled (handled by JS 'if' check, but good to have class)
-      onclick = sprintf("toggleGlassMenu('%s')", inputId),
-      type = "button",
-      htmltools::tags$span(id = paste0("label-", inputId), selected_label),
-      htmltools::tags$i(class = "fa fa-chevron-down", style = "float: right; font-size: 0.8em; margin-top: 4px;")
-    ),
-
+    # The Dropdown Container
     htmltools::tags$div(
-      id = paste0("menu-", inputId),
-      class = "glass-dropdown-menu",
-      htmltools::tagList(options_html)
+      class = container_cls,
+      style = "width: 100%;", # Fill the wrapper
+      id = paste0("container-", inputId),
+      `data-selected` = selected,
+
+      htmltools::tags$button(
+        id = paste0("btn-", inputId),
+        class = btn_cls,
+        onclick = sprintf("toggleGlassMenu('%s')", inputId),
+        type = "button",
+        htmltools::tags$span(id = paste0("label-", inputId), selected_label),
+        htmltools::tags$i(class = "fa fa-chevron-down", style = "float: right; font-size: 0.8em; margin-top: 4px;")
+      ),
+
+      htmltools::tags$div(
+        id = paste0("menu-", inputId),
+        class = "glass-dropdown-menu",
+        htmltools::tagList(options_html)
+      )
     )
   )
 
+  # --- Attach Dependencies ---
   htmltools::tagList(
     ui_structure,
     htmltools::htmlDependency(

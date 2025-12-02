@@ -4,10 +4,15 @@
 \alias{glassTogglePanel}
 \title{Glass Toggle Panel}
 \usage{
-glassTogglePanel(triggerId, ...)
+glassTogglePanel(triggerId, show_when = NULL, ...)
 }
 \arguments{
 \item{triggerId}{The inputId of the button (glassButton) that toggles this panel.}
+
+\item{show_when}{Optional. A specific value (character/numeric) that the input
+at \code{triggerId} must match to show the panel.
+If NULL (default), it assumes \code{triggerId} is a counter
+(odd = show, even = hide).}
 
 \item{...}{Content to display inside the panel.}
 }

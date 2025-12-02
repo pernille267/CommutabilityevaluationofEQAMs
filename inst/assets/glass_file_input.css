@@ -82,7 +82,7 @@
 }
 
 /* --- 5. HELP ICON --- */
-.glass-help-icon {
+.glass-file-help-icon {
   color: #adb5bd;
   cursor: help;
   font-size: 15px;
@@ -91,11 +91,11 @@
   display: flex;
   align-items: center;
 }
-.glass-help-icon:hover {
+.glass-file-help-icon:hover {
   color: #605CA8;
 }
 
-.glass-help-icon::after {
+.glass-file-help-icon::after {
   content: attr(data-glass-help);
   position: absolute;
   bottom: 135%;
@@ -120,7 +120,7 @@
   white-space: normal;
   text-align: center;
 }
-.glass-help-icon:hover::after {
+.glass-file-help-icon:hover::after {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);

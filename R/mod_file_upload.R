@@ -26,7 +26,8 @@ mod_file_upload_ui <- function(id) {
       glassButton(
         inputId = ns("show_file_input_explanation"),
         label = "Show Help Text",
-        icon = icon("circle-question")
+        icon = icon("circle-question"),
+        color = "green"
       )
     ),
     glassTogglePanel(
@@ -88,74 +89,85 @@ mod_file_upload_ui <- function(id) {
           width = "100%",
           div(
             class = "parameter-section",
-            h4(
-              icon("arrow-pointer", class = "section-icon"),
-              "Reference Method"
-            ),
             glassDropdown(
               inputId = ns("reference_method"),
+              label = "Reference Method",
+              label_icon = icon("arrow-pointer"),
               choices = "none",
               selected = "none",
               disabled = TRUE,
               width = "100%"
-            )
-          ),
-          div(
-            class = "parameter-section",
-            h4(icon("snowflake", class = "section-icon"), "Ignore Failed Validation Tests"),
+            ),
             glassRadioButtons(
               inputId = ns("ignore_invalid_data"),
+              label = "Ignore Failed Validation Tests",
+              label_icon = icon("bug-slash"),
               choices = c("Yes", "No"),
               selected = "No",
               width = "100%"
-            ),
-            uiOutput(ns("warning_placeholder"))
-          )
+            )
+          ),
+          uiOutput(ns("warning_placeholder"))
         )
       )
     ),
 
     # --- Diagnostic Section ---
-
-    # Overall Status
     glassResultCard(
-      inputId = ns("card_status"),
+      inputId = ns("card_diagnostics_main"),
       title = "Diagnostic Overview",
       icon = icon("stethoscope"),
       width = "100%",
       toolbar = uiOutput(
-        outputId = ns("overall_diagnostic_status")
+        outputId = ns("overall_diagnostics_status")
+      ),
+      glassTabsetPanel(
+        inputId = ns("diag_tabset"),
+        glassTabPanel(
+          title = "Clinical Samples",
+          value = "tab_cs",
+          icon = uiOutput(ns("status_icon_cs"), inline = TRUE),
+          glassCard(
+            inputId = ns("card_inner_cs"),
+            title = "Clinical Sample Data Diagnostics",
+            icon = icon("microscope"),
+            collapsible = TRUE,
+            collapsed = FALSE,
+            width = "100%",
+            uiOutput(outputId = ns("cs_table_diagnostics")),
+            htmlOutput(outputId = ns("cs_text_diagnostics"))
+          )
+        ),
+        glassTabPanel(
+          title = "EQAM Data",
+          value = "tab_eq",
+          icon = uiOutput(ns("status_icon_eq"), inline = TRUE),
+          glassCard(
+            inputId = ns("card_inner_eq"),
+            title = "EQAM Data Diagnostics",
+            icon = icon("vial"),
+            collapsible = TRUE,
+            collapsed = FALSE,
+            width = "100%",
+            uiOutput(outputId = ns("eq_table_diagnostics")),
+            htmlOutput(outputId = ns("eq_text_diagnostics"))
+          )
+        ),
+        glassTabPanel(
+          title = "Agreement",
+          value = "tab_agreement",
+          icon = uiOutput(ns("status_icon_ag"), inline = TRUE),
+          glassCard(
+            inputId = ns("card_inner_ag"),
+            title = "Structural Agreement Diagnostics",
+            icon = icon("check-double"),
+            collapsible = TRUE,
+            collapsed = FALSE,
+            width = "100%",
+            htmlOutput(outputId = ns("both_text_diagnostics"))
+          )
+        )
       )
-    ),
-
-    # Detailed Diagnostics (Split into separate collapsible Glass Cards)
-    glassCard(
-      inputId = ns("card_diag_cs"),
-      title = "Clinical Sample Data Diagnostics",
-      icon = icon("microscope"),
-      collapsible = TRUE,
-      collapsed = TRUE,
-      uiOutput(outputId = ns("cs_table_diagnostics")),
-      htmlOutput(outputId = ns("cs_text_diagnostics"))
-    ),
-
-    glassCard(
-      inputId = ns("card_diag_eq"),
-      title = "External Quality Assessment Material Data Diagnostics",
-      icon = icon("flask"),
-      collapsible = TRUE,
-      collapsed = TRUE,
-      uiOutput(outputId = ns("eq_table_diagnostics")),
-      htmlOutput(outputId = ns("eq_text_diagnostics"))
-    ),
-
-    glassCard(
-      inputId = ns("card_diag_agreement"),
-      title = "Structural Agreement Between Data Diagnostics",
-      icon = icon("check-double"),
-      collapsible = TRUE,
-      collapsed = TRUE,
-      htmlOutput(outputId = ns("both_text_diagnostics"))
     )
   )
 }
@@ -179,6 +191,8 @@ mod_file_upload_server <- function(id) {
   # --- Create the Module Server for the `File Upload` Section ---
   moduleServer(id, function(input, output, session) {
 
+    # --- Helper Functions ---
+    ns <- session$ns
 
     # --- File Reading with Error Handling -------------------------------------
     read_data_safely <- function(file_input) {
@@ -280,7 +294,7 @@ mod_file_upload_server <- function(id) {
     # --- Notes ----------------------------------------------------------------
     # This is a single indicator that tells the user whether they can move
     # forward or not
-    output$overall_diagnostic_status <- renderUI({
+    output$overall_diagnostics_status <- renderUI({
       # --- Require diagnostics have been run before showing ---
       req(
         current_diagnostics_cs(),
@@ -319,6 +333,39 @@ mod_file_upload_server <- function(id) {
         status_icon,
         span(status_text)
       )
+    })
+
+    # --- DYNAMIC ICON RENDERING -----------------------------------------------
+    # This allows the UI structure to stay in mod_file_upload_ui
+
+    # 1. CS Icon
+    output$status_icon_cs <- renderUI({
+      diag <- current_diagnostics_cs()
+      if (!is.null(diag) && diag$badge == "not acceptable") {
+        icon("circle-exclamation", class = "text-danger")
+      } else {
+        icon("microscope")
+      }
+    })
+
+    # 2. EQ Icon
+    output$status_icon_eq <- renderUI({
+      diag <- current_diagnostics_eq()
+      if (!is.null(diag) && diag$badge == "not acceptable") {
+        icon("circle-exclamation", class = "text-danger")
+      } else {
+        icon("flask")
+      }
+    })
+
+    # 3. Agreement Icon
+    output$status_icon_ag <- renderUI({
+      diag <- current_diagnostics_both()
+      if (!is.null(diag) && (!isTRUE(diag$equal_names) || !isTRUE(diag$equal_order))) {
+        icon("circle-exclamation", class = "text-danger")
+      } else {
+        icon("check-double")
+      }
     })
 
     # --- Dynamic UI Updates ---------------------------------------------------
@@ -475,6 +522,13 @@ mod_file_upload_server <- function(id) {
       req(current_diagnostics_both())
       render_agreement_text(current_diagnostics_both())
     })
+
+    outputOptions(output, "overall_diagnostics_status", suspendWhenHidden = FALSE)
+    outputOptions(output, "cs_table_diagnostics", suspendWhenHidden = FALSE)
+    outputOptions(output, "cs_text_diagnostics", suspendWhenHidden = FALSE)
+    outputOptions(output, "eq_table_diagnostics", suspendWhenHidden = FALSE)
+    outputOptions(output, "eq_text_diagnostics", suspendWhenHidden = FALSE)
+    outputOptions(output, "both_text_diagnostics", suspendWhenHidden = FALSE)
 
     # --- Return Values for Other Modules ---
     return(

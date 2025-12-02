@@ -577,7 +577,7 @@ render_diagnostic_text <- function(diagnostics, other_diagnostics, type = "cs") 
   htmltools::tagList(
     # --- Section 1: Validation Tests ---
     htmltools::tags$div(
-      class = "glass-diag-container",
+      class = "glass-diag-container collapsed",
       # Header
       htmltools::tags$div(
         class = "glass-diag-header",
@@ -601,7 +601,7 @@ render_diagnostic_text <- function(diagnostics, other_diagnostics, type = "cs") 
 
     # --- Section 2: Repairing ---
     htmltools::tags$div(
-      class = "glass-diag-container",
+      class = "glass-diag-container collapsed",
       # Header
       htmltools::tags$div(
         class = "glass-diag-header",
@@ -680,7 +680,7 @@ render_agreement_text <- function(diagnostics) {
   # --- 5. Assemble UI ---
   htmltools::tagList(
     htmltools::tags$div(
-      class = "glass-diag-container",
+      class = "glass-diag-container collapsed",
       # Header
       htmltools::tags$div(
         class = "glass-diag-header",
@@ -703,4 +703,335 @@ render_agreement_text <- function(diagnostics) {
     ),
     dep
   )
+}
+
+#' Expert System for Optimal Regression Model and Transformation Selection
+#'
+#' @description
+#' An automated decision-making engine that evaluates IVD-MD comparison data to recommend
+#' the optimal statistical transformation (Identity, Log, or Box-Cox) and regression model
+#' (Deming OLS or Smoothing Spline).
+#'
+#' The function employs a "gatekeeper" logic combined with a sophisticated scoring algorithm
+#' to balance model simplicity (OLS) against goodness-of-fit requirements.
+#'
+#' @param data A \code{data.table} object containing the raw comparison data. Must include the following columns:
+#' \itemize{
+#'   \item \code{comparison}: Character/Factor identifier for the IVD-MD pair.
+#'   \item \code{SampleID}: Identifier for specific samples.
+#'   \item \code{ReplicateID}: Identifier for replicates within samples.
+#'   \item \code{MP_A}: Measurement results for the first IVD-MD.
+#'   \item \code{MP_B}: Measurement results for the second IVD-MD.
+#' }
+#' @param zeta_critical Numeric. The upper threshold for the Zeta statistic (default: 4.24).
+#' If an OLS model yields a Zeta score below this threshold, it is considered a "Success" and
+#' the system will prioritize OLS over Smoothing Splines to prevent overfitting.
+#' @param parsimony_threshold Numeric. If both (Smoothing Splines and OLS) zeta estimates
+#' exceeds \code{zeta_critical}, the percentage reduction in in the zeta estimate produced
+#' by Smoothing Splines is necessary to justify recommending this model.
+#'
+#' @details
+#' \strong{The Decision Logic:}
+#' The engine follows a hierarchical decision tree for each comparison in \code{data}:
+#' \enumerate{
+#'   \item \strong{Transformation Evaluation:} It applies Identity, Log (natural), and Box-Cox (lambda=0.5) transformations to the data.
+#'   \item \strong{Linear Model Check (Gatekeeper):} It calculates the Zeta statistic using Ordinary Least Squares (OLS) for all transformations.
+#'   \item \strong{Branching:}
+#'   \itemize{
+#'     \item \emph{Path A (Success):} If any OLS Zeta is \eqn{\le} \code{zeta_critical}, the system restricts its selection to OLS models.
+#'     \item \emph{Path B (Fallback):} If all OLS Zetas exceed the threshold, the system switches to Non-Weighted Smoothing Splines.
+#'   }
+#'   \item \strong{Scoring & Selection:} The surviving models are ranked using a composite scoring system:
+#'   \itemize{
+#'     \item \emph{Absolute Difference:} \eqn{| \zeta - 1 |}
+#'     \item \emph{Relative Difference:} Penalizes deviations from the benchmark.
+#'     \item \emph{Dynamic Score:} A custom continuous function \eqn{f(x, b, L)} that is convex between the cutoff \eqn{L} (0.6) and benchmark \eqn{b} (1), and decays rapidly (concave) for values > \eqn{b}.
+#'   }
+#' }
+#'
+#' \strong{Tie-Breaking:}
+#' If metrics disagree, the \strong{Dynamic Score} is prioritized. If a transformation shows no meaningful
+#' improvement over Identity (improvement score \eqn{\le 0}), the system reverts to the Identity transformation.
+#'
+#' @return A named list where each element corresponds to a unique \code{comparison} from the input \code{data}.
+#' Each element contains:
+#' \itemize{
+#'   \item \code{comparison}: The comparison ID.
+#'   \item \code{model_type}: The selected model class ("OLS" or "SmoothingSpline").
+#'   \item \code{best_transformation}: The internal code for the optimal transformation (e.g., "log#e", "identity").
+#'   \item \code{reason}: A descriptive string explaining the logic behind the selection (e.g., "Consensus among all score metrics").
+#'   \item \code{zeta}: The Zeta statistic of the selected model/transformation.
+#'   \item \code{linear_success}: Logical. \code{TRUE} if OLS was sufficient, \code{FALSE} if fallback to Spline was required.
+#' }
+#'
+#' @export
+recommendation_engine <- function(data, zeta_critical = 4.24, parsimony_threshold = 0.20) {
+
+  # --- Local Constants ---
+  transformations <- c(
+    "identity" = "identity",
+    "log" = "log#e",
+    "boxcox" = "boxcox#0.5"
+  )
+
+  # --- Local functions ---
+
+  # Dynamic Scoring Function
+  dynamic_zeta_score <- function(zetas, benchmark = 1, zeta_bad_upper = 0.6, zeta_critical, score_at_zeta_bad_upper = 5) {
+
+    if (zeta_bad_upper >= benchmark) {
+      stop("zeta_bad_upper (cutoff) must be strictly less than the benchmark.")
+    }
+    # Using pmax to avoid negative inputs in log
+    alpha_calc_zeta <- pmax(zeta_bad_upper, 1e-9)
+
+    # Formula: score_at_zeta_bad_upper = 100 * (zeta_bad_upper / benchmark) ^ y
+    y <- log(score_at_zeta_bad_upper / 100) / log(alpha_calc_zeta / benchmark)
+
+    scores <- numeric(length(zetas))
+
+    # Masking
+    mask_left  <- !is.na(zetas) & (zetas <= benchmark)
+    mask_right <- !is.na(zetas) & (zetas > benchmark)
+
+    # Part 1: Left Side (Growth)
+    if (any(mask_left)) {
+      val_left <- pmax(zetas[mask_left], 1e-9)
+      scores[mask_left] <- 100 * (val_left / benchmark) ^ y
+    }
+
+    # Part 2: Right Side (Decay)
+    # Note: Using zeta_critical as the 'c' offset parameter equivalent
+    if (any(mask_right)) {
+      val_right <- zetas[mask_right]
+      scores[mask_right] <- 100 / (1 + 9 * ((val_right - benchmark) / (zeta_critical - benchmark)) ^ 2)
+    }
+
+    scores[is.na(zetas)] <- NA
+    return(scores)
+  }
+
+  # Score Aggregation Function
+  zeta_scores <- function(zetas, transformations_names, benchmark = 1, zeta_critical, zeta_bad_upper = 0.6) {
+
+    score_absolute_diff <- abs(zetas - benchmark)
+    score_relative_diff <- pmax(1 / abs((zetas - benchmark) / benchmark) * 10, 100)
+    score_dynamic <- dynamic_zeta_score(
+      zetas = zetas,
+      benchmark = benchmark,
+      zeta_bad_upper = zeta_bad_upper,
+      zeta_critical = zeta_critical,
+      score_at_zeta_bad_upper = 5
+    )
+
+    impr_score_absolute_diff <- score_absolute_diff - score_absolute_diff[1]
+    impr_score_relative_diff <- score_relative_diff - score_relative_diff[1]
+    impr_score_dynamic <- score_dynamic - score_dynamic[1]
+
+    # Best identifiers
+    # Note: For absolute diff, MIN is best. For others, MAX is best.
+    output_best <- c(
+      "best_score_absolute_diff" = transformations_names[which.min(score_absolute_diff)],
+      "best_score_relative_diff" = transformations_names[which.max(score_relative_diff)],
+      "best_score_dynamic" = transformations_names[which.max(score_dynamic)],
+      "best_impr_score_absolute_diff" = transformations_names[which.max(impr_score_absolute_diff)],
+      "best_impr_score_relative_diff" = transformations_names[which.max(impr_score_relative_diff)],
+      "best_impr_score_dynamic" = transformations_names[which.max(impr_score_dynamic)]
+    )
+
+    # Store raw values for decision logic
+    raw_scores <- list(
+      "dynamic" = score_dynamic,
+      "impr_dynamic" = impr_score_dynamic
+    )
+
+    output_details <- sapply(seq_along(zetas), function(i) {
+      list(
+        "transformation" = transformations_names[i],
+        "zeta" = zetas[i],
+        "score_dynamic" = score_dynamic[i],
+        "impr_dynamic" = impr_score_dynamic[i]
+      )
+    },
+    simplify = FALSE)
+
+    return(list("details" = output_details, "best" = output_best, "raw" = raw_scores))
+  }
+
+  # Decision Logic Helper (To avoid repeating code in OLS and SS blocks)
+  decide_outcome <- function(scores_output, transformation_map) {
+
+    scores_best <- scores_output$best
+    raw_dynamic <- scores_output$raw$dynamic
+    raw_impr <- scores_output$raw$impr_dynamic
+    names(raw_dynamic) <- names(transformation_map)
+    names(raw_impr) <- names(transformation_map)
+
+    # Extract the 'best' suggestions from the different metrics
+    # We focus on the indices 1:3 (Absolute, Relative, Dynamic)
+    best_candidates <- unique(scores_best[1:3])
+
+    selected_transformation <- NULL
+    reason <- NULL
+
+    # CASE 1: Consensus (All scores point to the same transformation)
+    if (length(best_candidates) == 1) {
+      selected_transformation <- best_candidates
+      reason <- "Consensus among all score metrics."
+
+      # CASE 2: Disagreement (Tie-breaking)
+    } else {
+      # Prefer Dynamic Score as per instructions
+      selected_transformation <- scores_best["best_score_dynamic"]
+      reason <- "Metrics disagreed; Dynamic Score prioritized."
+    }
+
+    # CHECK: Is the improvement meaningful?
+    # If the selected transformation is NOT identity, we check if it actually improved things.
+    if (selected_transformation != "identity") {
+
+      # Check the dynamic improvement score for the selected transformation
+      # We map the name back to the index or name in the raw vector
+      imp_val <- raw_impr[selected_transformation]
+
+      # If improvement is non-positive (or negligible), revert to identity
+      if (imp_val <= 0.05) {
+        reason <- paste(reason, "However, improvement score was <= 5 %, reverting to identity.")
+        selected_transformation <- "identity"
+      } else {
+        reason <- paste(reason, sprintf("Meaningful improvement found (Score +%.2f).", imp_val))
+      }
+    } else {
+      reason <- paste(reason, "Identity was the best fit.")
+    }
+
+    return(list(
+      "selected_transformation" = unname(transformation_map[selected_transformation]),
+      "selected_transformation_name" = selected_transformation,
+      "reason" = reason,
+      "scores" = scores_output$best
+    ))
+  }
+
+  # --- Data Preparation ---
+
+  # Create copies to avoid modifying original data.table in place by reference
+  data_identity <- commutability::transform_data(data.table::copy(data), transformations["identity"])
+  data_log      <- commutability::transform_data(data.table::copy(data), transformations["log"])
+  data_boxcox   <- commutability::transform_data(data.table::copy(data), transformations["boxcox"])
+
+  # Split into lists
+  data_identity_list <- split(data_identity, by = "comparison")
+  data_log_list      <- split(data_log, by = "comparison")
+  data_boxcox_list   <- split(data_boxcox, by = "comparison")
+
+  # --- The Expert System Loop ---
+  optimal_transformations <- sapply(
+    seq_along(data_identity_list),
+    function(comparisonID) {
+
+      # 1. Run OLS (Always)
+      zetas_ols <- c(
+        estimate_zeta_ols(data_identity_list[[comparisonID]])$zeta,
+        estimate_zeta_ols(data_log_list[[comparisonID]])$zeta,
+        estimate_zeta_ols(data_boxcox_list[[comparisonID]])$zeta
+      )
+
+      # Calculate OLS Scores
+      scores_ols <- zeta_scores(
+        zetas = zetas_ols,
+        transformations_names = names(transformations),
+        benchmark = 1,
+        zeta_critical = zeta_critical
+      )
+      decision_ols <- decide_outcome(scores_ols, transformations)
+
+      # check if OLS is valid
+      ols_is_valid <- any(zetas_ols <= zeta_critical, na.rm = TRUE)
+
+      # Extract best zeta value based on the OLS model
+      best_zeta_ols <- zetas_ols[which(
+        x = names(transformations) == decision_ols$selected_transformation_name
+      )]
+
+      # --- LOGIC BRANCH 1: OLS IS GOOD ENOUGH ---
+      # If OLS fits the criteria, we generally stop.
+      # (Usually we stick to OLS if valid).
+      if (ols_is_valid) {
+        return(list(
+          comparison = names(data_identity_list)[comparisonID],
+          model_type = "OLS",
+          best_transformation = decision_ols$selected_transformation,
+          reason = "OLS met criteria (Parsimony).",
+          zeta = best_zeta_ols
+        ))
+      }
+
+      # --- LOGIC BRANCH 2: OLS FAILED -> CHECK SS ---
+      # We must calculate SS to see if it improves things
+      zetas_ss <- c(
+        estimate_zeta_ss(data_identity_list[[comparisonID]], df=NULL, df_max=7.5, weighted=FALSE, mor=FALSE, na_rm=TRUE)$zeta,
+        estimate_zeta_ss(data_log_list[[comparisonID]],      df=NULL, df_max=7.5, weighted=FALSE, mor=FALSE, na_rm=TRUE)$zeta,
+        estimate_zeta_ss(data_boxcox_list[[comparisonID]],   df=NULL, df_max=7.5, weighted=FALSE, mor=FALSE, na_rm=TRUE)$zeta
+      )
+
+      scores_ss <- zeta_scores(
+        zetas = zetas_ss,
+        transformations_names = names(transformations),
+        benchmark = 1, zeta_critical = zeta_critical
+      )
+
+      decision_ss <- decide_outcome(scores_ss, transformations)
+
+      # check if SS is valid
+      ss_is_valid <- any(zetas_ss <= zeta_critical, na.rm = TRUE)
+
+      # Extract best zeta value based on the OLS model
+      best_zeta_ss <- zetas_ss[which(
+        x = names(transformations) == decision_ss$selected_transformation_name
+      )]
+
+      # --- COMPARISON LOGIC ---
+
+      # 1. SS Rescued the dataset (OLS Fail, SS Pass)
+      if (ss_is_valid) {
+        return(list(
+          comparison = names(data_identity_list)[comparisonID],
+          model_type = "SmoothingSpline",
+          best_transformation = decision_ss$selected_transformation,
+          reason = "Excessive DINS according to the ordinary least squares model; Acceptable DINS according to the Smoothing Spline model.",
+          zeta = best_zeta_ss
+        ))
+      }
+
+      # 2. Both Failed -> Check Relative Improvement
+      # Calculate distances from 1
+      dist_ols <- abs(best_zeta_ols - 1)
+      dist_ss  <- abs(best_zeta_ss - 1)
+
+      # Improvement %
+      improvement <- (dist_ols - dist_ss) / dist_ols
+
+      if (improvement >= parsimony_threshold) {
+        return(list(
+          comparison = names(data_identity_list)[comparisonID],
+          model_type = "SmoothingSpline",
+          best_transformation = decision_ss$selected_transformation,
+          reason = sprintf("Excessive DINS according to both Ordinary Least Squares and Smoothing Splines. However the Smoothing Spline improved the DINS accuracy by %.1f%% (Accuracy improvement of %.0f%% is considered meaningful in this context).", improvement*100, parsimony_threshold*100),
+          zeta = best_zeta_ss
+        ))
+      } else {
+        return(list(
+          comparison = names(data_identity_list)[comparisonID],
+          model_type = "OLS",
+          best_transformation = decision_ols$selected_transformation,
+          reason = sprintf("Excessive DINS according to both Ordinary Least Squares and Smoothing Splines. The DINS estimate reduction (%.1f%%) insufficient to justify the added complexity that comes with the Smoothing Spline Model.", improvement*100),
+          zeta = best_zeta_ols
+        ))
+      }
+    },
+    simplify = FALSE
+  )
+
+  return(optimal_transformations)
 }

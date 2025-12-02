@@ -59,7 +59,7 @@ glassFileInput <- function(inputId,
       # Help Icon (Right aligned)
       if (!is.null(help_text)) {
         htmltools::tags$div(
-          class = "glass-help-icon",
+          class = "glass-file-help-icon",
           `data-glass-help` = help_text,
           htmltools::tags$i(class = "fa fa-question-circle")
         )
