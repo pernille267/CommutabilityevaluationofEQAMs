@@ -17,7 +17,6 @@
 /* --- CAPTION (Top Block) --- */
 .glass-table-caption {
   padding: 20px 25px;
-  /* Seamless Background Color */
   background-color: rgba(96, 92, 168, 0.06);
   color: #4a4a6a;
   font-size: 16px;
@@ -31,7 +30,7 @@
 .glass-table-main {
   display: flex;
   width: 100%;
-  flex-wrap: nowrap; /* CRITICAL: Prevents table dropping below sidebar */
+  flex-wrap: nowrap; /* Prevents table dropping below sidebar */
 }
 
 /* --- LEFT: SIDEBAR --- */
@@ -40,8 +39,6 @@
   flex-shrink: 0; /* Never shrink */
   display: flex;
   flex-direction: column;
-
-  /* Seamless Background Match */
   background-color: rgba(96, 92, 168, 0.06);
   border-right: 1px solid rgba(96, 92, 168, 0.1);
   border-left: 5px solid #605CA8;
@@ -67,10 +64,10 @@
 /* --- RIGHT: DATA AREA --- */
 .glass-table-data-col {
   flex-grow: 1;
-  min-width: 0; /* CRITICAL: Allows flex child to shrink if needed */
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow-x: auto; /* Scroll horizontally if too tight */
+  overflow-x: scroll; /* Scroll horizontally if too tight */
 }
 
 /* --- HEADER --- */
@@ -80,27 +77,13 @@
   position: sticky;
   top: 0;
   z-index: 20;
-
-  /* Fallback for RStudio (Solid Color) */
-  background: rgb(96, 92, 168);
-
-  /* Modern Browsers (Glass) */
-  background: rgba(96, 92, 168, 0.95);
-}
-
-/* CSS Feature Query for Blur */
-@supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
-  .glass-table-head {
-    background: rgba(96, 92, 168, 0.85);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
-}
-
-.glass-table-head {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 15px rgba(96, 92, 168, 0.15);
   border-top-left-radius: 12px; /* Round the corner touching the sidebar */
+  background: rgba(96, 92, 168, 0.95);
+  min-width: 100%;
+  width: max-content;
+  box-sizing: border-box;
 }
 
 .glass-table-header-cell {
@@ -108,16 +91,19 @@
   color: #ffffff;
   font-weight: 600; /* Soft Bold */
   font-size: 16px;
-  /* REMOVED: text-transform: uppercase; */
   cursor: pointer;
   user-select: none;
   display: flex;
   align-items: center;
   height: 100%;
   transition: background 0.2s;
-
   /* Vertical Separators */
   border-right: 1px solid rgba(255, 255, 255, 0.15);
+  /* Forces text to stay on one line */
+  white-space: nowrap;
+  /* Adds "..." if text is still too long */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .glass-table-header-cell:last-child { border-right: none; }
@@ -136,6 +122,8 @@
   overflow-y: auto;
   max-height: 550px;
   background-color: #ffffff;
+  min-width: 100%;
+  width: max-content;
 }
 
 .glass-table-row {
@@ -143,9 +131,9 @@
   border-bottom: 1px solid rgba(96, 92, 168, 0.06);
   transition: all 0.2s ease;
   min-height: 55px;
-
-  /* Soft Glass Tint */
   background-color: rgba(255, 255, 255, 0.7);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .glass-table-row:nth-child(even) {
@@ -154,7 +142,6 @@
 
 .glass-table-row:hover {
   background-color: #ffffff;
-  transform: scale(1.002);
   box-shadow: 0 4px 12px rgba(96, 92, 168, 0.08);
   z-index: 5;
   border-bottom-color: transparent;
@@ -174,11 +161,15 @@
   align-items: center;
   line-height: 1.4;
   transition: transform 0.2s ease, color 0.2s ease;
+  /* Forces text to stay on one line */
+  white-space: nowrap;
+  /* Adds "..." if text is still too long */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Interactive Cell Pop */
 .glass-table-cell:hover {
-  transform: scale(1.01);
   z-index: 10;
   color: #605CA8;
   font-weight: 600;
@@ -200,7 +191,6 @@
   text-align: center;
   font-weight: 500;
   font-size: 16px;
-  /* Removed Roboto Mono */
 }
 
 /* --- BADGES --- */

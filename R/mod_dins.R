@@ -151,26 +151,20 @@ mod_dins_ui <- function(id) {
           width = "100%",
           toolbar = div(
             style = "display: flex; gap: 10px;",
-            glassButton(
-              inputId = ns("calculate_zetas"),
-              label = "Estimate",
-              icon = icon("calculator"),
+            glassDownloadButton(
+              outputId = ns("download_current_zeta"),
+              label = "Current Estimates",
+              icon = icon("download"),
               width = "50%"
             ),
-            glassButton(
-              inputId = ns("clear_zetas"),
-              label = "Clear",
-              icon = icon("trash"),
-              width = "50%"
+            glassDownloadButton(
+              outputId = ns("download_all_zetas"),
+              label = "All Estimates",
+              icon = icon("download"),
+              width = "50px"
             )
           ),
-
-          withSpinner(
-            ui_element = DT::DTOutput(outputId = ns("calculated_zetas")),
-            type = 6,
-            color = "#605CA8",
-            hide.ui = TRUE
-          )
+          uiOutput(outputId = ns("calculated_zetas_table"))
         )
       ),
       glassTabPanel(
@@ -199,13 +193,7 @@ mod_dins_ui <- function(id) {
               width = "100px"
             )
           ),
-
-          withSpinner(
-            ui_element = DT::DTOutput(outputId = ns("im_results")),
-            type = 6,
-            color = "#28A745",
-            hide.ui = TRUE
-          )
+          DT::DTOutput(outputId = ns("im_results"))
         )
       )
     )
@@ -317,20 +305,27 @@ mod_dins_server <- function(id, file_upload_data) {
         cs_data_long(),
         input$M
       )
+      # Use the cached diagnostics from upstream instead of recalculating
+      diagnostics <- file_upload_data$diagnostics_cs()
 
-      diagnostics <- commutability::check_data(data = file_upload_data$raw_cs_data(), type = "cs")
+      # diagnostics must exist
+      req(diagnostics)
+
+      # Get study design quality metrics
       study_design_information <- diagnostics$quality
 
+      # To be conservative we use n_eff = max(n_1, n_2, ..., n_I)
       maximum_n <- max(study_design_information$effective_number_of_samples, na.rm = TRUE)
       maximum_R <- ceiling(max(study_design_information$average_number_of_replicates, na.rm = TRUE))
 
+      # Calculate M as decimal number instead of percentage
       current_M <- as.numeric(input$M) / 100
 
-      if (maximum_n < 20) maximum_n <- 20
-      if (maximum_n > 50) maximum_n <- 50
-      if (maximum_R < 2)  maximum_R <- 2
-      if (maximum_R > 5)  maximum_R <- 5
+      # Clamp values to table limits
+      maximum_n <- max(20, min(50, maximum_n))
+      maximum_R <- max(2, min(5, maximum_R))
 
+      # Find cell-match in LU table
       matches_n <- which(abs(commutability::look_up_table$n - maximum_n) <= 0.1)
       matches_R <- which(abs(commutability::look_up_table$R - maximum_R) <= 0.1)
       matches_M <- which(abs(commutability::look_up_table$M - current_M) <= 0.01)
@@ -347,90 +342,73 @@ mod_dins_server <- function(id, file_upload_data) {
       round(recommended_zeta_upper, digits = 2L)
     })
 
+    # --- Cache the Model Fitting ---
+    cached_zeta_estimates <- reactive({
+      req(raw_cs_data_long())
+
+      # Show a notification because this takes a few seconds
+      id <- showNotification("Fitting regression models...", type = "message", duration = NULL)
+      on.exit(removeNotification(id))
+
+      calculate_candidate_zetas(raw_cs_data_long())
+    })
+
     # --- Recommendation Engine (Heavy Lifter) ---
     optimization_results <- reactive({
       req(
-        raw_cs_data_long(),
+        cached_zeta_estimates(),
         current_recommended_zeta_upper()
       )
 
-      #browser()
-
-      # 1. Run the Expert System
-      # This returns a list of results (one per comparison in your dataset)
+      # Run the lightweight decision logic
       engine_output <- tryCatch(
-        recommendation_engine(
-          data = raw_cs_data_long(),
+        select_best_model(
+          candidate_results = cached_zeta_estimates(),
           zeta_critical = current_recommended_zeta_upper()
         ),
         error = function(e) {
-          warning("Recommendation Engine Error: ", e$message)
+          warning("Selection Logic Error: ", e$message)
           return(NULL)
         }
       )
 
       if (is.null(engine_output) || length(engine_output) == 0) return(NULL)
 
-
-
-      # 2. Aggregate Results (Majority Vote)
-      # We convert the list to a data.table to easily count frequencies
+      # --- Aggregation Logic (Unchanged) ---
       results_dt <- data.table::rbindlist(engine_output)
 
-      # We group by Transformation and Model to find the most frequent combination
-      # We also calculate the average Zeta for that combo to determine overall validity
       ranking <- results_dt[, .(
         votes = .N,
         avg_zeta = mean(zeta, na.rm = TRUE)
       ), by = .(best_transformation, model_type)]
 
-      # Sort by votes (descending) and then avg_zeta (ascending, as tie-breaker)
       data.table::setorder(ranking, -votes, avg_zeta)
-
       winner <- ranking[1]
 
-      # 3. Map Winner to UI Inputs
-
-      # Map Transformation Code -> UI Radio Value
+      # Map to UI
       ui_tr <- switch(winner$best_transformation,
                       "identity"   = "identity",
                       "log#e"      = "ln",
                       "boxcox#0.5" = "boxcox",
-                      "identity"   # Fallback
+                      "identity"
       )
 
-      # Map Model Type -> UI Radio Value
       ui_model <- if (winner$model_type == "OLS") "fg" else "ss"
 
-      # Map Weighted
-      # Currently hardcoded to No as per engine logic, but ready for future expansion
-      ui_weighted <- "No"
-
-      # Map Validity
-      # We define "Valid" if the average zeta of the winning strategy is below the limit
-      is_valid <- winner$avg_zeta <= current_recommended_zeta_upper()
-
-      # Create a descriptive reason string for the UI
-      total_comparisons <- nrow(results_dt)
-      vote_share <- round(100 * winner$votes / total_comparisons, 1)
-
-      reason_text <- sprintf(
-        "Global Consensus: Selected by %s%% of comparisons (%d/%d).",
-        vote_share, winner$votes, total_comparisons
-      )
-
-      # Return structured list
       list(
         tr = ui_tr,
         model = ui_model,
-        weighted = ui_weighted,
-        is_valid = is_valid,
+        weighted = "No", # Still hardcoded as per original logic
+        is_valid = winner$avg_zeta <= current_recommended_zeta_upper(),
         zeta = winner$avg_zeta,
-        reason = reason_text
+        reason = sprintf(
+          "Global Consensus: Selected by %s%% of comparisons (%d/%d).",
+          round(100 * winner$votes / nrow(results_dt), 1), winner$votes, nrow(results_dt)
+        )
       )
     })
 
-    # --- 4. Render General Tab Content ---
+    # --- Render General Tab Content ---
     output$general_tab_content <- renderUI({
       req(
         current_recommended_zeta_upper(),
@@ -537,7 +515,7 @@ mod_dins_server <- function(id, file_upload_data) {
       )
     })
 
-    # --- 5. Handle "Use Recommendations" Click ---
+    # ---  Handle "Use Recommendations" Click ---
     observeEvent(input$apply_recommendations, {
       rec <- optimization_results()
       req(rec)
@@ -549,36 +527,182 @@ mod_dins_server <- function(id, file_upload_data) {
       # Weighted Spline is nested in toggle panel
       updateGlassRadio(session, "ss_weighted", selected = rec$weighted)
 
-      showNotification("Recommendations applied successfully!", type = "message", duration = 3)
-    })
-
-    # --- DINS Estimation Logic ------------------------------------------------
-    # --- Activates if Relevant Button is Pressed ---
-    # --- Event Reactive Checks if Estimate DINS Button is Pressed ---
-    zetas_calculated <- eventReactive(input$calculate_zetas, {
-      req(cs_data_long())
-
-      zeta_method <- if (input$pi_method == "fg") {
-        "ols"
-      }
-      else if (input$pi_method == "ss") {
-        # Check if the conditional weighted input is "Yes"
-        if (input$ss_weighted == "Yes") {
-          "ssw"
-        }
-        else {
-          "ss"
-        }
-      }
-
-      commutability::estimate_zeta_data(
-        data = cs_data_long(),
-        B = NULL,
-        method = zeta_method,
-        M = 1,
-        N = 1
+      # Provide Button Feedback
+      updateGlassButton(
+        session,
+        inputId = "apply_recommendations",
+        label = "Applied!",
+        icon = icon("check"),
+        disabled = TRUE
       )
     })
+
+    # --- State Watcher: Auto-enable/disable based on alignment ---
+    observeEvent({
+      list(
+        input$M,                # Changes Recommendation
+        raw_cs_data_long(),     # Changes Recommendation
+        input$transformation,   # User Manual Change
+        input$pi_method,        # User Manual Change
+        input$ss_weighted       # User Manual Change
+      )
+    }, {
+      rec <- optimization_results()
+      # If system isn't ready, default to enabled so user can try again
+      if (is.null(rec)) return()
+
+      # Check if current UI settings match the Engine's recommendations
+      # Using isTRUE to safely handle potential NULLs during init
+      matches_tr       <- isTRUE(input$transformation == rec$tr)
+      matches_model    <- isTRUE(input$pi_method == rec$model)
+      matches_weighted <- isTRUE(input$ss_weighted == rec$weighted)
+
+      if (matches_tr && matches_model && matches_weighted) {
+        # Current state == Recommended state -> Button is "Applied"
+        updateGlassButton(
+          session,
+          "apply_recommendations",
+          label = "Applied!",
+          icon = icon("check"),
+          disabled = TRUE
+        )
+      } else {
+        # Current state != Recommended state -> Button is available
+        updateGlassButton(
+          session,
+          "apply_recommendations",
+          label = "Use Recommendations",
+          icon = icon("wand-magic-sparkles"),
+          disabled = FALSE
+        )
+      }
+    }, ignoreInit = FALSE)
+
+    # ==========================================================================
+    # 7. NEW: ZETA TABLE LOGIC (Glass Table + Downloads)
+    # ==========================================================================
+
+    # A. Debounce Inputs to prevent spam
+    dins_inputs_debounced <- reactive({
+      list(
+        tr = input$transformation,
+        model = input$pi_method,
+        weighted = input$ss_weighted,
+        z_crit = current_recommended_zeta_upper()
+      )
+    })
+
+    # B. Calculate Current Zeta Data
+    current_zeta_data <- reactive({
+      inputs <- dins_inputs_debounced()
+      req(cs_data_long(), inputs$z_crit)
+
+      zeta_method <- inputs$model
+      if (zeta_method == "fg") zeta_method <- "ols"
+      if (zeta_method == "ss" && inputs$weighted == "Yes") zeta_method <- "ssw"
+
+      # We can use the cached candidates for OLS/SS-Unweighted to make this instant
+      # But for SS-Weighted we might need to run it (or just run standard function since it's fast for point est)
+      out <- commutability::estimate_zeta_data(
+        data = cs_data_long(),
+        B = NULL, # Point estimates only (Fast)
+        method = zeta_method,
+        zeta_critical = inputs$z_crit,
+        M = 1, N = 1
+      )
+
+      return(out)
+    })
+
+    # C. Render Custom Glass Table
+    output$calculated_zetas_table <- renderUI({
+      req(
+        current_zeta_data(),
+        dins_inputs_debounced()
+      )
+      inputs <- dins_inputs_debounced()
+      dt <- current_zeta_data()
+
+      # 1. Format Data for Display
+      dt_display <- data.table::data.table(
+        "Comparison" = dt$comparison,
+        "Zeta" = format(dt$zeta, nsmall = 2, digits = 2),
+        "Zeta_Crit" = format(inputs$z_crit, nsmall = 2, digits = 2),
+        "Conclusion" = ifelse(dt$zeta > inputs$z_crit, "Excessive", "Acceptable")
+      )
+
+      # 2. Generate Caption
+      n_total <- nrow(dt)
+      n_excessive <- sum(dt$zeta > inputs$z_crit)
+
+      caption_text <- if (n_excessive == 0) {
+        sprintf("All %d comparisons demonstrate <b>acceptable</b> differences in nonselectivity.", n_total)
+      } else if (n_excessive == n_total) {
+        sprintf("All %d comparisons demonstrate <b>excessive</b> differences in nonselectivity.", n_total)
+      } else {
+        sprintf("<b>%d</b> out of %d comparisons demonstrate excessive differences in nonselectivity.", n_excessive, n_total)
+      }
+
+      # 3. Highlight rows with Excessive DINS
+      bad_rows <- which(dt$zeta > inputs$z_crit)
+
+      # 4. Render
+      renderGlassTable(
+        data = dt_display,
+        col_names = c("IVD-MD Comparison", "\\(\\hat{\\zeta}\\)", "\\(\\zeta_{\\mathrm{upper}}\\)", "Conclusion"),
+        caption = caption_text,
+        highlight_rows = bad_rows,
+        sortable = TRUE,
+        sidebar_html = NULL
+      )
+    })
+
+
+    # D. Download Handler 1: Current Results
+    output$download_current_zeta <- downloadHandler(
+      filename = function() { paste0("dins_current_", Sys.Date(), ".xlsx") },
+      content = function(file) {
+        req(current_zeta_data())
+        final_zeta_data_debug <<- current_zeta_data()
+        writexl::write_xlsx(
+          x = current_zeta_data(),
+          path = file,
+          col_names = TRUE
+        )
+      }
+    )
+
+    # E. Download Handler 2: All Models (Using Cache)
+    output$download_all_zetas <- downloadHandler(
+      filename = function() { paste0("dins_all_transformations_and_models_", Sys.Date(), ".xlsx") },
+      content = function(file) {
+        req(cached_zeta_estimates())
+
+        # Flatten the list structure from cached_zeta_estimates
+        raw_list <- cached_zeta_estimates()
+
+        # Helper to extract rows
+        flat_dt <- lapply(raw_list, function(item) {
+          data.table::data.table(
+            comparison = item$comparison,
+            ols_identity = item$ols["identity"],
+            ols_log = item$ols["log"],
+            ols_boxcox = item$ols["boxcox"],
+            ss_identity = item$ss["identity"],
+            ss_log = item$ss["log"],
+            ss_boxcox = item$ss["boxcox"]
+          )
+        })
+
+        final_dt <- data.table::rbindlist(flat_dt)
+        final_dt_debug <<- final_dt
+        writexl::write_xlsx(
+          x = final_dt,
+          path = file,
+          col_names = TRUE
+        )
+      }
+    )
 
     # --- IVD-MD Imprecision Estimation Logic ----------------------------------
     # --- Activates if Relevant Button is Pressed ---
@@ -599,60 +723,10 @@ mod_dins_server <- function(id, file_upload_data) {
     # --- UI Rendering for Tables ---
     # --- Control visibility of the tables ---
 
-    # --- Show / Hide Dins Estimates Table ----
-    show_zetas <- reactiveVal(FALSE)
-    observeEvent(input$calculate_zetas, { show_zetas(TRUE) })
-    observeEvent(input$clear_zetas, { show_zetas(FALSE) })
-
     # --- Show / Hide IVD-MD Repeatability Estimates Table ---
     show_imprecision <- reactiveVal(FALSE)
     observeEvent(input$calculate_imprecision, { show_imprecision(TRUE) })
     observeEvent(input$clear_imprecision, { show_imprecision(FALSE) })
-
-    # --- Render Table of DINS Estimates ---
-    output$calculated_zetas <- DT::renderDT({
-
-      # Check first if DINS estimates should be showed
-      if (show_zetas()) {
-        out <- zetas_calculated()
-        out$zeta <- format(
-          x = out$zeta,
-          nsmall = 2,
-          digits = 2
-        )
-
-        names(out) <- c("IVD-MD Comparison", "zeta")
-
-        DT::datatable(
-          out,
-          rownames = FALSE,
-          extensions = 'Buttons',
-          options = list(
-            scolllX = TRUE,
-            scrollY = "400px",
-            pageLength = 25,
-            dom = "Bfrtip", # B=Buttons, f=filtering, r=processing, t=table, i=info, p=pagination
-            buttons = list(
-              list(extend = 'copy', className = 'btn-dt'),
-              list(extend = 'csv', className = 'btn-dt'),
-              list(extend = 'excel', className = 'btn-dt'),
-              list(extend = 'pdf', className = 'btn-dt'),
-              list(extend = 'print', className = 'btn-dt')
-            ),
-            columnDefs = list(
-              list(className = 'dt-center', targets = "_all")
-            ),
-            initComplete = JS(
-              "function(settings, json) {",
-              "  $(this.api().table().container()).find('.dataTables_scrollBody').on('scroll', function() {",
-              "    $(this).prev('.dataTables_scrollHead').scrollLeft($(this).scrollLeft());",
-              "  });",
-              "}"
-            )
-          )
-        )
-      }
-    })
 
     # Render Imprecision Table
     output$im_results <- DT::renderDT({
@@ -701,33 +775,16 @@ mod_dins_server <- function(id, file_upload_data) {
       }
     })
 
-    # ADDED: Render the recommended zeta display
-    output$recommended_zeta_display <- renderUI({
-      req(current_recommended_zeta_upper())
-      zeta_val <- current_recommended_zeta_upper()
-      withMathJax(
-        div(
-          class = "help-info-box",
-          style = "margin-top: 0px; border-left-color: #605CA8;",
-          tagList(
-            div(
-              class = "input-note",
-              style = "font-style: normal; font-weight: 600;",
-              icon("cogs"),
-              sprintf("Calculated value: \\(\\hat{\\zeta}_{\\mathrm{upper}} = %s\\)", format(zeta_val, nsmall = 2, digits = 2))
-            ),
-            div(
-              style = "margin-top: 10px; color: #6c757d; font-size: 1.25rem;",
-              "Any IVD-MD pair with a \\(\\hat{\\zeta}\\) value above this limit will be deemed to have excessive differences in nonselectivity."
-            )
-          )
-        )
-      )
-    })
-
-    outputOptions(output, "recommended_zeta_display", suspendWhenHidden = FALSE)
-    outputOptions(output, "calculated_zetas", suspendWhenHidden = FALSE)
+    # 1. Wake up the DATA GENERATORS first (The Tables)
+    # This ensures the reactive expressions (current_zeta_data, etc.) are actually calculating.
+    outputOptions(output, "general_tab_content", suspendWhenHidden = FALSE)
+    outputOptions(output, "calculated_zetas_table", suspendWhenHidden = FALSE)
     outputOptions(output, "im_results", suspendWhenHidden = FALSE)
+
+    # 2. Wake up the DATA CONSUMERS second (The Download Handlers)
+    # Now that the data is guaranteed to be there, these handlers can bind to it successfully.
+    outputOptions(output, "download_current_zeta", suspendWhenHidden = FALSE)
+    outputOptions(output, "download_all_zetas", suspendWhenHidden = FALSE)
 
     # --- Return values for other modules ---
     return(
