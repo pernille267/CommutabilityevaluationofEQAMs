@@ -6,78 +6,74 @@
 /* Target BOTH class names */
 .glass-btn,
 .glass-download-btn {
-  /* Layout: Flex container */
+  /* Layout */
   display: inline-flex;
-  align-items: stretch; /* Crucial: Forces children to fill height */
-  justify-content: center;
+  align-items: stretch; /* Forces children to fill height */
+  justify-content: flex-start; /* Align content to the left */
 
-  /* Size & Shape */
+  /* Dimensions */
   height: 42px;        /* Fixed height for consistency */
-  min-width: 140px;
-  padding: 0;
+  min-width: 160px;
   margin: 6px;
+  padding: 0;
 
-  /* The Outer Shell */
-  border-radius: 50px;
+  /* Shape & Masking */
+  border-radius: 50px; /* The Pill Shape */
   border: none;
-  background-color: transparent; /* Important: Background comes from children */
-
-  /* Shadow */
-  box-shadow: 0 4px 15px rgba(96, 92, 168, 0.25);
-
-  cursor: pointer;
-  user-select: none;
   outline: none;
   overflow: hidden; /* Clips the children to the rounded corners */
-  transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.2s;
 
-  /* Text defaults */
-  font-family: 'Source Sans Pro', sans-serif;
-  text-decoration: none !important;
-  color: transparent;
+  /* THE BACKGROUND (Applied to container now, not label) */
+  background: linear-gradient(135deg, #605CA8 0%, #9e64c2 100%);
+
+  /* Shadow & Interaction */
+  box-shadow: 0 4px 15px rgba(96, 92, 168, 0.25);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none !important; /* For <a> tags */
 }
 
-/* --- PART 1: THE ICON (Left Side) --- */
+/* The Icon (White overlay on the left) */
 .glass-btn-icon {
   background-color: #ffffff;
   color: #605CA8;
+
+  /* Size */
+  width: 44px; /* Fixed width */
+  min-width: 44px; /* Prevent squashing */
+  flex-shrink: 0; /* NEVER shrink */
 
   /* Centering Magic */
   display: flex;
   align-items: center;
   justify-content: center;
-
-  /* Fixed width prevents off-center issues */
-  width: 48px;
-  min-width: 48px;
-
   font-size: 1.2em;
-  position: relative;
-  z-index: 2;
+
+  /* Interaction */
   transition: color 0.2s;
+  z-index: 2; /* Sits above the gradient */
 }
 
-/* --- PART 2: THE LABEL (Right Side) --- */
+/* --- The Label (Transparent Text Area) --- */
 .glass-btn-label {
-  background: linear-gradient(135deg, #605CA8 0%, #9e64c2 100%);
+  background: transparent;
   color: #ffffff;
 
-  /* Fill remaining space */
-  flex-grow: 1;
-  width: 100%; /* Ensures it tries to fill if flex fails */
-
+  /* Layout */
+  flex-grow: 1; /* Fills remaining space */
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 15px 0 10px; /* Slight padding adj */
 
-  padding: 0 20px; /* Padding only for text side */
+  /* Text Decoration */
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
 
-  position: relative;
   z-index: 1;
-  transition: filter 0.2s;
 }
 
 /* --- HOVER EFFECTS --- */
@@ -85,6 +81,7 @@
 .glass-download-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(96, 92, 168, 0.4);
+  filter: brightness(1.1);
 }
 
 .glass-btn:hover .glass-btn-label,
@@ -108,19 +105,26 @@
 .glass-btn.disabled,
 .glass-download-btn.disabled {
   opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-  filter: grayscale(0.8);
   pointer-events: none;
+  filter: grayscale(0.8);
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 /* --- Green Glass Button Variant */
-.glass-btn.green .glass-btn-label {
+.glass-btn.green {
   background: linear-gradient(135deg, #28A745 0%, #34ce57 100%);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.25);
 }
+
 .glass-btn.green .glass-btn-icon {
   color: #28A745;
 }
+
+.glass-btn.green:hover {
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
 .glass-btn.green:hover .glass-btn-icon {
   color: #1e7e34;
 }

@@ -22,7 +22,8 @@ mod_outlier_analysis_ui <- function(id) {
       glassButton(
         inputId = ns("show_outlier_analysis_explanation"),
         label = "Show Help Text",
-        icon = icon(name = "circle-question")
+        icon = icon(name = "circle-question"),
+        color = "green"
       )
     ),
 
@@ -32,80 +33,79 @@ mod_outlier_analysis_ui <- function(id) {
     ),
 
     # --- Card 1 - Outlier Analysis Options ------------------------------------
-    div(
-      class = "dashboard-card",
-      div(
-        class = "card-header",
-        icon("sliders", class = "header-icon"),
-        h3("Options")
-      ),
-      div(
-        class = "card-body",
-        fluidRow(
-          # --- Outlier Test Selection ---
-          column(
-            width = 6,
-            div(
-              class = "parameter-section",
-              h5("Test for Outliers"),
-              radioGroupButtons(
-                inputId = ns("outlier_test"),
-                label = NULL,
-                choiceNames = c("Between Samples", "Within Samples"),
-                choiceValues = c("burnett", "qrange"),
-                selected = "burnett",
-                status = "primary",
-                justified = TRUE
-              )
-            )
-          ),
-          column(
-            width = 6,
-            # --- Outlier Test Confidence Level Selection ---
-            div(
-              class = "parameter-section",
-              h5("Confidence Level"),
-              radioGroupButtons(
-                inputId = ns("outlier_test_conf_level"),
-                label = NULL,
-                choiceNames = c("80 %", "90 %", "95 %", "99 %"),
-                choiceValues = c(0.80, 0.90, 0.95, 0.99),
-                selected = 0.95,
-                status = "primary",
-                justified = TRUE
-              )
-            )
+    glassCard(
+      inputId = ns("outlier_options"),
+      title = "Configuration",
+      icon = icon("sliders"),
+      collapsible = TRUE,
+      collapsed = FALSE,
+      disabled = FALSE,
+      fluidRow(
+        column(
+          width = 4,
+          glassRadioButtons(
+            inputId = ns("outlier_test"),
+            label = "Test for Outliers",
+            label_icon = icon("people-arrows"),
+            help_text = paste0(
+              "Outlier test selection. Between samples means that we try to ",
+              "detect particular samples with measurements being ",
+              "unexpectedely different from one IVD-MD to another. Within ",
+              "samples means that we try to detect particular ",
+              "replicates within a sample being unexpectedely different from ",
+              "other replicates within that sample."
+            ),
+            choices = c(
+              "Between Samples" = "burnett",
+              "Within Samples" = "qrange"
+            ),
+            selected = "burnett",
+            width = "100%",
+            disabled = FALSE
+          )
+        ),
+        column(
+          width = 4,
+          glassRadioButtons(
+            inputId = ns("outlier_test_conf_level"),
+            label = "Confidence Level",
+            label_icon = icon("percent"),
+            help_text = paste0(
+              "Confidence level for the selected outlier test. Higher ",
+              "confidence level signify a more conservative test, meaning ",
+              "it takes more to deem a sample to be an outlier."
+            ),
+            choices = c(
+              "80 %" = "0.80",
+              "90 %" = "0.90",
+              "95 %" = "0.95",
+              "99 %" = "0.99"
+            ),
+            selected = "0.95",
+            width = "100%",
+            disabled = FALSE
           )
         )
       )
     ),
 
     # --- Card 2 - Outlier Analysis Results ------------------------------------
-    div(
-      class = "dashboard-card",
-      div(
-        class = "card-header",
-        icon("table", class = "header-icon"),
-        h3("Results"),
-        actionBttn(
-          inputId = ns("get_outlier_results"),
-          label = "Analyze",
-          icon = icon("magnifying-glass-chart", class = "fa-solid"),
-          color = "royal",
-          size = "md",
-          style = "gradient"
-        )
+    glassResultCard(
+      inputId = ns("outlier_test_results"),
+      title = "Outlier Test Results",
+      toolbar = glassButton(
+        inputId = ns("get_outlier_results"),
+        label = "Analyze",
+        icon = icon("magnifying-glass-chart"),
+        width = "50%",
+        color = "purple",
+        # CHANGE 1: Button is disabled by default
+        disabled = TRUE
       ),
-      div(
-        class = "card-body",
-        withSpinner(
-          DT::DTOutput(
-            outputId = ns("outlier_results")
-          ),
-          type = 4,
-          color = "#28A745"
-        )
-      )
+      icon = icon("table"),
+      width = "100%",
+      # CHANGE 2: Using uiOutput instead of DTOutput for glassTable
+      uiOutput(outputId = ns("outlier_results_ui"))
     )
   )
 }
@@ -198,10 +198,31 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     # --- Create a reactiveVal to Cache Results. -------------------------------
     analysis_results_val <- reactiveVal(NULL)
 
+    # --- CHANGE 3: Enable Button Logic ----------------------------------------
+    # Watch for Data Availability AND Input Changes to re-enable the button
+    observeEvent(list(raw_cs_data_long(), input$outlier_test, input$outlier_test_conf_level), {
+      # Only proceed if data is available
+      if (!is.null(raw_cs_data_long())) {
+        updateGlassButton(
+          session = session,
+          inputId = "get_outlier_results",
+          disabled = FALSE
+        )
+      }
+    }, ignoreInit = TRUE)
+
     # --- Update reactiveVal when `Analyze` Button is Pressed ------------------
     observeEvent(input$get_outlier_results, {
       # Require `raw_cs_data_long()` to exist
       req(raw_cs_data_long())
+
+      # CHANGE 4: Disable button immediately on click
+      updateGlassButton(
+        session = session,
+        inputId = "get_outlier_results",
+        disabled = TRUE
+      )
+
       results <- commutability::do_outlier_analysis(
         data = raw_cs_data_long(),
         method = input$outlier_test,
@@ -212,37 +233,98 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       analysis_results_val(results)
     })
 
-    # --- Render Table Using Cached Results from `analysis_results_val` --------
-    output$outlier_results <- DT::renderDT({
+    # --- CHANGE 5: Render Table Using renderGlassTable ------------------------
+    output$outlier_results_ui <- renderUI({
       # Require cache to be filled before displaying table
       req(analysis_results_val())
 
       # Extract results from cache
       results <- analysis_results_val()
 
-      # Render the table
-      DT::datatable(
-        results,
-        rownames = FALSE,
-        extensions = 'Buttons',
-        options = list(
-          scolllX = TRUE,
-          scrollY = "400px",
-          pageLength = 25,
-          dom = "Bfrtip",
-          buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-          columnDefs = list(
-            list(className = 'dt-center', targets = "_all")
-          ),
-          initComplete = JS(
-            "function(settings, json) {",
-            "  $(this.api().table().container()).find('.dataTables_scrollBody').on('scroll', function() {",
-            "    $(this).prev('.dataTables_scrollHead').scrollLeft($(this).scrollLeft());",
-            "  });",
-            "}"
-          )
-        )
+      # --- 1. Identify Row Indices to Highlight (Logic for "." repeats) ---
+      highlight_idx <- integer(0)
+
+      # Case A: Sample-level tests (Burnett, IQR, Chauvenet)
+      # Structure contains column "Outliers". Values: "none", "sample1...", or "."
+      if ("Outliers" %in% names(results)) {
+        vals <- results[["Outliers"]]
+        last_val <- "none" # Default assumption
+        for (i in seq_len(length(vals))) {
+          val <- vals[i]
+          if (val != ".") {
+            last_val <- val
+          }
+          # Highlight if the effective value is not "none"
+          if (last_val != "none") {
+            highlight_idx <- c(highlight_idx, i)
+          }
+        }
+      }
+      # Case B: Replicate-level tests (Q-Range)
+      # Structure: SampleID, Comparison columns with "yes"/"no"/".", etc.
+      else {
+        # Convert to matrix for easier cell access
+        mat <- as.matrix(results)
+        n_rows <- nrow(mat)
+        n_cols <- ncol(mat)
+
+        # Maintain state of the current row (to resolve dots)
+        current_row_state <- rep(NA_character_, n_cols)
+
+        for (i in seq_len(n_rows)) {
+          row_vals <- mat[i, ]
+          # Update state: if value is not ".", update the current state
+          not_dot <- row_vals != "."
+          current_row_state[not_dot] <- row_vals[not_dot]
+
+          # Check for "yes" in any column of the resolved row
+          if (any(current_row_state == "yes", na.rm = TRUE)) {
+            highlight_idx <- c(highlight_idx, i)
+          }
+        }
+      }
+
+      # --- 2. Reactive Caption Logic ---
+      has_outliers <- length(highlight_idx) > 0
+      if (has_outliers) {
+        caption_html <- "<span style='color: #B61F06; font-weight: 700;'><i class='fa fa-exclamation-triangle'></i> Potential outliers detected. Please review the highlighted items.</span>"
+      } else {
+        caption_html <- "<span style='color: #28A745; font-weight: 700;'><i class='fa fa-check-circle'></i> No outliers detected.</span>"
+      }
+
+      # --- 3. Generate Base HTML ---
+      # We use highlight_rows here to leverage glassTable.R native functionality
+      table_tag <- renderGlassTable(
+        data = results,
+        caption = caption_html,
+        highlight_rows = highlight_idx,
+        sortable = FALSE
       )
+
+      # --- 4. HTML Injection for "Ditto" and "Yes" ---
+      html_str <- as.character(table_tag)
+
+      # A: Replace dots with Flex Ditto Icon
+      # REMOVED justify-content: center as requested. Kept display: flex.
+      icon_html <- "><span style='color: #ccc; font-size: 1.5em; line-height: 0.5; display: flex;'>&rdquo;</span></td>"
+
+      modified_html_str <- gsub(
+        pattern = ">\\.</td>",
+        replacement = icon_html,
+        x = html_str,
+        fixed = FALSE
+      )
+
+      # B: Styling for "yes" cells
+      # Bold and Red (#B61F06)
+      modified_html_str <- gsub(
+        pattern = ">yes</td>",
+        replacement = "><span style='font-weight: bold; color: #B61F06;'>yes</span></td>",
+        x = modified_html_str,
+        fixed = TRUE
+      )
+
+      HTML(modified_html_str)
     })
 
     # --- Send Relevant Module Components to Other Modules ---------------------

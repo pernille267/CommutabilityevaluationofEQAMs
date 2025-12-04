@@ -2,7 +2,7 @@
 % Please edit documentation in R/glassTable.R
 \name{renderGlassTable}
 \alias{renderGlassTable}
-\title{Render a Custom Glass Table with Optional Sidebar}
+\title{Render a Custom Glass Table (Table-based Layout)}
 \usage{
 renderGlassTable(
   data,
@@ -15,20 +15,20 @@ renderGlassTable(
 )
 }
 \arguments{
-\item{data}{A data.frame or data.table (The main data rows).}
+\item{data}{A data.frame or data.table.}
 
-\item{col_names}{Optional vector of column names for \code{data}.}
+\item{col_names}{Optional vector of column names.}
 
 \item{caption}{Optional HTML caption.}
 
-\item{sidebar_html}{Optional raw HTML for the left-hand fixed sidebar (e.g. Quality Score).}
+\item{sidebar_html}{Optional raw HTML for the sidebar.}
 
-\item{sidebar_title}{Title for the sidebar column. Set to NULL or "" to hide the header bar.}
+\item{sidebar_title}{Title for the sidebar column.}
 
 \item{highlight_rows}{Vector of row indices to highlight.}
 
 \item{sortable}{Logical.}
 }
 \description{
-Render a Custom Glass Table with Optional Sidebar
+Render a Custom Glass Table (Table-based Layout)
 }

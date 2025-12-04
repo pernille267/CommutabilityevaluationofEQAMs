@@ -1035,3 +1035,176 @@ recommendation_engine <- function(data, zeta_critical = 4.24, parsimony_threshol
 
   return(optimal_transformations)
 }
+
+#' Step 1: Pre-calculate Zetas for all models (Expensive Operation)
+#' @export
+calculate_candidate_zetas <- function(data) {
+
+  # --- Constants ---
+  transformations <- c(
+    "identity" = "identity",
+    "log" = "log#e",
+    "boxcox" = "boxcox#0.5"
+  )
+
+  # --- Data Preparation (Vectorized) ---
+  data_identity <- commutability::transform_data(data.table::copy(data), transformations["identity"])
+  data_log      <- commutability::transform_data(data.table::copy(data), transformations["log"])
+  data_boxcox   <- commutability::transform_data(data.table::copy(data), transformations["boxcox"])
+
+  # Split into lists
+  data_identity_list <- split(data_identity, by = "comparison")
+  data_log_list      <- split(data_log, by = "comparison")
+  data_boxcox_list   <- split(data_boxcox, by = "comparison")
+
+  # --- Fit Models & Extract Zetas ---
+  results <- lapply(names(data_identity_list), function(comp_name) {
+
+    # 1. OLS Zetas
+    z_ols <- c(
+      identity = fasteqa::estimate_zeta_ols(data_identity_list[[comp_name]])$zeta,
+      log      = fasteqa::estimate_zeta_ols(data_log_list[[comp_name]])$zeta,
+      boxcox   = fasteqa::estimate_zeta_ols(data_boxcox_list[[comp_name]])$zeta
+    )
+
+    # 2. Smoothing Spline Zetas (Non-weighted as per original logic)
+    # Using tryCatch to be safe during batch processing
+    safe_ss <- function(d) {
+      tryCatch(
+        smooth.commutability::estimate_zeta_ss(d, df=NULL, df_max=7.5, weighted=FALSE, mor=FALSE, na_rm=TRUE)$zeta,
+        error = function(e) NA_real_
+      )
+    }
+
+    z_ss <- c(
+      identity = safe_ss(data_identity_list[[comp_name]]),
+      log      = safe_ss(data_log_list[[comp_name]]),
+      boxcox   = safe_ss(data_boxcox_list[[comp_name]])
+    )
+
+    list(comparison = comp_name, ols = z_ols, ss = z_ss)
+  })
+
+  names(results) <- names(data_identity_list)
+  return(results)
+}
+
+#' Step 2: Select Best Model based on Thresholds (Fast Operation)
+#' @export
+select_best_model <- function(candidate_results, zeta_critical = 4.24, parsimony_threshold = 0.20) {
+
+  # --- Helper Functions (Internal to Logic) ---
+  transformations_map <- c("identity" = "identity", "log" = "log#e", "boxcox" = "boxcox#0.5")
+
+  # Dynamic Scoring
+  dynamic_zeta_score <- function(zetas, benchmark = 1, zeta_bad_upper = 0.6, z_crit, score_at_bad = 5) {
+    if (zeta_bad_upper >= benchmark) stop("Invalid bad_upper")
+    alpha <- pmax(zeta_bad_upper, 1e-9)
+    y <- log(score_at_bad / 100) / log(alpha / benchmark)
+
+    scores <- numeric(length(zetas))
+    mask_left  <- !is.na(zetas) & (zetas <= benchmark)
+    mask_right <- !is.na(zetas) & (zetas > benchmark)
+
+    if (any(mask_left)) scores[mask_left] <- 100 * (pmax(zetas[mask_left], 1e-9) / benchmark) ^ y
+    if (any(mask_right)) scores[mask_right] <- 100 / (1 + 9 * ((zetas[mask_right] - benchmark) / (z_crit - benchmark)) ^ 2)
+    scores[is.na(zetas)] <- NA
+    return(scores)
+  }
+
+  # Score Aggregator
+  get_scores <- function(zetas) {
+    score_dynamic <- dynamic_zeta_score(zetas, z_crit = zeta_critical)
+    score_abs <- abs(zetas - 1)
+    score_rel <- pmax(1 / abs((zetas - 1)) * 10, 100)
+
+    # Identify winners for each metric
+    best_idx <- c(
+      which.min(score_abs),
+      which.max(score_rel),
+      which.max(score_dynamic)
+    )
+
+    names <- c("identity", "log", "boxcox")
+    best_candidates <- names[unique(best_idx)]
+
+    # Decision
+    if (length(best_candidates) == 1) {
+      return(list(best = best_candidates, reason = "Consensus among metrics.", score_imp = 0))
+    }
+
+    # Tie-break: Prioritize Dynamic Score
+    winner <- names[which.max(score_dynamic)]
+
+    # Check Improvement over Identity
+    imp <- if(winner != "identity") score_dynamic[which(names==winner)] - score_dynamic[1] else 0
+
+    if (winner != "identity" && imp <= 0.05) {
+      return(list(best = "identity", reason = "Improvement negligible.", score_imp = imp))
+    }
+
+    return(list(best = winner, reason = "Dynamic Score prioritized.", score_imp = imp))
+  }
+
+  # --- Main Decision Loop ---
+  decisions <- lapply(candidate_results, function(res) {
+
+    # 1. Evaluate OLS
+    ols_decision <- get_scores(res$ols)
+    best_zeta_ols <- res$ols[[ols_decision$best]]
+
+    # GATEKEEPER: If OLS works, take it
+    if (!is.na(best_zeta_ols) && best_zeta_ols <= zeta_critical) {
+      return(list(
+        comparison = res$comparison,
+        model_type = "OLS",
+        best_transformation = transformations_map[[ols_decision$best]],
+        reason = "OLS met criteria (Parsimony).",
+        zeta = best_zeta_ols
+      ))
+    }
+
+    # 2. Evaluate SS (Fallback)
+    ss_decision <- get_scores(res$ss)
+    best_zeta_ss <- res$ss[[ss_decision$best]]
+
+    # Check SS Validity
+    ss_valid <- !is.na(best_zeta_ss) && best_zeta_ss <= zeta_critical
+
+    if (ss_valid) {
+      return(list(
+        comparison = res$comparison,
+        model_type = "SmoothingSpline",
+        best_transformation = transformations_map[[ss_decision$best]],
+        reason = "OLS failed; Smoothing Spline accepted.",
+        zeta = best_zeta_ss
+      ))
+    }
+
+    # 3. Both Failed: Check Relative Improvement
+    dist_ols <- abs(best_zeta_ols - 1)
+    dist_ss <- abs(best_zeta_ss - 1)
+
+    improvement <- (dist_ols - dist_ss) / dist_ols
+
+    if (!is.na(improvement) && improvement >= parsimony_threshold) {
+      return(list(
+        comparison = res$comparison,
+        model_type = "SmoothingSpline",
+        best_transformation = transformations_map[[ss_decision$best]],
+        reason = sprintf("Both failed, but SS improved accuracy by %.1f%%.", improvement*100),
+        zeta = best_zeta_ss
+      ))
+    } else {
+      return(list(
+        comparison = res$comparison,
+        model_type = "OLS",
+        best_transformation = transformations_map[[ols_decision$best]],
+        reason = "Both failed; SS improvement insufficient.",
+        zeta = best_zeta_ols
+      ))
+    }
+  })
+
+  return(decisions)
+}
