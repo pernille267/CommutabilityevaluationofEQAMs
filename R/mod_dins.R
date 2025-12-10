@@ -820,7 +820,7 @@ mod_dins_server <- function(id, file_upload_data) {
     output$download_imprecision <- downloadHandler(
       filename = function() {
         fn <- paste0(
-          "ceapkfcr_IVD_MD_wise_imprecision_estimates",
+          "ceapkfcr_IVD_MD_wise_imprecision_estimates_",
           Sys.Date(),
           ".xlsx"
         )

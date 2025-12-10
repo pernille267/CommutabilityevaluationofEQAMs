@@ -23,7 +23,8 @@ mod_model_validation_ui <- function(id) {
       glassButton(
         inputId = ns("show_model_validation_explanation"),
         label = "Show Help Text",
-        icon = icon(name = "circle-question")
+        icon = icon(name = "circle-question"),
+        color = "green"
       )
     ),
 
@@ -58,20 +59,24 @@ mod_model_validation_ui <- function(id) {
               label = "Run tests",
               icon = icon(name = "list-check"),
               color = "purple",
-              width = "160px"
+              width = "100%",
+              disabled = FALSE
             ),
-            glassButton(
-              inputId = ns("clear_test_results"),
-              label = "Clear",
-              icon = icon("trash"),
-              color = "purple",
-              width = "120px"
+            glassDownloadButton(
+              outputId = ns("download_model_at_visual_results"),
+              label = "Table",
+              icon = icon("download"),
+              width = "100%"
+            ),
+            glassDownloadButton(
+              outputId = ns("download_model_at_exact_results"),
+              label = "Raw Results",
+              icon = icon("download"),
+              width = "100%"
             )
           ),
-          withSpinner(
-            DT::DTOutput(outputId = ns("formal_assessment_tests")),
-            type = 4,
-            color = "#605ca8"
+          uiOutput(
+            outputId = ns("formal_assessment_tests_table")
           )
         )
       ),
@@ -157,13 +162,6 @@ mod_model_validation_ui <- function(id) {
               h4("Additional Download Options"),
               div(
                 class = "parameter-section",
-                glassRadioButtons(
-                  inputId = ns("plot_download_file_type"),
-                  label = "Format",
-                  choices = c("PDF" = ".pdf", "PNG" = ".png", "TIF" = ".tif"),
-                  selected = ".png",
-                  width = "100%"
-                ),
                 glassNumericInput(
                   inputId = ns("plot_download_quality"),
                   label = "Quality",
@@ -175,12 +173,18 @@ mod_model_validation_ui <- function(id) {
                   width = "100%",
                   accept = c(72, 1500),
                   warning_unacceptable = "DPI must be between 72 and 1500"
+                ),
+                glassRadioButtons(
+                  inputId = ns("plot_download_file_type"),
+                  label = "Format",
+                  label_icon = icon("highlighter"),
+                  choices = c("PDF" = ".pdf", "PNG" = ".png", "TIF" = ".tif"),
+                  selected = ".png",
+                  width = "100%"
                 )
               )
             )
           ),
-
-          # Display Options (Moved here from removed column, now horizontal)
           h4("Display Options"),
           fluidRow(
             column(
@@ -204,20 +208,17 @@ mod_model_validation_ui <- function(id) {
                   choices = c("No" = FALSE, "Yes" = TRUE),
                   selected = FALSE,
                   width = "100%"
-                )
-              )
-            ),
-            column(
-              width = 4,
-              glassTogglePanel(
-                triggerId = ns("which_plot"),
-                show_when = "cv_vs_concentration",
-                glassRadioButtons(
-                  inputId = ns("cv_percent"),
-                  label = "Show as CV %",
-                  choices = c("No" = FALSE, "Yes" = TRUE),
-                  selected = FALSE,
-                  width = "100%"
+                ),
+                glassTogglePanel(
+                  triggerId = ns("which_plot"),
+                  show_when = "cv_vs_concentration",
+                  glassRadioButtons(
+                    inputId = ns("cv_percent"),
+                    label = "Show as CV %",
+                    choices = c("No" = FALSE, "Yes" = TRUE),
+                    selected = FALSE,
+                    width = "100%"
+                  )
                 )
               )
             )
@@ -232,25 +233,6 @@ mod_model_validation_ui <- function(id) {
           width = "100%",
           toolbar = div(
             style = "display: flex; gap: 10px; align-items: center;",
-
-            # --- Dropdown Moved to Toolbar ---
-            div(
-              style = "width: 250px;",
-              glassDropdown(
-                inputId = ns("which_plot"),
-                label = NULL,
-                help_text = "Select Plot Type",
-                choices = c(
-                  "Residuals vs Fitted Values" = "residual_plot",
-                  "Histogram of Residuals" = "residual_histogram",
-                  "QQ Normal Plot" = "qq_plot",
-                  "SD vs Concentration" = "sd_vs_concentration",
-                  "CV vs Concentration" = "cv_vs_concentration"
-                ),
-                selected = "residual_plot",
-                width = "100%"
-              )
-            ),
             glassButton(
               inputId = ns("plot_assessment_plots"),
               label = "Plot",
@@ -263,6 +245,20 @@ mod_model_validation_ui <- function(id) {
               label = "Download",
               icon = icon("download"),
               width = "auto"
+            ),
+            glassDropdown(
+              inputId = ns("which_plot"),
+              label = NULL,
+              help_text = "Select Plot Type",
+              choices = c(
+                "Residuals vs Fitted Values" = "residual_plot",
+                "Histogram of Residuals" = "residual_histogram",
+                "QQ Normal Plot" = "qq_plot",
+                "SD vs Concentration" = "sd_vs_concentration",
+                "CV vs Concentration" = "cv_vs_concentration"
+              ),
+              selected = "residual_plot",
+              width = "100%"
             )
           ),
           div(
@@ -289,6 +285,14 @@ mod_model_validation_ui <- function(id) {
 #' @noRd
 mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
   moduleServer(id, function(input, output, session) {
+
+    # --- Trackers -------------------------------------------------------------
+
+    # --- Track whether recalculation of Plot Cache is necessary ---
+    plot_cache_state <- reactiveValues(
+      filled = FALSE,
+      need_update = TRUE
+    )
 
     # --- Reactive Data Preparation ---
     cs_data_long <- reactive({
@@ -325,73 +329,271 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
       )
     })
 
-    # --- *DEBUGGING* look at cs_data_long() ---
-    observe({
-      debug_cs_data <<- cs_data_long()
-    })
+    # --- Server Logic for Formal Assessment Tests -----------------------------
 
-    # --- Server Logic for Formal Tests ---
-    assessment_tests_results <- eventReactive(input$run_tests, {
-      req(file_upload_data$is_valid(), cs_data_long())
-      if (file_upload_data$is_valid()) {
-        data_without_NAs <- na.omit(object = cs_data_long())
-        commutability::perform_assessment_tests(
-          data = data_without_NAs,
-          B = 100,
-          method = mod_dins_params()$pi_method,
-          level = 0.05,
-          robust = TRUE,
-          adjust_p_value = FALSE,
-          holm = FALSE,
-          output = "visual"
+    # --- Create a reactiveVal to Cache Results. ---
+    current_assessment_tests_results <- reactiveVal(NULL)
+
+    # --- Watch for input changes to re-enable buttons ---
+    observeEvent(list(cs_data_long(), mod_dins_params()$pi_method), {
+
+      # --- Plot cache needs update if input data or regr. model changes ---
+      plot_cache_state$need_update <- TRUE
+
+      # Only proceed if data is available
+      if (!is.null(cs_data_long())) {
+        updateGlassButton(
+          session = session,
+          inputId = "run_tests",
+          disabled = FALSE
+        )
+        updateGlassButton(
+          session = session,
+          inputId = "plot_assessment_plots",
+          disabled = FALSE
         )
       }
+    }, ignoreInit = TRUE)
+
+    # --- Update Cache when `Run Tests` Button is Pressed (Disables Button) ---
+    observeEvent(input$run_tests, {
+      # Require `cs_data_long()` to exist
+      req(cs_data_long())
+
+      # Disable button immediately on click
+      updateGlassButton(
+        session = session,
+        inputId = "run_tests",
+        disabled = TRUE
+      )
+
+      # Remove NA-values before performing tests
+      data_without_NAs <- na.omit(object = cs_data_long())
+
+      # Make visual table
+      out_visual <- commutability::perform_assessment_tests(
+        data = data_without_NAs,
+        B = 100,
+        method = mod_dins_params()$pi_method,
+        level = 0.95,
+        robust = TRUE,
+        adjust_p_value = FALSE,
+        holm = FALSE,
+        output = "visual"
+      )
+
+      # Make exact table (for row high-lighting)
+      out_exact <- commutability::perform_assessment_tests(
+        data = data_without_NAs,
+        B = 100,
+        method = mod_dins_params()$pi_method,
+        level = 0.95,
+        robust = TRUE,
+        adjust_p_value = FALSE,
+        holm = FALSE,
+        output = "exact"
+      )
+
+      # Combine into list
+      results <- list(
+        "visual" = out_visual,
+        "exact" = out_exact
+      )
+
+      # Fill Cache
+      current_assessment_tests_results(results)
     })
 
-    output$formal_assessment_tests <- DT::renderDT({
-      req(assessment_tests_results())
-      results <- assessment_tests_results()
+    # --- *DEBUGGING* ---
+    observe({
+      debug_cs_data <<- cs_data_long()
+      debug_fmad_data <<- current_assessment_tests_results()
+      debug_plot_cache_state <<- plot_cache_state
+      debug_vmad_data <<- current_assessment_plots()
+    })
 
-      DT::datatable(
-        results,
-        rownames = FALSE,
-        extensions = 'Buttons',
-        options = list(
-          scolllX = TRUE,
-          scrollY = "400px",
-          pageLength = 25,
-          dom = "Bfrtip",
-          buttons = list(
-            list(extend = 'copy', className = 'glass-dt-btn'),
-            list(extend = 'csv', className = 'glass-dt-btn'),
-            list(extend = 'excel', className = 'glass-dt-btn'),
-            list(extend = 'pdf', className = 'glass-dt-btn'),
-            list(extend = 'print', className = 'glass-dt-btn')
-          ),
-          columnDefs = list(
-            list(className = 'dt-center', targets = "_all")
-          ),
-          initComplete = JS(
-            "function(settings, json) {",
-            "  $(this.api().table().container()).find('.dataTables_scrollBody').on('scroll', function() {",
-            "    $(this).prev('.dataTables_scrollHead').scrollLeft($(this).scrollLeft());",
-            "  });",
-            "}"
-          )
+    # --- Render Visual Assessment Table ---
+    output$formal_assessment_tests_table <- renderUI({
+      req(
+        current_assessment_tests_results()
+      )
+
+      # Extract tests results from Cache
+      results <- current_assessment_tests_results()
+
+      # Extract individual components from 'results'
+      dt_visual <- results$visual
+      dt_exact <- results$exact
+
+      # Format Data for Display
+      #dt_display <- data.table::data.table(
+      #  "Comparison" = dt$comparison,
+      #  "Zeta" = format(dt$zeta, nsmall = 2, digits = 2),
+      #  "Zeta_Crit" = format(inputs$z_crit, nsmall = 2, digits = 2),
+      #  "Conclusion" = ifelse(dt$zeta > inputs$z_crit, "Excessive", "Acceptable")
+      #)
+
+      # Generate Caption
+      n_total <- nrow(dt_visual)
+      n_normality <- nrow(dt_exact[testing == "normality"])
+      n_homoscedasticity <- nrow(dt_exact[testing == "normality"])
+      n_reject_normality <- sum(
+        dt_exact[testing == "normality"]$conclusion == "reject"
+      )
+      n_reject_homoscedasticity <- sum(
+        dt_exact[testing == "homoscedasticity"]$conclusion == "reject"
+      )
+      n_reject <- n_reject_normality + n_reject_homoscedasticity
+
+      caption_text <- if (n_reject == 0) {
+        sprintf("All %d comparisons passed both model assessment tests. Great!", n_normality)
+      }
+      else if (n_reject == n_total) {
+        sprintf("All %d comparisons FAILED both model assessment tests. This is where you stop and reflect over what you have done.", n_normality)
+      }
+      else {
+        paste0(
+          sprintf("<b>%d</b> out of %d comparisons failed the normality tests. ", n_reject_normality, n_normality),
+          sprintf("Also, <b>%d</b> out of %d comparisons failed the homoscedasticity tests.", n_reject_homoscedasticity, n_homoscedasticity),
+          sprintf(" That is <b>%d</b> out of %d failed tests in total!", n_reject, n_total)
         )
+      }
+
+      # Highlight rows with failed tests
+      bad_rows <- which(dt_exact$conclusion == "reject")
+
+      # 4. Render
+      renderGlassTable(
+        data = dt_visual,
+        col_names = c("IVD-MD Comparison", "Testing", "Test Name", "\\(p\\)-value", "Test Conclusion", "Rate of Rejected Tests During Resampling"),
+        caption = caption_text,
+        highlight_rows = bad_rows,
+        sortable = TRUE,
+        sidebar_html = NULL
       )
     })
 
-    # --- Server Logic for Assessment Plots ---
+    # --- Download Formatted Table (Visual Assessment Table) ---
+    output$download_model_at_visual_results <- downloadHandler(
+      filename = function() {
+        paste0(
+          "ceapkfcr_formal_model_validation_tests_visual_table_",
+          Sys.Date(),
+          ".xlsx"
+        )
+      },
+      content = function(file) {
+        table_to_save <- current_assessment_tests_results()$visual
+        req(table_to_save)
+        writexl::write_xlsx(
+          x = table_to_save,
+          path = file,
+          col_names = TRUE,
+          format_headers = TRUE
+        )
+      }
+    )
+
+    # --- Download Exact Numeric Table (Raw) ---
+    output$download_model_at_exact_results <- downloadHandler(
+      filename = function() {
+        paste0(
+          "ceapkfcr_formal_model_validation_tests_raw_table_",
+          Sys.Date(),
+          ".xlsx"
+        )
+      },
+      content = function(file) {
+        table_to_save <- current_assessment_tests_results()$exact
+        req(table_to_save)
+        writexl::write_xlsx(
+          x = table_to_save,
+          path = file,
+          col_names = TRUE,
+          format_headers = TRUE
+        )
+      }
+    )
+
+    # --- Server Logic for Assessment Plots ------------------------------------
+
+    # --- Create a reactiveVal to Cache Plots. ---
+    current_assessment_plots <- reactiveVal(NULL)
+
+    # --- Watch for input changes to re-enable Plot button ---
+    observeEvent(
+      eventExpr = {
+        c(
+          input$ap_title,
+          input$ap_x_title,
+          input$ap_y_title,
+          input$which_plot,
+          input$include_se_band,
+          input$var_instead,
+          input$cv_percent
+        )
+      },
+      handlerExpr = {
+        updateGlassButton(
+          session = session,
+          inputId = "plot_assessment_plots",
+          disabled = FALSE
+        )
+      }
+    )
+
+    # --- Update Cache when `Plot` Button is Pressed (Disables Button) ---
     assessment_plot_object <- eventReactive(input$plot_assessment_plots, {
       req(file_upload_data$is_valid(), cs_data_long())
       if (file_upload_data$is_valid()) {
+
+        # Disable Button
+        updateGlassButton(
+          session = session,
+          inputId = "plot_assessment_plots",
+          disabled = TRUE
+        )
 
         # Helper: Convert string input from glassRadioButtons to logical
         # glassRadioButtons returns character ("TRUE"/"FALSE")
         to_logical <- function(val) {
           if (is.null(val)) return(FALSE)
           as.logical(val)
+        }
+
+        # Update Cache if necessary
+        if (isTRUE(plot_cache_state$need_update)) {
+          assessment_plots <- sapply(
+            X = c(
+              "residual_plot",
+              "residual_histogram",
+              "qq_plot",
+              "sd_vs_concentration",
+              "cv_vs_concentration"
+            ),
+            FUN = function(plot_type) {
+              commutability::plot_assessment_plots(
+                data = cs_data_long(),
+                method = mod_dins_params()$pi_method,
+                type = plot_type,
+                draw_curves = TRUE,
+                plot_theme = "default",
+                additional_arguments = list(
+                  "main_title" = NULL,
+                  "x_name" = NULL,
+                  "y_name" = NULL,
+                  "curve_se" = FALSE,
+                  "cv_percent" = TRUE,
+                  "var_instead" = FALSE
+                )
+              )
+            },
+            simplify = FALSE
+          )
+          # Fill Cache
+          current_assessment_plots(assessment_plots)
+          plot_cache_state$need_update <- FALSE
+          plot_cache_state$filled <- TRUE
         }
 
         commutability::plot_assessment_plots(
@@ -404,7 +606,6 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
             "main_title" = input$ap_title,
             "x_name" = input$ap_x_title,
             "y_name" = input$ap_y_title,
-            # Convert UI string inputs to logical for internal logic
             "curve_se" = to_logical(input$include_se_band),
             "cv_percent" = to_logical(input$cv_percent),
             "var_instead" = to_logical(input$var_instead)
@@ -413,6 +614,7 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
       }
     })
 
+    # --- Render Assessment Plot ---
     output$assessment_plots <- renderPlot(
       res = 99,
       height = function() {
@@ -429,9 +631,16 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
       }
     )
 
+    # --- Download Assessment Plot ---
     output$download_assessment_plots <- downloadHandler(
       filename = function() {
-        paste(input$which_plot, "_", Sys.Date(), input$plot_download_file_type, sep = '')
+        paste0(
+          "ceapkfcr_visual_model_validation_",
+          input$which_plot,
+          "_",
+          Sys.Date(),
+          input$plot_download_file_type
+        )
       },
       content = function(file) {
         plot_to_save <- assessment_plot_object()
@@ -447,10 +656,22 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
       }
     )
 
+    # --- Avoid Suspension Issues ---
+
+    # 1. Wake up the DATA GENERATORS first (The Table and Plot)
+    outputOptions(output, "formal_assessment_tests_table", suspendWhenHidden = FALSE)
+    outputOptions(output, "assessment_plots", suspendWhenHidden = FALSE)
+
+    # 2. Wake up the DATA CONSUMERS second (The Download Handlers)
+    outputOptions(output, "download_model_at_visual_results", suspendWhenHidden = FALSE)
+    outputOptions(output, "download_model_at_exact_results", suspendWhenHidden = FALSE)
+    outputOptions(output, "download_assessment_plots", suspendWhenHidden = FALSE)
+
+
     return(
       list(
-        formal_results = assessment_tests_results,
-        assessment_plot = assessment_plot_object,
+        formal_results = current_assessment_tests_results,
+        assessment_plot = current_assessment_plots,
         assessment_plot_type = reactive({
           input$which_plot
         })

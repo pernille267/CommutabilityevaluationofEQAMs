@@ -99,8 +99,7 @@ mod_outlier_analysis_ui <- function(id) {
         icon = icon("magnifying-glass-chart"),
         width = "50%",
         color = "purple",
-        # CHANGE 1: Button is disabled by default
-        disabled = TRUE
+        disabled = FALSE
       ),
       icon = icon("table"),
       width = "100%",
@@ -233,7 +232,7 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       analysis_results_val(results)
     })
 
-    # --- CHANGE 5: Render Table Using renderGlassTable ------------------------
+    # --- Render Table Using renderGlassTable ------------------------
     output$outlier_results_ui <- renderUI({
       # Require cache to be filled before displaying table
       req(analysis_results_val())
@@ -326,6 +325,9 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
 
       HTML(modified_html_str)
     })
+
+    # --- Avoid Suspension Issues ---
+    outputOptions(output, "outlier_results_ui", suspendWhenHidden = FALSE)
 
     # --- Send Relevant Module Components to Other Modules ---------------------
     return(

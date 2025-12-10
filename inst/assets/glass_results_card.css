@@ -63,12 +63,45 @@
 }
 
 /* Force buttons inside the toolbar to be smaller/compact if needed */
-.glass-result-toolbar .glass-btn {
-  height: 36px;       /* Smaller than main action buttons */
-  min-width: 125px;
+.glass-result-toolbar .glass-btn,
+.glass-result-toolbar .glass-download-btn {
+  height: 36px !important;       /* Smaller than main action buttons */
+  min-width: 100px;
   padding: 0;
   font-size: 14px;
   margin: 0;
+}
+
+/* ==========================================================================
+   TOOLBAR ALIGNMENT OVERRIDES (Fixing Dropdown Alignment)
+   ========================================================================== */
+
+/* 1. Reset Container Margins */
+/* This removes the 'margin-bottom: 5px' usually present on form inputs */
+.glass-result-toolbar .glass-dropdown-container {
+  margin-bottom: 0 !important;
+  vertical-align: middle;
+}
+
+/* 2. Match Dropdown Button dimensions to Toolbar Buttons */
+.glass-result-toolbar .glass-dropdown-btn {
+  height: 36px !important;       /* Exact same height as .glass-btn above */
+  font-size: 14px !important;    /* Match font size */
+  padding-top: 0 !important;     /* Remove padding that might offset text */
+  padding-bottom: 0 !important;
+  padding-left: 15px;
+  padding-right: 10px;
+
+  display: flex;                 /* Use Flexbox to center text vertically */
+  align-items: center;           /* Critical for vertical alignment */
+  justify-content: space-between;
+  line-height: 1 !important;     /* Prevent line-height from pushing text down */
+}
+
+/* Ensure the label inside the button is centered */
+.glass-result-toolbar .glass-dropdown-btn span {
+  display: inline-block;
+  margin-top: 1px; /* Optical correction for Source Sans Pro */
 }
 
 /* --- BODY --- */

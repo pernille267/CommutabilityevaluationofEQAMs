@@ -6,11 +6,10 @@
 .glass-result-card {
   background: #ffffff;
   border-radius: 12px;
-  /* Slightly crispier shadow for data containers */
   box-shadow: 0 2px 15px rgba(0,0,0,0.04);
   border: 1px solid rgba(40, 167, 69, 0.15); /* Faint Green Border */
   margin-bottom: 25px;
-  overflow: visible; /* Allow dropdowns/tooltips to escape */
+  overflow: visible;
   position: relative;
   transition: all 0.3s ease;
 }
@@ -52,10 +51,11 @@
   font-weight: 700;
   color: #2c3e50;
   margin: 0;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
 }
 
 /* --- TOOLBAR (The Magic Part) --- */
-/* This area is designed to hold buttons inline */
+/* This area is designed to hold buttons and dropdowns inline */
 .glass-result-toolbar {
   display: flex;
   align-items: center;
@@ -63,12 +63,30 @@
 }
 
 /* Force buttons inside the toolbar to be smaller/compact if needed */
-.glass-result-toolbar .glass-btn {
+.glass-result-toolbar .glass-btn,
+.glass-result-toolbar .glass-download-btn {
   height: 36px;       /* Smaller than main action buttons */
   min-width: 125px;
   padding: 0;
   font-size: 14px;
   margin: 0;
+}
+
+.glass-result-toolbar .glass-btn-label {
+  font-size: 1em;
+}
+
+
+
+/* Force dropdowns inside the toolbar to be smaller/compact if needed */
+.glass-result-toolbar .glass-dropdown-container {
+  min-width: 250px;
+  margin-bottom: 0;
+}
+
+.glass-result-toolbar .glass-dropdown-btn {
+  padding: 7.5px 15px;
+  font-size: 14px;
 }
 
 /* --- BODY --- */

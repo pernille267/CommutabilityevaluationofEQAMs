@@ -115,9 +115,9 @@ glassNumericInput <- function(inputId,
     range_text = range_text # Pass range text to internal helper
   )
 
-  # Add specific data attributes for numeric validation
-  ui$attribs$`data-min` <- accept[1]
-  ui$attribs$`data-max` <- accept[2]
+  # Add specific data attributes for numeric validation on the wrapper
+  ui[[1]]$attribs$`data-min` <- accept[1]
+  ui[[1]]$attribs$`data-max` <- accept[2]
 
   # Inject the warning message container inside
   warning_div <- htmltools::tags$div(
@@ -127,7 +127,7 @@ glassNumericInput <- function(inputId,
   )
 
   # Append warning div to the binding container
-  ui$children[[length(ui$children) + 1]] <- warning_div
+  ui[[1]]$children[[length(ui[[1]]$children) + 1]] <- warning_div
 
   return(ui)
 }
@@ -135,14 +135,34 @@ glassNumericInput <- function(inputId,
 
 #' Internal Helper to build Glass Input structure
 #' @noRd
-glassInput <- function(inputId, label, value, type, label_icon, help_text,
-                       placeholder, tooltip_empty, tooltip_filled, width, unit,
-                       disabled, is_numeric, min=NA, max=NA, step=NA, range_text=NULL) {
+glassInput <- function(inputId,
+                       label,
+                       value,
+                       type,
+                       label_icon,
+                       help_text,
+                       placeholder,
+                       tooltip_empty,
+                       tooltip_filled,
+                       width,
+                       unit,
+                       disabled,
+                       is_numeric,
+                       min = NA,
+                       max = NA,
+                       step = NA,
+                       range_text = NULL) {
 
   # Container Classes
-  binding_class <- "glass-input-binding form-group"
+  # REMOVED "form-group" to avoid standard shiny styling interference if that was part of the issue,
+  # but mostly kept distinct class names.
+  binding_class <- "glass-input-binding"
   if (is_numeric) binding_class <- paste(binding_class, "glass-numeric")
   if (disabled) binding_class <- paste(binding_class, "disabled")
+
+  # Generate a unique ID for the inner input element so label can point to it
+  # This avoids collision with the Wrapper ID (inputId) which Shiny uses.
+  inner_id <- paste0(inputId, "_inner")
 
   # 1. Header (Label + Icon + Range Text)
   header_html <- NULL
@@ -150,9 +170,9 @@ glassInput <- function(inputId, label, value, type, label_icon, help_text,
     header_html <- htmltools::tags$div(
       class = "glass-input-header",
       if (!is.null(label_icon)) htmltools::tags$div(class = "glass-input-label-icon", label_icon),
-      if (!is.null(label)) htmltools::tags$label(class = "glass-input-label-text", `for` = inputId, label),
+      if (!is.null(label)) htmltools::tags$label(class = "glass-input-label-text", `for` = inputId, label), # 'for' targets the wrapper ID, which is OK for accessibility mostly, or we can omit.
 
-      # New: Range Text Display
+      # Range Text Display (Right of label)
       if (!is.null(range_text)) htmltools::tags$span(class = "glass-input-range-text", range_text)
     )
   }
@@ -169,7 +189,7 @@ glassInput <- function(inputId, label, value, type, label_icon, help_text,
 
   # 3. Input Wrapper
   input_tag <- htmltools::tags$input(
-    id = inputId,
+    id = inner_id,
     type = type,
     class = "glass-native-input",
     value = value,
@@ -198,7 +218,7 @@ glassInput <- function(inputId, label, value, type, label_icon, help_text,
   ui_structure <- htmltools::tags$div(
     class = binding_class,
     style = paste0("width: ", width, ";"),
-    id = inputId, # The binding attaches here
+    id = inputId, # The binding attaches here ONLY
     help_icon_html,
     header_html,
     wrapper_html
@@ -209,7 +229,7 @@ glassInput <- function(inputId, label, value, type, label_icon, help_text,
     ui_structure,
     htmltools::htmlDependency(
       name = "glass-input",
-      version = "1.0.1", # Version bump
+      version = "1.0.1",
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
       script = "glass_input.js",
       stylesheet = "glass_input.css"

@@ -78,7 +78,7 @@ glassDropdown <- function(inputId,
 
   # --- Build UI (Wrap in a parent div to hold Header + Dropdown) ---
   ui_structure <- htmltools::tags$div(
-    style = paste0("width: ", width, "; margin-bottom: 20px;"),
+    style = paste0("width: ", width, ";"),
     # Help Icon
     help_icon_html,
     # The Header & Header Icon
