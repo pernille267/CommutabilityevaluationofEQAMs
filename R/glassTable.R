@@ -141,7 +141,7 @@ renderGlassTable <- function(data,
     ui,
     htmltools::htmlDependency(
       name = "glass-table",
-      version = "11.5.0", # Major version bump for architectural change
+      version = "13.0.0", # Major version bump for architectural change
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
       script = "glass_table.js",
       stylesheet = "glass_table.css"

@@ -34,277 +34,243 @@ mod_model_validation_ui <- function(id) {
     ),
 
     # --- Create Tabset Panels for Model Assessment ----------------------------
-    tabsetPanel(
-      id = ns("model_validation_tabs"),
-      type = "pills",
+    glassTabsetPanel(
+      inputId = ns("model_validation_tabs"),
+      selected = "formal_tests",
+      color = "purple",
+
       # --- Panel 1 - Formal Assesment ---
-      tabPanel(
+      glassTabPanel(
         title = "Formal Assessment",
         value = "formal_tests",
         icon = icon("clipboard"),
+
         # --- Panel 1 - Card 1 - Results ---
-        div(
-          class = "dashboard-card",
-          div(
-            class = "card-header",
-            icon("table", class = "header-icon"),
-            h3(
-              "Formal Assessment Results"
+        glassResultCard(
+          inputId = ns("card_formal_results"),
+          title = "Formal Assessment Results",
+          icon = icon("table"),
+          width = "100%",
+          toolbar = div(
+            style = "display: flex; gap: 10px;",
+            glassButton(
+              inputId = ns("run_tests"),
+              label = "Run tests",
+              icon = icon(name = "list-check"),
+              color = "purple",
+              width = "160px"
             ),
-            div(
-              class = "text-center mt-4 mb-3",
-              actionBttn(
-                inputId = ns("run_tests"),
-                label = "Run tests",
-                icon = icon(name = "list-check"),
-                style = "gradient",
-                size = "md",
-                color = "royal"
-              ),
-              actionBttn(
-                inputId = ns("clear_test_results"),
-                label = NULL,
-                icon = icon("trash"),
-                style = "gradient",
-                color = "primary"
-              )
+            glassButton(
+              inputId = ns("clear_test_results"),
+              label = "Clear",
+              icon = icon("trash"),
+              color = "purple",
+              width = "120px"
             )
           ),
-          div(
-            class = "card-body",
-            withSpinner(
-              DT::DTOutput(outputId = ns("formal_assessment_tests")),
-              type = 4,
-              color = "#28A745"
-            )
+          withSpinner(
+            DT::DTOutput(outputId = ns("formal_assessment_tests")),
+            type = 4,
+            color = "#605ca8"
           )
         )
       ),
 
       # --- Panel 2 - Visual Assesment ---
-      tabPanel(
+      glassTabPanel(
         title = "Visual Assessment",
         value = "assessment_plots",
         icon = icon("chart-line"),
-        div(
-          class = "dashboard-card-drop-down",
-          div(
-            class = "card-header",
-            icon("chart-line", class = "header-icon"),
-            h3("Plotting Options")
-          ),
-          box(
-            title = tagList(
-              icon("sliders", class = "section-icon"),
-              "Customize Appearance & Advanced Options"
+
+        # --- Options Card (Modified) ---
+        glassCard(
+          inputId = ns("card_plot_options"),
+          title = "Customize Appearance & Advanced Options",
+          icon = icon("sliders"),
+          collapsible = TRUE,
+          collapsed = TRUE,
+          width = "100%",
+
+          # Customization Inputs
+          fluidRow(
+            column(
+              width = 4,
+              h4("Set Labels"),
+              div(
+                class = "parameter-section",
+                glassTextInput(
+                  inputId = ns("ap_title"),
+                  label = "Plot Title",
+                  placeholder = "Title...",
+                  label_icon = icon("heading"),
+                  width = "100%"
+                ),
+                glassTextInput(
+                  inputId = ns("ap_x_title"),
+                  label = "X-Axis",
+                  placeholder = "Auto",
+                  label_icon = icon("arrows-left-right"),
+                  width = "100%"
+                ),
+                glassTextInput(
+                  inputId = ns("ap_y_title"),
+                  label = "Y-Axis",
+                  placeholder = "Auto",
+                  label_icon = icon("arrows-up-down"),
+                  width = "100%"
+                )
+              )
             ),
-            collapsible = TRUE,
-            collapsed = TRUE,
-            width = 12,
-            solidHeader = TRUE,
-            status = "primary",
-            # Customization Inputs
-            fluidRow(
-              column(
-                width = 4,
-                h4("Set Labels"),
-                div(
-                  class = "parameter-section",
-                  h5("Plot Title"),
-                  textInputIcon(
-                    inputId = ns("ap_title"),
-                    label = NULL,
-                    placeholder = "Title...",
-                    icon = icon("heading")
-                  ),
-                  h5("X-Axis"),
-                  textInputIcon(
-                    inputId = ns("ap_x_title"),
-                    label = NULL,
-                    placeholder = "Auto",
-                    icon = icon("arrows-left-right")
-                  ),
-                  h5("Y-Axis"),
-                  textInputIcon(
-                    inputId = ns("ap_y_title"),
-                    label = NULL,
-                    placeholder = "Auto",
-                    icon = icon("arrows-up-down")
-                  )
+            column(
+              width = 4,
+              h4("Download Dimensions"),
+              div(
+                class = "parameter-section",
+                glassNumericInput(
+                  inputId = ns("ap_width"),
+                  label = "Width",
+                  value = 15,
+                  min = 5,
+                  max = 50,
+                  label_icon = icon("ruler-horizontal"),
+                  width = "100%",
+                  accept = c(5, 50),
+                  unit = " CM",
+                  warning_unacceptable = "Width must be between 5 and 50 cm"
+                ),
+                glassNumericInput(
+                  inputId = ns("ap_height"),
+                  label = "Height",
+                  value = 9.3,
+                  min = 5,
+                  max = 50,
+                  label_icon = icon("ruler-vertical"),
+                  width = "100%",
+                  accept = c(5, 50),
+                  unit = " CM",
+                  warning_unacceptable = "Height must be between 5 and 50 cm"
                 )
-              ),
-              column(
-                width = 4,
-                h4("Download Dimensions"),
-                div(
-                  class = "parameter-section",
-                  h5("Width (cm)"),
-                  numericInputIcon(
-                    inputId = ns("ap_width"),
-                    label = NULL,
-                    value = 15,
-                    min = 5,
-                    icon = icon("ruler-horizontal")
-                  ),
-                  h5("Height (cm)"),
-                  numericInputIcon(
-                    inputId = ns("ap_height"),
-                    label = NULL,
-                    value = 9.3,
-                    min = 5,
-                    icon = icon("ruler-vertical")
-                  )
-                )
-              ),
-              column(
-                width = 4,
-                h4("Additional Download Options"),
-                div(
-                  class = "parameter-section",
-                  h5("Format"),
-                  radioGroupButtons(
-                    inputId = ns("plot_download_file_type"),
-                    label = NULL,
-                    choiceNames = c("PDF", "PNG", "TIF"),
-                    choiceValues = c(".pdf", ".png", ".tif"),
-                    selected = ".png",
-                    status = "primary",
-                    justified = TRUE,
-                    size = "normal"
-                  ),
-                  h5("Quality (DPI)"),
-                  numericInputIcon(
-                    inputId = ns("plot_download_quality"),
-                    label = NULL,
-                    value = 300,
-                    min = 72,
-                    max = 1500,
-                    icon = icon("image")
-                  )
+              )
+            ),
+            column(
+              width = 4,
+              h4("Additional Download Options"),
+              div(
+                class = "parameter-section",
+                glassRadioButtons(
+                  inputId = ns("plot_download_file_type"),
+                  label = "Format",
+                  choices = c("PDF" = ".pdf", "PNG" = ".png", "TIF" = ".tif"),
+                  selected = ".png",
+                  width = "100%"
+                ),
+                glassNumericInput(
+                  inputId = ns("plot_download_quality"),
+                  label = "Quality",
+                  value = 300,
+                  min = 72,
+                  max = 1500,
+                  label_icon = icon("image"),
+                  unit = " DPI",
+                  width = "100%",
+                  accept = c(72, 1500),
+                  warning_unacceptable = "DPI must be between 72 and 1500"
                 )
               )
             )
           ),
-          div(
-            class = "card-body",
-            # Plot type selection
-            fluidRow(
-              column(
-                width = 6,
-                div(
-                  class = "parameter-section",
-                  h5(
-                    "Select Diagnostic Plot",
-                    div(
-                      class = "input-note",
-                      # --- Force the Icon to the Right ---
-                      style = "display: inline-block; margin-left: 5px;",
-                      icon(name = "info-circle"),
-                      id = ns("plot_explanation_tool_tip")
-                    )
-                  ),
-                  virtualSelectInput(
-                    inputId = ns("which_plot"),
-                    label = NULL,
-                    choices = c(
-                      "Residuals vs Fitted Values" = "residual_plot",
-                      "Histogram of Residuals" = "residual_histogram",
-                      "QQ Normal Plot" = "qq_plot",
-                      "SD vs Concentration" = "sd_vs_concentration",
-                      "CV vs Concentration" = "cv_vs_concentration"
-                    ),
-                    selected = "residual_plot",
-                    search = FALSE,
-                    multiple = FALSE
-                  )
-                )
-              ),
-              column(
-                width = 6,
-                div(
-                  class = "parameter-section",
-                  h5("Display Options"),
-                  div(
-                    class = "switch-container",
-                    materialSwitch(
-                      inputId = ns("include_se_band"),
-                      label = "Include Error Ribbon",
-                      value = FALSE,
-                      status = "success"
-                    ),
-                    conditionalPanel(
-                      condition = sprintf(
-                        "input['%s'] == 'sd_vs_concentration'",
-                        ns("which_plot")
-                      ),
-                      materialSwitch(
-                        inputId = ns("var_instead"),
-                        label = "Use Variance",
-                        value = FALSE,
-                        status = "success"
-                      )
-                    ),
-                    conditionalPanel(
-                      condition = sprintf(
-                        "input['%s'] == 'cv_vs_concentration'",
-                        ns("which_plot")
-                      ),
-                      materialSwitch(
-                        inputId = ns("cv_percent"),
-                        label = "CV %",
-                        value = FALSE,
-                        status = "success"
-                      ),
-                    )
-                  )
+
+          # Display Options (Moved here from removed column, now horizontal)
+          h4("Display Options"),
+          fluidRow(
+            column(
+              width = 4,
+              glassRadioButtons(
+                inputId = ns("include_se_band"),
+                label = "Include Error Ribbon",
+                choices = c("No" = FALSE, "Yes" = TRUE),
+                selected = FALSE,
+                width = "100%"
+              )
+            ),
+            column(
+              width = 4,
+              glassTogglePanel(
+                triggerId = ns("which_plot"),
+                show_when = "sd_vs_concentration",
+                glassRadioButtons(
+                  inputId = ns("var_instead"),
+                  label = "Use Variance Instead",
+                  choices = c("No" = FALSE, "Yes" = TRUE),
+                  selected = FALSE,
+                  width = "100%"
                 )
               )
             ),
-            shinyBS::bsTooltip(
-              id = ns("plot_explanation_tool_tip"),
-              title = paste0(
-                "QQ, SD, and CV are abbreviations for Quantile-Quantile, ",
-                "Standard Deviation, and Coefficient of Variation, Respectively."
-              ),
-              placement = "right"
+            column(
+              width = 4,
+              glassTogglePanel(
+                triggerId = ns("which_plot"),
+                show_when = "cv_vs_concentration",
+                glassRadioButtons(
+                  inputId = ns("cv_percent"),
+                  label = "Show as CV %",
+                  choices = c("No" = FALSE, "Yes" = TRUE),
+                  selected = FALSE,
+                  width = "100%"
+                )
+              )
             )
           )
         ),
-        div(
-          class = "dashboard-card",
-          div(
-            class = "card-header",
-            icon("chart-line", class = "header-icon"),
-            h3("Generate Model Assessment Plot"),
-            actionBttn(
+
+        # --- Plot Result Card (Dropdown moved here) ---
+        glassResultCard(
+          inputId = ns("card_assessment_plot"),
+          title = "Generate Model Assessment Plot",
+          icon = icon("chart-line"),
+          width = "100%",
+          toolbar = div(
+            style = "display: flex; gap: 10px; align-items: center;",
+
+            # --- Dropdown Moved to Toolbar ---
+            div(
+              style = "width: 250px;",
+              glassDropdown(
+                inputId = ns("which_plot"),
+                label = NULL,
+                help_text = "Select Plot Type",
+                choices = c(
+                  "Residuals vs Fitted Values" = "residual_plot",
+                  "Histogram of Residuals" = "residual_histogram",
+                  "QQ Normal Plot" = "qq_plot",
+                  "SD vs Concentration" = "sd_vs_concentration",
+                  "CV vs Concentration" = "cv_vs_concentration"
+                ),
+                selected = "residual_plot",
+                width = "100%"
+              )
+            ),
+            glassButton(
               inputId = ns("plot_assessment_plots"),
               label = "Plot",
               icon = icon("magnifying-glass-chart"),
-              style = "gradient",
-              color = "royal",
-              size = "md"
+              color = "purple",
+              width = "auto"
             ),
-            downloadBttn(
+            glassDownloadButton(
               outputId = ns("download_assessment_plots"),
               label = "Download",
               icon = icon("download"),
-              style = "gradient",
-              color = "royal",
-              size = "md"
+              width = "auto"
             )
           ),
           div(
-            class = "card-body",
-            div(
-              # Plot output
-              div(
-                class = "plot-container",
-                withSpinner(
-                  ui_element = plotOutput(outputId = ns("assessment_plots"), width = "100%", height = "auto"),
-                  type = 4,
-                  color = "#28A745"
-                )
-              )
+            class = "plot-container",
+            plotOutput(
+              outputId = ns("assessment_plots"),
+              width = "100%",
+              height = "auto"
             )
           )
         )
@@ -317,14 +283,12 @@ mod_model_validation_ui <- function(id) {
 #'
 #' @param id A character string for the namespace.
 #' @param file_upload_data A reactive list from the file upload module.
-#' @param user_input_params A reactive list from the user input module.
+#' @param mod_dins_params A reactive list from the user input module.
 #'
 #' @return This module does not return any values.
 #' @noRd
 mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
   moduleServer(id, function(input, output, session) {
-
-
 
     # --- Reactive Data Preparation ---
     cs_data_long <- reactive({
@@ -363,8 +327,6 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
 
     # --- *DEBUGGING* look at cs_data_long() ---
     observe({
-      # This will create or update an object named 'debug_cs_data' in your R Global Environment
-      # every time the cs_data_long() reactive updates.
       debug_cs_data <<- cs_data_long()
     })
 
@@ -380,7 +342,7 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
           level = 0.05,
           robust = TRUE,
           adjust_p_value = FALSE,
-          holm = FALSE,#(input$sim_testing == "yes"),
+          holm = FALSE,
           output = "visual"
         )
       }
@@ -398,13 +360,13 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
           scolllX = TRUE,
           scrollY = "400px",
           pageLength = 25,
-          dom = "Bfrtip", # B=Buttons, f=filtering, r=processing, t=table, i=info, p=pagination
+          dom = "Bfrtip",
           buttons = list(
-            list(extend = 'copy', className = 'btn-dt'),
-            list(extend = 'csv', className = 'btn-dt'),
-            list(extend = 'excel', className = 'btn-dt'),
-            list(extend = 'pdf', className = 'btn-dt'),
-            list(extend = 'print', className = 'btn-dt')
+            list(extend = 'copy', className = 'glass-dt-btn'),
+            list(extend = 'csv', className = 'glass-dt-btn'),
+            list(extend = 'excel', className = 'glass-dt-btn'),
+            list(extend = 'pdf', className = 'glass-dt-btn'),
+            list(extend = 'print', className = 'glass-dt-btn')
           ),
           columnDefs = list(
             list(className = 'dt-center', targets = "_all")
@@ -424,6 +386,14 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
     assessment_plot_object <- eventReactive(input$plot_assessment_plots, {
       req(file_upload_data$is_valid(), cs_data_long())
       if (file_upload_data$is_valid()) {
+
+        # Helper: Convert string input from glassRadioButtons to logical
+        # glassRadioButtons returns character ("TRUE"/"FALSE")
+        to_logical <- function(val) {
+          if (is.null(val)) return(FALSE)
+          as.logical(val)
+        }
+
         commutability::plot_assessment_plots(
           data = cs_data_long(),
           method = mod_dins_params()$pi_method,
@@ -434,9 +404,10 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
             "main_title" = input$ap_title,
             "x_name" = input$ap_x_title,
             "y_name" = input$ap_y_title,
-            "curve_se" = input$include_se_band,
-            "cv_percent" = input$cv_percent,
-            "var_instead" = input$var_instead
+            # Convert UI string inputs to logical for internal logic
+            "curve_se" = to_logical(input$include_se_band),
+            "cv_percent" = to_logical(input$cv_percent),
+            "var_instead" = to_logical(input$var_instead)
           )
         )
       }
