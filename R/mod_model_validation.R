@@ -579,9 +579,6 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
                 draw_curves = TRUE,
                 plot_theme = "default",
                 additional_arguments = list(
-                  "main_title" = NULL,
-                  "x_name" = NULL,
-                  "y_name" = NULL,
                   "curve_se" = FALSE,
                   "cv_percent" = TRUE,
                   "var_instead" = FALSE

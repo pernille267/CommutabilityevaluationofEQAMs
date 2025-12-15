@@ -302,7 +302,8 @@ mod_results_ui <- function(id) {
               ),
               icon = icon("table-list"),
               withSpinner(
-                ui_element = DT::DTOutput(outputId = ns("ce_results")),
+                # Change from DT::DTOutput to uiOutput
+                ui_element = uiOutput(outputId = ns("ce_results")),
                 color = "#605ca8", # Changed color to purple to match original
                 type = 4
               )
@@ -338,7 +339,8 @@ mod_results_ui <- function(id) {
               icon = icon("vial"),
               #uiOutput(ns("repress_grid_notification")),
               withSpinner(
-                ui_element = DT::DTOutput(outputId = ns("ce_results_grid")),
+                # Change from DT::DTOutput to uiOutput
+                ui_element = uiOutput(outputId = ns("ce_results_grid")),
                 color = "#605ca8", # Changed color to purple to match original
                 type = 4
               )
@@ -821,7 +823,8 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
       # --- Double ensure that the `results_list` is valid ---
       if (!is.null(results_list$error)) {
-        return(DT::datatable(data.table("Error:" = results_list$error), options = list(dom = 't')))
+        # Using renderGlassTable for error display
+        return(renderGlassTable(data = data.table("Error" = results_list$error), sortable = FALSE))
       }
 
       # --- Get copy of relevant object from the results list ---
@@ -920,33 +923,16 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
         )
       }
 
-      # --- Create the processed table DT::datatable object ---
-      DT::datatable(
-        display_tbl,
-        rownames = FALSE,
-        extensions = 'Buttons',
-        options = list(
-          scolllX = TRUE,
-          scrollY = "400px",
-          pageLength = 25,
-          dom = "Bfrtip", # B=Buttons, f=filtering, r=processing, t=table, i=info, p=pagination
-          buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-          columnDefs = list(
-            list(className = 'dt-center', targets = "_all")
-          ),
-          initComplete = JS(
-            "function(settings, json) {",
-            "  $(this.api().table().container()).find('.dataTables_scrollBody').on('scroll', function() {",
-            "    $(this).prev('.dataTables_scrollHead').scrollLeft($(this).scrollLeft());",
-            "  });",
-            "}"
-          )
-        )
+      # --- Create the processed table using renderGlassTable ---
+      renderGlassTable(
+        data = display_tbl,
+        col_names = names(display_tbl),
+        sortable = TRUE
       )
     })
 
     # --- Display Main Table in UI ---------------------------------------------
-    output$ce_results <- DT::renderDT({
+    output$ce_results <- renderUI({
       # --- Ensure that the output is processed and prepared ---
       req(ce_results_display())
       # --- Display table in UI ---
@@ -963,7 +949,8 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
       # --- Double ensure that the `results_list` is valid ---
       if (!is.null(results_list$error)) {
-        return(DT::datatable(data.table("Error:" = results_list$error), options = list(dom = 't')))
+        # Using renderGlassTable for error display
+        return(renderGlassTable(data = data.table("Error" = results_list$error), sortable = FALSE))
       }
 
       # --- Get copy of relevant object from the results list ---
@@ -1045,34 +1032,16 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
       # --- Prepare table only if an material is selected ---
       if (particular_material != "none") {
-        DT::datatable(
-          output_tbl_list[[particular_material]],
-          rownames = FALSE,
-          extensions = 'Buttons',
-          options = list(
-            scolllX = TRUE,
-            scrollY = "400px",
-            pageLength = 25,
-            dom = "Bfrtip", # B=Buttons, f=filtering, r=processing, t=table, i=info, p=pagination
-            buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
-            columnDefs = list(
-              list(className = 'dt-center', targets = "_all")
-            ),
-            initComplete = JS(
-              "function(settings, json) {",
-              "  $(this.api().table().container()).find('.dataTables_scrollBody').on('scroll', function() {",
-              "    $(this).prev('.dataTables_scrollHead').scrollLeft($(this).scrollLeft());",
-              "  });",
-              "}"
-            )
-          )
+        renderGlassTable(
+          data = output_tbl_list[[particular_material]],
+          sortable = TRUE
         )
       }
       # --- Nothing is returned if input$material is 'none' ---
     })
 
     # --- Display Commutability Results for One EQAM in the UI -----------------
-    output$ce_results_grid <- DT::renderDT({
+    output$ce_results_grid <- renderUI({
       # --- Ensure that the output is processed and prepared ---
       req(ce_results_grid_display())
       # --- Render the commutability table for the selected EQAM ---
@@ -1209,7 +1178,8 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
 
       # --- Double ensure that the `results_list` is valid ---
       if (!is.null(results_list$error)) {
-        return(DT::datatable(data.table("Error:" = results_list$error), options = list(dom = 't')))
+        # Using renderGlassTable for error display handling inside renderUI
+        return(NULL)
       }
 
       # --- Get copy of relevant object from the results list ---
