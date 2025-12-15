@@ -50,18 +50,14 @@ mod_results_ui <- function(id) {
           width = 5,
           div(
             class = "parameter-section",
-            h5(
-              "Select Desired Confidence Level",
-              div(
-                class = "input-note",
-                # --- Force the Icon to the Right ---
-                style = "display: inline-block; margin-left: 5px;",
-                icon(name = "info-circle"),
-                id = ns("ci_level_explanation_tool_tip")
-              )
-            ),
             glassRadioButtons(
               inputId = ns("pi_conf_level"),
+              label = "Select Desired Confidence Level",
+              help_text = paste0(
+                "Confidence level here signify the nominal confidence level ",
+                "of the prediction intervals. It is generally recommended ",
+                "setting this to 99 % (the default)."
+              ),
               choices = c(
                 "95 %" = 0.95,
                 "99 %" = 0.99
@@ -77,18 +73,15 @@ mod_results_ui <- function(id) {
           width = 5,
           div(
             class = "parameter-section",
-            h5(
-              "Exclude Extrapolated Results",
-              div(
-                class = "input-note",
-                # --- Force the Icon to the Right ---
-                style = "display: inline-block; margin-left: 5px;",
-                icon(name = "info-circle"),
-                id = ns("exclude_extrapolations_explanation_tool_tip")
-              )
-            ),
             glassRadioButtons(
               inputId = ns("exclude_extrapolations"),
+              label = "Exclude Extrapolated Results",
+              help_text = paste0(
+                "Applies to evaluated materials within IVD-MD pairs. ",
+                "Excludes evaluated material results outside the observed ",
+                "measurement interval of the clinical samples for each IVD-MD ",
+                "pair. It is not recommended to set this to -No-."
+              ),
               choices = c(
                 "Yes" = "Yes",
                 "No" = "No"
@@ -112,27 +105,6 @@ mod_results_ui <- function(id) {
             )
           )
         )
-      ),
-      bsTooltip(
-        id = ns("ci_level_explanation_tool_tip"),
-        title = paste0(
-          "Confidence level here signify the nominal confidence level ",
-          "of the prediction intervals. It is generally recommended ",
-          "setting this to 99 % (the default)."
-        ),
-        placement = "right",
-        trigger = "hover"
-      ),
-      bsTooltip(
-        id = ns("exclude_extrapolations_explanation_tool_tip"),
-        title = paste0(
-          "Applies to evaluated materials within IVD-MD pairs. ",
-          "Excludes evaluated material results outside the observed ",
-          "measurement interval of the clinical samples for each IVD-MD ",
-          "pair. It is not recommended to set this to -No-."
-        ),
-        placement = "left",
-        trigger = "hover"
       )
     ),
 
@@ -160,18 +132,14 @@ mod_results_ui <- function(id) {
               width = 6,
               div(
                 class = "parameter-section",
-                h5(
-                  "Choose Filtering for Evaluated Material Locations",
-                  div(
-                    class = "input-note",
-                    # --- Force the Icon to the Right ---
-                    style = "display: inline-block; margin-left: 5px;",
-                    icon(name = "info-circle"),
-                    id = ns("pi_explanation_tool_tip")
-                  )
-                ),
                 glassRadioButtons(
                   inputId = ns("filter_eq_location"),
+                  label = "Choose Filtering for Evaluated Material Locations",
+                  help_text = paste0(
+                    "PIs is an abbreviation for prediction intervals. Only ",
+                    "include evaluated materials that have results inside ",
+                    "or outside the established prediction intervals."
+                  ),
                   choices = c(
                     "No Filters" = "n_filt",
                     "Inside PIs" = "o_inside",
@@ -188,18 +156,14 @@ mod_results_ui <- function(id) {
               width = 6,
               div(
                 class = "parameter-section",
-                h5(
-                  "Choose Filtering for IVD-MD Nonselectivity Differences",
-                  div(
-                    class = "input-note",
-                    # --- Force the Icon to the Right ---
-                    style = "display: inline-block; margin-left: 5px;",
-                    icon(name = "info-circle"),
-                    id = ns("dins_explanation_tool_tip")
-                  )
-                ),
                 glassRadioButtons(
                   inputId = ns("filter_by_dins"),
+                  label = "Choose Filtering for IVD-MD Nonselectivity Differences",
+                  help_text = paste0(
+                    "Applies to IVD-MD pairs. Only include IVD-MD pairs ",
+                    "demonstrating acceptable or excessive differences in ",
+                    "nonselectivity (i.e., DINS)."
+                  ),
                   choices = c(
                     "No Filters" = "n_filt",
                     "Acceptable" = "o_ins",
@@ -218,18 +182,16 @@ mod_results_ui <- function(id) {
               width = 6,
               div(
                 class = "parameter-section",
-                h5(
-                  "Choose Table Format",
-                  div(
-                    class = "input-note",
-                    # --- Force the Icon to the Right ---
-                    style = "display: inline-block; margin-left: 5px;",
-                    icon(name = "info-circle"),
-                    id = ns("table_format_explanation_tool_tip")
-                  )
-                ),
                 glassRadioButtons(
                   inputId = ns("data_format"),
+                  label = "Choose Table Format",
+                  help_text = paste0(
+                    "Controls the presentation of the results in the ",
+                    "commutability evaluation analysis table below. If expanded ",
+                    "is selected, each individual piece of information will get ",
+                    "their own column. Otherwise, results that are possible (",
+                    "and convenient) to group toghether, are grouped together."
+                  ),
                   choices = c(
                     "Expanded" = "expanded",
                     "Compact" = "compact"
@@ -246,39 +208,6 @@ mod_results_ui <- function(id) {
               # --- TO ME: Should add summary for filterings later here ---
               div()
             )
-          ),
-          # --- Panel 1 - Card 1 - Tooltip Functionality ---
-          bsTooltip(
-            id = ns("pi_explanation_tool_tip"),
-            title = paste0(
-              "PIs is an abbreviation for prediction intervals. Only ",
-              "include evaluated materials that have results inside ",
-              "or outside the established prediction intervals."
-            ),
-            placement = "right",
-            trigger = "hover"
-          ),
-          bsTooltip(
-            id = ns("dins_explanation_tool_tip"),
-            title = paste0(
-              "Applies to IVD-MD pairs. Only include IVD-MD pairs ",
-              "demonstrating acceptable or excessive differences in ",
-              "nonselectivity (i.e., DINS)."
-            ),
-            placement = "left",
-            trigger = "hover"
-          ),
-          bsTooltip(
-            id = ns("table_format_explanation_tool_tip"),
-            title = paste0(
-              "Controls the presentation of the results in the ",
-              "commutability evaluation analysis table below. If expanded ",
-              "is selected, each individual piece of information will get ",
-              "their own column. Otherwise, results that are possible (",
-              "and convenient) to group toghether, are grouped together."
-            ),
-            placement = "top",
-            trigger = "hover"
           )
         ),
         # --- Results Card 1 - Results Demonstrated in Tables ------------------
