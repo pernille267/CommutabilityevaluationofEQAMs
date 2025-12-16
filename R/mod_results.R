@@ -1318,6 +1318,8 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
     outputOptions(output, "ce_results", suspendWhenHidden = FALSE)
     outputOptions(output, "ce_results_grid", suspendWhenHidden = FALSE)
     outputOptions(output, "ce_plots", suspendWhenHidden = FALSE)
+    outputOptions(output, "download_ce_plots", suspendWhenHidden = FALSE)
+
 
   })
 }

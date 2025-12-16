@@ -192,6 +192,22 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     # --- Create a reactiveVal to Cache Results. -------------------------------
     analysis_results_val <- reactiveVal(NULL)
 
+    # --- *EXPERIMENTAL* (START) ---
+
+    # --- Track Performed Outlier Tests ---
+    completed_tests <- reactiveVal(character(0))
+
+    # --- Track whether outlier analysis is deemed completed ----
+    outlier_analysis_deemed_complete <- reactiveVal(FALSE)
+
+    # --- Reset Tracking of Performed Tests if Data Changes ---
+    observeEvent(raw_cs_data_long(), {
+      completed_tests(character(0))
+      outlier_analysis_deemed_complete(FALSE)
+    })
+
+    # --- *EXPERIMENTAL* (END) ---
+
     # --- CHANGE 3: Enable Button Logic ----------------------------------------
     # Watch for Data Availability AND Input Changes to re-enable the button
     observeEvent(list(raw_cs_data_long(), input$outlier_test, input$outlier_test_conf_level), {
@@ -225,6 +241,13 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
         output = "visual"
       )
       analysis_results_val(results)
+
+      # Record that this test now have been complete if not completed before
+      current_set <- completed_tests()
+      current_method <- input$outlier_test
+      if (!current_method %in% current_set) {
+        completed_tests(c(current_set, current_method))
+      }
     })
 
     # --- Render Table Using renderGlassTable ------------------------
@@ -323,6 +346,25 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
 
     # --- Avoid Suspension Issues ---
     outputOptions(output, "outlier_results_ui", suspendWhenHidden = FALSE)
+
+    # --- *EXPERIMENTAL* ---
+
+    # --- Notification Functionality ---
+    observe({
+      # --- Get Current Completed Tests ---
+      done <- completed_tests()
+
+      # Definer kravene: Både 'Between Samples' (burnett) og 'Within Samples' (qrange)
+      required <- c("burnett", "qrange")
+
+      # Sjekk om alle kravene er oppfylte
+      all_requirements_met <- all(required %in% done)
+      if (all_requirements_met) {
+        outlier_analysis_deemed_complete(TRUE)
+        completed_tests(character(0))
+      }
+      updateGlassSidebarHighlight(session, "model_val", enable = outlier_analysis_deemed_complete())
+    })
 
     # --- Send Relevant Module Components to Other Modules ---------------------
     return(

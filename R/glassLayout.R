@@ -82,7 +82,9 @@ glassNavItem <- function(tabName, icon, title, active = FALSE) {
     class = classes,
     `data-target` = tabName,
     `data-title` = title,
-    icon
+    icon,
+    # NYTT: Legg til et dedikert element for notifikasjonsprikken
+    htmltools::tags$div(class = "glass-nav-notification")
   )
 }
 
@@ -127,6 +129,26 @@ glassCol <- function(width, ...) {
   htmltools::tags$div(
     class = paste0("glass-col-", w),
     ...
+  )
+}
+
+#' Update Glass Sidebar Highlight
+#'
+#' Sends a custom message to the frontend to toggle the notification pulse
+#' on a specific sidebar item.
+#'
+#' @param session The Shiny session object.
+#' @param tabName The `tabName` (data-target) of the item to highlight.
+#' @param enable Logical. TRUE to start pulsing, FALSE to stop.
+#'
+#' @export
+updateGlassSidebarHighlight <- function(session, tabName, enable = TRUE) {
+  session$sendCustomMessage(
+    type = "glass-sidebar-highlight",
+    message = list(
+      tabName = tabName,
+      enable = enable
+    )
   )
 }
 

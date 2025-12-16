@@ -853,6 +853,78 @@ mod_dins_server <- function(id, file_upload_data) {
     outputOptions(output, "download_all_zetas", suspendWhenHidden = FALSE)
     outputOptions(output, "download_imprecision", suspendWhenHidden = FALSE)
 
+    # --- *EXPERIMENTAL* ---
+
+    # --- Outlier Analysis - Notification Triggers -----------------------------
+
+    # --- Track Visited Tabs ---
+    visited_tabs <- reactiveVal(character(0))
+
+    # --- Track Whether DINS Analysis is Deemed Complete ---
+    dins_analysis_suggested_complete <- reactiveVal(FALSE)
+
+    # --- Track Whether the notification has been view once
+
+
+    # --- The list of Tabs that must be visited ---
+    target_tabs <- c("dins_recommendations_and_info",
+                     "dins_estimates",
+                     "imprecision_estimates")
+
+    # --- Observe for changes in `input$dins_results_tabs` ---
+    observeEvent(input$dins_results_tabs, {
+      req(input$dins_results_tabs)
+      current_set <- visited_tabs()
+
+      # --- Check if current tab is in the list and append if not ---
+      if (!input$dins_results_tabs %in% current_set) {
+        visited_tabs(c(current_set, input$dins_results_tabs))
+      }
+    })
+
+    # --- Reset if Clinical Sample Data Changes ---
+    observeEvent(cs_data_long(), {
+      visited_tabs(character(0))
+      dins_analysis_suggested_complete(FALSE)
+    })
+
+    # --- Check if recommendations align with user selections ---
+    is_aligned_with_recommendation <- reactive({
+      rec <- optimization_results()
+      # --- If no recommendation exist, alignment is impossible ---
+      if (is.null(rec)) return(FALSE)
+
+      # --- Check whether UI-input match Recommendations ---
+      matches_tr       <- isTRUE(input$transformation == rec$tr)
+      matches_model    <- isTRUE(input$pi_method == rec$model)
+      matches_weighted <- isTRUE(input$ss_weighted == rec$weighted)
+
+      return(matches_tr && matches_model && matches_weighted)
+    })
+
+    # --- Main Notification Trigger ---
+    observe({
+      # Check Trigger 1: Does UI-input align with recommendations?
+      condition_1_met <- is_aligned_with_recommendation()
+
+      # Check Trigger 2: Have the user viewed all panels?
+      current_tabs <- visited_tabs()
+      all_tabs_visited <- all(target_tabs %in% visited_tabs())
+
+      if (all_tabs_visited) {
+        # Set Analysis Suggested Complete Key to TRUE
+        dins_analysis_suggested_complete(TRUE)
+
+        # Reset `visited_tabs`
+        visited_tabs(character(0))
+      }
+
+      # Check if at least one of the trigger events has happened
+      should_notify <- condition_1_met || dins_analysis_suggested_complete()
+
+      # Make the notification appear, if suitable
+      updateGlassSidebarHighlight(session, "outliers", enable = should_notify)
+    })
 
     # --- Return values for other modules ---
     return(

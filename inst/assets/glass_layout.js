@@ -4,7 +4,28 @@
 // ==========================================================================
 
 $(document).on('shiny:connected', function() {
+  // 1. Initialize Router
   initGlassRouter();
+
+  // 2. Register Custom Message Handler
+  Shiny.addCustomMessageHandler('glass-sidebar-highlight', function(message) {
+    // message: { tabName: "dins", enable: true }
+
+    // 1. Finn selve menyknappen (Forelderen)
+    var $navItem = $('.glass-nav-item[data-target="' + message.tabName + '"]');
+
+    // 2. Finn selve varsel-ikonet INNI knappen (Barnet)
+    // Dette er trinnet som manglet:
+    var $notificationIcon = $navItem.find('.glass-nav-notification');
+
+    if (message.enable) {
+      // Nå legges klassen på riktig element:
+      // .glass-nav-notification blir til .glass-nav-notification.has-notification
+      $notificationIcon.addClass('has-notification');
+    } else {
+      $notificationIcon.removeClass('has-notification');
+    }
+  });
 });
 
 function initGlassRouter() {
@@ -20,6 +41,9 @@ function initGlassRouter() {
 $(document).on('click', '.glass-nav-item', function() {
   var $el = $(this);
   var target = $el.data('target');
+
+  // Remove Pulse Icon if there
+  $el.find('.glass-nav-notification').removeClass('has-notification');
 
   // Visual Update (Sidebar)
   $('.glass-nav-item').removeClass('active');
