@@ -219,6 +219,44 @@ mod_model_validation_ui <- function(id) {
                 )
               )
             )
+          ),
+          h4("Display Options"),
+          glassRow(
+            glassCol(
+              width = 4,
+              glassRadioButtons(
+                inputId = ns("include_se_band"),
+                label = "Include Error Ribbon",
+                choices = c("No" = FALSE, "Yes" = TRUE),
+                selected = FALSE,
+                width = "100%"
+              )
+            ),
+            glassCol(
+              width = 4,
+              glassTogglePanel(
+                triggerId = ns("which_plot"),
+                show_when = "sd_vs_concentration",
+                glassRadioButtons(
+                  inputId = ns("var_instead"),
+                  label = "Use Variance Instead",
+                  choices = c("No" = FALSE, "Yes" = TRUE),
+                  selected = FALSE,
+                  width = "100%"
+                ),
+                glassTogglePanel(
+                  triggerId = ns("which_plot"),
+                  show_when = "cv_vs_concentration",
+                  glassRadioButtons(
+                    inputId = ns("cv_percent"),
+                    label = "Show as CV %",
+                    choices = c("No" = FALSE, "Yes" = TRUE),
+                    selected = FALSE,
+                    width = "100%"
+                  )
+                )
+              )
+            )
           )
         ),
         # --- Plot Result Card (Dropdown moved here) ---

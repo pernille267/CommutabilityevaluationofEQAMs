@@ -270,6 +270,8 @@ body {
 .glass-col-4  { grid-column: span 4; }
 .glass-col-3  { grid-column: span 3; }
 .glass-col-2  { grid-column: span 2; }
+.glass-col-4  { grid-column: span 4; }
+.glass-col-3  { grid-column: span 3; }
 
 @media (max-width: 992px) {
   .glass-row {
