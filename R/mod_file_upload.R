@@ -519,6 +519,22 @@ mod_file_upload_server <- function(id) {
     outputOptions(output, "eq_text_diagnostics", suspendWhenHidden = FALSE)
     outputOptions(output, "both_text_diagnostics", suspendWhenHidden = FALSE)
 
+    is_valid <- reactive({
+      if (isTRUE(input$ignore_invalid_data == "Yes")) {
+        return(TRUE)
+      }
+      current_validity()
+    })
+
+
+    # Vi lytter direkte på is_valid()
+    observeEvent(is_valid(), {
+      val_status <- is_valid()
+      should_pulse <- isTRUE(val_status)
+      # Aktiver/Deaktiver puls på "dins" fanen
+      updateGlassSidebarHighlight(session, "dins", enable = should_pulse)
+    })
+
     # --- Return Values for Other Modules ---
     return(
       list(
@@ -526,10 +542,7 @@ mod_file_upload_server <- function(id) {
         raw_eq_data = current_raw_eq_data_wide,
         remove_ivd_mds = methods_to_remove_globally,
         reference_method = reactive({ if (input$reference_method == "none") NULL else input$reference_method }),
-        is_valid = reactive({
-          if (isTRUE(input$ignore_invalid_data == "Yes")) return(TRUE)
-          current_validity()
-        }),
+        is_valid = is_valid,
         diagnostics_cs = current_diagnostics_cs,
         diagnostics_eq = current_diagnostics_eq,
         diagnostics_both = current_diagnostics_both

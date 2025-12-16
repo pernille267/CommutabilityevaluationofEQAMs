@@ -300,3 +300,39 @@ body {
   from { opacity: 0; transform: translateY(10px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Selve prikken (skjult som standard) */
+.glass-nav-notification {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background-color: #28A745; /* Brand Green */
+  border-radius: 50%;
+  box-shadow: 0 0 0 rgba(40, 167, 69, 0.4);
+  opacity: 0; /* Skjult */
+  transform: scale(0);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  z-index: 10; /* Under tooltippen */
+}
+
+/* Når forelderen har klassen .has-notification, vis prikken med animasjon */
+.glass-nav-notification.has-notification {
+  opacity: 1;
+  transform: scale(1);
+  animation: glassPulse 2s infinite;
+}
+
+@keyframes glassPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+  }
+}
