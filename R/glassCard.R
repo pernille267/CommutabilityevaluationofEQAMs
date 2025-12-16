@@ -9,17 +9,21 @@
 #' @param collapsible Logical. Can the user toggle visibility?
 #' @param collapsed Logical. Should it start closed? (Only if collapsible=TRUE).
 #' @param disabled Logical. Should the card be disabled (greyed out) on load?
+#' @param attached Logical. If TRUE, removes top border-radius to blend with a boxed tabset above.
 #' @param width The width (e.g., "100%").
 #'
 #' @importFrom htmltools tagList tags htmlDependency
 #' @export
-glassCard <- function(inputId, title, ..., icon = NULL, collapsible = TRUE, collapsed = FALSE, disabled = FALSE, width = "100%") {
+glassCard <- function(inputId, title, ..., icon = NULL, collapsible = TRUE, collapsed = FALSE, disabled = FALSE, attached = FALSE, width = "100%") {
 
   # 1. Class Construction
   card_classes <- "glass-card"
   if (collapsible) card_classes <- paste(card_classes, "collapsible")
   if (collapsible && collapsed) card_classes <- paste(card_classes, "collapsed")
   if (disabled) card_classes <- paste(card_classes, "disabled")
+
+  # NEW: Add attached class if TRUE
+  if (attached) card_classes <- paste(card_classes, "attached-top")
 
   # 2. Icon Handling
   icon_html <- if (!is.null(icon)) {

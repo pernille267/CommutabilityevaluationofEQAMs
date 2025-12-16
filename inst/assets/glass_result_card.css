@@ -105,3 +105,20 @@
   color: #888;
   border-radius: 0 0 12px 12px;
 }
+
+/* ==========================================================================
+   ATTACHED MODE
+   ========================================================================== */
+
+.glass-result-card.attached-top {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.04);
+  margin-top: 0;
+}
+
+.glass-result-card.attached-top .glass-result-header {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}

@@ -7,11 +7,6 @@
 mod_model_validation_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    div(
-      class = "version-badge",
-      icon("flask"),
-      "Commutability Evaluation: Beta Version S1.0"
-    ),
     # --- Dashboard Tab Header -------------------------------------------------
     div(
       class = "page-header",
@@ -39,13 +34,12 @@ mod_model_validation_ui <- function(id) {
       inputId = ns("model_validation_tabs"),
       selected = "formal_tests",
       color = "purple",
-
+      boxed = TRUE,
       # --- Panel 1 - Formal Assesment ---
       glassTabPanel(
         title = "Formal Assessment",
         value = "formal_tests",
         icon = icon("clipboard"),
-
         # --- Panel 1 - Card 1 - Results ---
         glassResultCard(
           inputId = ns("card_formal_results"),
@@ -59,22 +53,23 @@ mod_model_validation_ui <- function(id) {
               label = "Run tests",
               icon = icon(name = "list-check"),
               color = "purple",
-              width = "100%",
+              width = "auto",
               disabled = FALSE
             ),
             glassDownloadButton(
               outputId = ns("download_model_at_visual_results"),
               label = "Table",
               icon = icon("download"),
-              width = "100%"
+              width = "auto"
             ),
             glassDownloadButton(
               outputId = ns("download_model_at_exact_results"),
-              label = "Raw Results",
+              label = "Raw Table",
               icon = icon("download"),
-              width = "100%"
+              width = "auto"
             )
           ),
+          attached = TRUE,
           uiOutput(
             outputId = ns("formal_assessment_tests_table")
           )
@@ -90,15 +85,15 @@ mod_model_validation_ui <- function(id) {
         # --- Options Card (Modified) ---
         glassCard(
           inputId = ns("card_plot_options"),
-          title = "Customize Appearance & Advanced Options",
+          title = "Configuration",
           icon = icon("sliders"),
           collapsible = TRUE,
           collapsed = TRUE,
+          attached = TRUE,
           width = "100%",
-
           # Customization Inputs
-          fluidRow(
-            column(
+          glassRow(
+            glassCol(
               width = 4,
               h4("Set Labels"),
               div(
@@ -126,42 +121,82 @@ mod_model_validation_ui <- function(id) {
                 )
               )
             ),
-            column(
-              width = 4,
-              h4("Download Dimensions"),
+            glassCol(
+              width = 3,
+              h4("Display Options"),
               div(
                 class = "parameter-section",
-                glassNumericInput(
-                  inputId = ns("ap_width"),
-                  label = "Width",
-                  value = 15,
-                  min = 5,
-                  max = 50,
-                  label_icon = icon("ruler-horizontal"),
-                  width = "100%",
-                  accept = c(5, 50),
-                  unit = " CM",
-                  warning_unacceptable = "Width must be between 5 and 50 cm"
+                glassRadioButtons(
+                  inputId = ns("include_se_band"),
+                  label = "Include Error Ribbon",
+                  label_icon = icon("bacon"),
+                  choices = c("No" = FALSE, "Yes" = TRUE),
+                  selected = FALSE,
+                  width = "100%"
                 ),
-                glassNumericInput(
-                  inputId = ns("ap_height"),
-                  label = "Height",
-                  value = 9.3,
-                  min = 5,
-                  max = 50,
-                  label_icon = icon("ruler-vertical"),
-                  width = "100%",
-                  accept = c(5, 50),
-                  unit = " CM",
-                  warning_unacceptable = "Height must be between 5 and 50 cm"
+                glassTogglePanel(
+                  triggerId = ns("which_plot"),
+                  show_when = "sd_vs_concentration",
+                  glassRadioButtons(
+                    inputId = ns("var_instead"),
+                    label = "Use Variance Instead",
+                    label_icon = icon("vaadin"),
+                    choices = c("No" = FALSE, "Yes" = TRUE),
+                    selected = FALSE,
+                    width = "100%"
+                  )
+                ),
+                glassTogglePanel(
+                  triggerId = ns("which_plot"),
+                  show_when = "cv_vs_concentration",
+                  glassRadioButtons(
+                    inputId = ns("cv_percent"),
+                    label = "Show as CV %",
+                    label_icon = icon("percent"),
+                    choices = c("No" = FALSE, "Yes" = TRUE),
+                    selected = FALSE,
+                    width = "100%"
+                  )
                 )
               )
             ),
-            column(
-              width = 4,
-              h4("Additional Download Options"),
+            glassCol(
+              width = 5,
+              h4("Download Options"),
               div(
                 class = "parameter-section",
+                glassRow(
+                  glassCol(
+                    width = 6,
+                    glassNumericInput(
+                      inputId = ns("ap_width"),
+                      label = "Width",
+                      value = 15,
+                      min = 5,
+                      max = 50,
+                      label_icon = icon("ruler-horizontal"),
+                      width = "100%",
+                      accept = c(5, 50),
+                      unit = " CM",
+                      warning_unacceptable = "Width must be between 5 and 50 cm"
+                    )
+                  ),
+                  glassCol(
+                    width = 6,
+                    glassNumericInput(
+                      inputId = ns("ap_height"),
+                      label = "Height",
+                      value = 9.3,
+                      min = 5,
+                      max = 50,
+                      label_icon = icon("ruler-vertical"),
+                      width = "100%",
+                      accept = c(5, 50),
+                      unit = " CM",
+                      warning_unacceptable = "Height must be between 5 and 50 cm"
+                    )
+                  )
+                ),
                 glassNumericInput(
                   inputId = ns("plot_download_quality"),
                   label = "Quality",
@@ -184,47 +219,8 @@ mod_model_validation_ui <- function(id) {
                 )
               )
             )
-          ),
-          h4("Display Options"),
-          fluidRow(
-            column(
-              width = 4,
-              glassRadioButtons(
-                inputId = ns("include_se_band"),
-                label = "Include Error Ribbon",
-                choices = c("No" = FALSE, "Yes" = TRUE),
-                selected = FALSE,
-                width = "100%"
-              )
-            ),
-            column(
-              width = 4,
-              glassTogglePanel(
-                triggerId = ns("which_plot"),
-                show_when = "sd_vs_concentration",
-                glassRadioButtons(
-                  inputId = ns("var_instead"),
-                  label = "Use Variance Instead",
-                  choices = c("No" = FALSE, "Yes" = TRUE),
-                  selected = FALSE,
-                  width = "100%"
-                ),
-                glassTogglePanel(
-                  triggerId = ns("which_plot"),
-                  show_when = "cv_vs_concentration",
-                  glassRadioButtons(
-                    inputId = ns("cv_percent"),
-                    label = "Show as CV %",
-                    choices = c("No" = FALSE, "Yes" = TRUE),
-                    selected = FALSE,
-                    width = "100%"
-                  )
-                )
-              )
-            )
           )
         ),
-
         # --- Plot Result Card (Dropdown moved here) ---
         glassResultCard(
           inputId = ns("card_assessment_plot"),
@@ -258,7 +254,7 @@ mod_model_validation_ui <- function(id) {
                 "CV vs Concentration" = "cv_vs_concentration"
               ),
               selected = "residual_plot",
-              width = "100%"
+              width = "auto"
             )
           ),
           div(

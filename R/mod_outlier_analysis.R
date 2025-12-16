@@ -8,11 +8,6 @@ mod_outlier_analysis_ui <- function(id) {
   ns <- NS(id)
   tagList(
     div(
-      class = "version-badge",
-      icon("flask"),
-      "Commutability Evaluation: Beta Version S1.0"
-    ),
-    div(
       class = "page-header",
       h1(
         class = "main-title",
@@ -40,8 +35,8 @@ mod_outlier_analysis_ui <- function(id) {
       collapsible = TRUE,
       collapsed = FALSE,
       disabled = FALSE,
-      fluidRow(
-        column(
+      glassRow(
+        glassCol(
           width = 4,
           glassRadioButtons(
             inputId = ns("outlier_test"),
@@ -64,7 +59,7 @@ mod_outlier_analysis_ui <- function(id) {
             disabled = FALSE
           )
         ),
-        column(
+        glassCol(
           width = 4,
           glassRadioButtons(
             inputId = ns("outlier_test_conf_level"),

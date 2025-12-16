@@ -12,6 +12,7 @@ glassCard(
   collapsible = TRUE,
   collapsed = FALSE,
   disabled = FALSE,
+  attached = FALSE,
   width = "100\%"
 )
 }
@@ -29,6 +30,8 @@ glassCard(
 \item{collapsed}{Logical. Should it start closed? (Only if collapsible=TRUE).}
 
 \item{disabled}{Logical. Should the card be disabled (greyed out) on load?}
+
+\item{attached}{Logical. If TRUE, removes top border-radius to blend with a boxed tabset above.}
 
 \item{width}{The width (e.g., "100\%").}
 }

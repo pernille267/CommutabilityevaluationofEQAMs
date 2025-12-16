@@ -11,6 +11,7 @@ glassResultCard(
   toolbar = NULL,
   icon = NULL,
   footer = NULL,
+  attached = FALSE,
   width = "100\%"
 )
 }
@@ -26,6 +27,8 @@ glassResultCard(
 \item{icon}{An optional icon().}
 
 \item{footer}{Optional footer text or UI.}
+
+\item{attached}{Logical. If TRUE, removes top border-radius to blend with a boxed tabset above.}
 
 \item{width}{Width of the card.}
 }

@@ -7,11 +7,6 @@
 mod_results_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    div(
-      class = "version-badge",
-      icon("flask"),
-      "Commutability Evaluation: Beta Version S1.0"
-    ),
     # --- Generate Main Header: 'Commutability Evaluation Analysis Results' ---
     div(
       class = "page-header",
@@ -45,9 +40,9 @@ mod_results_ui <- function(id) {
       collapsed = FALSE,
       disabled = FALSE,
       width = "100%",
-      fluidRow(
-        column(
-          width = 5,
+      glassRow(
+        glassCol(
+          width = 4,
           div(
             class = "parameter-section",
             glassRadioButtons(
@@ -69,8 +64,8 @@ mod_results_ui <- function(id) {
             )
           )
         ),
-        column(
-          width = 5,
+        glassCol(
+          width = 4,
           div(
             class = "parameter-section",
             glassRadioButtons(
@@ -93,10 +88,10 @@ mod_results_ui <- function(id) {
             )
           )
         ),
-        column(
-          width = 2,
+        glassCol(
+          width = 4,
           div(
-            style = "margin-top: 25px;", # Vertical alignment with radio groups
+            style = "margin: 25px; ",
             glassButton(
               inputId = ns("update_cache"),
               label = "Run Analysis",
@@ -113,7 +108,8 @@ mod_results_ui <- function(id) {
     glassTabsetPanel(
       inputId = ns("results_tabs"),
       selected = "show_results_tables",
-
+      color = "purple",
+      boxed = TRUE,
       # --- Panel 1 - Results Demonstrated in Table Format ---------------------
       glassTabPanel(
         title = "Tables",
@@ -125,10 +121,11 @@ mod_results_ui <- function(id) {
           icon = icon(name = "filter"),
           collapsible = TRUE,
           collapsed = TRUE,
+          attached = TRUE,
           disabled = FALSE,
           width = "100%",
-          fluidRow(
-            column(
+          glassRow(
+            glassCol(
               width = 6,
               div(
                 class = "parameter-section",
@@ -152,7 +149,7 @@ mod_results_ui <- function(id) {
                 )
               )
             ),
-            column(
+            glassCol(
               width = 6,
               div(
                 class = "parameter-section",
@@ -177,8 +174,8 @@ mod_results_ui <- function(id) {
               )
             )
           ),
-          fluidRow(
-            column(
+          glassRow(
+            glassCol(
               width = 6,
               div(
                 class = "parameter-section",
@@ -203,7 +200,7 @@ mod_results_ui <- function(id) {
                 )
               )
             ),
-            column(
+            glassCol(
               width = 6,
               # --- TO ME: Should add summary for filterings later here ---
               div()
@@ -215,6 +212,7 @@ mod_results_ui <- function(id) {
           inputId = ns("selected_table"),
           selected = "main_table",
           color = "green",
+          boxed = TRUE,
           glassTabPanel(
             title = "Main",
             value = "main_table",
@@ -230,6 +228,7 @@ mod_results_ui <- function(id) {
                 disabled = TRUE
               ),
               icon = icon("table-list"),
+              attached = TRUE,
               withSpinner(
                 # Change from DT::DTOutput to uiOutput
                 ui_element = uiOutput(outputId = ns("ce_results")),
@@ -266,7 +265,7 @@ mod_results_ui <- function(id) {
                 )
               ),
               icon = icon("vial"),
-              #uiOutput(ns("repress_grid_notification")),
+              attached = TRUE,
               withSpinner(
                 # Change from DT::DTOutput to uiOutput
                 ui_element = uiOutput(outputId = ns("ce_results_grid")),
@@ -286,47 +285,61 @@ mod_results_ui <- function(id) {
         # --- Card 1: Appearance Options (Converted from box) ---
         glassCard(
           inputId = ns("card_plot_appearance"),
-          title = "Customize Appearance",
+          title = "Configuration",
           icon = icon("sliders"),
           collapsible = TRUE,
           collapsed = TRUE,
-          fluidRow(
-            column(
+          attached = TRUE,
+          glassRow(
+            glassCol(
               width = 4,
               h4("Labels"),
               div(
                 class = "parameter-section",
-                h5("Plot Title"),
-                textInputIcon(
+                glassTextInput(
                   inputId = ns("title"),
-                  label = NULL,
-                  placeholder = "Some title ...",
-                  icon = icon("h")
+                  label = "Plot Title",
+                  value = "",
+                  label_icon = icon("h"),
+                  placeholder = "Some random title ...",
+                  tooltip_empty = "Write it now!",
+                  tooltip_filled = "Cool title!",
+                  width = "100%",
+                  help_text = "Write the desired plot title here"
                 ),
-                h5("X-Axis Title"),
-                textInputIcon(
+                glassTextInput(
                   inputId = ns("x_name"),
-                  label = NULL,
-                  placeholder = "Some title ...",
-                  icon = icon("pen")
+                  label = "X-Axis Title",
+                  value = "",
+                  label_icon = icon("x"),
+                  placeholder = "Some title for the x-axis ...",
+                  tooltip_empty = "Write it here",
+                  tooltip_filled = "Now that is a cool x-axis title",
+                  width = "100%",
+                  help_text = "What values do we see on the x-axis? Write it."
                 ),
-                h5("Y-Axis Title"),
-                textInputIcon(
+                glassTextInput(
                   inputId = ns("y_name"),
-                  label = NULL,
-                  placeholder = "Some title ...",
-                  icon = icon("pen")
+                  label = "Y-Axis Title",
+                  value = "",
+                  label_icon = icon("y"),
+                  placeholder = "Some title for the x-axis ...",
+                  tooltip_empty = "Write it here",
+                  tooltip_filled = "Nice y-axis title!",
+                  width = "100%",
+                  help_text = "What values do we see on the y-axis? Write it."
                 )
               )
             ),
-            column(
-              width = 4,
-              h4("Advanced Options"),
+            glassCol(
+              width = 3,
+              h4("Display Options"),
               div(
                 class = "parameter-section",
-                h5("Pattern Curve"),
                 glassDropdown(
                   inputId = ns("cs_curve"),
+                  label = "Pattern Curve",
+                  label_icon = icon("bezier-curve"),
                   choices = c(
                     "None" = "none",
                     "Diagonal" = "equivalence_curve",
@@ -336,62 +349,60 @@ mod_results_ui <- function(id) {
                   selected = "none",
                   width = "100%"
                 ),
-                h5("Axis Ticks"),
                 glassSlider(
                   inputId = ns("tick_density"),
-                  label = NULL,
+                  label = "Axis Ticks",
+                  label_icon = icon("grip"),
                   choices = 3:20,
                   selected = 6,
                   unit = " Ticks",
                   width = "100%"
                 )
               )
-            )
-          )
-        ),
-        # --- Card 2: Download Options (Converted from box) ---
-        glassCard(
-          inputId = ns("card_plot_download"),
-          title = "Download Options",
-          icon = icon("download"),
-          collapsible = TRUE,
-          collapsed = TRUE,
-          fluidRow(
-            column(
-              width = 4,
-              h4("Dimensions"),
-              div(
-                class = "parameter-section",
-                h5("Width (cm)"),
-                numericInputIcon(
-                  inputId = ns("width"),
-                  label = NULL,
-                  value = 17.6,
-                  min = 2,
-                  max = 42,
-                  step = 0.2,
-                  icon = icon("arrows-left-right")
-                ),
-                h5("Height (cm)"),
-                numericInputIcon(
-                  inputId = ns("height"),
-                  label = NULL,
-                  value = 11.7,
-                  min = 2,
-                  max = 59.4,
-                  step = 0.5,
-                  icon = icon("arrows-up-down")
-                )
-              )
             ),
-            column(
-              width = 4,
-              h4("Format & Quality"),
+            glassCol(
+              width = 5,
+              h4("Download Options"),
               div(
                 class = "parameter-section",
-                h5("Format"),
+                glassRow(
+                  glassCol(
+                    width = 6,
+                    glassNumericInput(
+                      inputId = ns("width"),
+                      label = "Width",
+                      value = 17.6,
+                      min = 2,
+                      max = 42,
+                      step = 0.4,
+                      label_icon = icon("arrows-left-right"),
+                      width = "100%",
+                      unit = "cm",
+                      accept = c(2, 42),
+                      warning_unacceptable = "No ... please don't."
+                    )
+                  ),
+                  glassCol(
+                    width = 6,
+                    glassNumericInput(
+                      inputId = ns("height"),
+                      label = "Height",
+                      value = 11.7,
+                      min = 2,
+                      max = 60,
+                      step = 0.4,
+                      label_icon = icon("arrows-up-down"),
+                      width = "100%",
+                      unit = "cm",
+                      accept = c(2, 60),
+                      warning_unacceptable = "No ... please don't."
+                    )
+                  )
+                ),
                 glassDropdown(
                   inputId = ns("plot_download_file_type"),
+                  label = "Format",
+                  label_icon = icon("file"),
                   choices = c(
                     "PDF" = ".pdf",
                     "PNG" = ".png",
@@ -402,9 +413,10 @@ mod_results_ui <- function(id) {
                   selected = NULL,
                   width = "100%"
                 ),
-                h5("Quality"),
                 glassSlider(
                   inputId = ns("plot_download_quality"),
+                  label = "Quality",
+                  label_icon = icon("image"),
                   choices = c(
                     100, 200, 300,
                     450, 600, 750,
@@ -418,7 +430,7 @@ mod_results_ui <- function(id) {
             )
           )
         ),
-        # --- Card 3: Plot Result (Converted to Result Card) ---
+        # --- Card 2: Plot Result (Converted to Result Card) ---
         glassResultCard(
           inputId = ns("plot_result_card"),
           title = "Commutability Evaluation Plot",

@@ -8,11 +8,6 @@ mod_dins_ui <- function(id) {
   ns <- NS(id)
   tagList(
     div(
-      class = "version-badge",
-      icon("flask"),
-      "Commutability Evaluation: Beta Version S1.0"
-    ),
-    div(
       class = "page-header",
       h1(
         class = "main-title",
@@ -38,9 +33,9 @@ mod_dins_ui <- function(id) {
       collapsible = TRUE,
       width = "100%",
 
-      fluidRow(
+      glassRow(
         # 1. Transformation & Setting M(%)
-        column(
+        glassCol(
           width = 6,
           div(
             class = "parameter-section",
@@ -50,7 +45,7 @@ mod_dins_ui <- function(id) {
               label_icon = icon("right-left"),
               help_text = paste0(
                 "Select None to use raw data. Select the transformation ",
-                "that results in the most zeta estimates closest to 1."
+                "that results in the most \\(\\zeta\\) estimates closest to 1."
               ),
               choices = c(
                 "None" = "identity",
@@ -78,9 +73,8 @@ mod_dins_ui <- function(id) {
             )
           )
         ),
-
         # 2. Regression Model & Weigthed Smoothing Spline (Conditional)
-        column(
+        glassCol(
           width = 6,
           div(
             class = "parameter-section",
@@ -121,6 +115,7 @@ mod_dins_ui <- function(id) {
       inputId = ns("dins_results_tabs"),
       selected = "dins_recommendations_and_info",
       color = "purple",
+      boxed = TRUE,
       # --- Recommendations and Information ---
       glassTabPanel(
         title = "General",
@@ -138,7 +133,10 @@ mod_dins_ui <- function(id) {
             color = "green",
             width = "220px"
           ),
-          uiOutput(ns("general_tab_content"))
+          attached = TRUE,
+          uiOutput(
+            outputId = ns("general_tab_content")
+          )
         )
       ),
       # --- Zeta Estimates Table & Downloads ---
@@ -157,16 +155,19 @@ mod_dins_ui <- function(id) {
               outputId = ns("download_current_zeta"),
               label = "Current Estimates",
               icon = icon("download"),
-              width = "50%"
+              width = "auto"
             ),
             glassDownloadButton(
               outputId = ns("download_all_zetas"),
               label = "All Estimates",
               icon = icon("download"),
-              width = "50px"
+              width = "auto"
             )
           ),
-          uiOutput(outputId = ns("calculated_zetas_table"))
+          attached = TRUE,
+          uiOutput(
+            outputId = ns("calculated_zetas_table")
+          )
         )
       ),
       # --- Zeta Estimates Table & Downloads ---
@@ -186,6 +187,7 @@ mod_dins_ui <- function(id) {
             icon = icon("download"),
             width = "100%"
           ),
+          attached = TRUE,
           # Render Imprecision Table to UI
           uiOutput(
             outputId = ns("calculated_imprecision_table")

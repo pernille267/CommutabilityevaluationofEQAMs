@@ -12,11 +12,6 @@ mod_file_upload_ui <- function(id) {
   ns <- NS(id)
   tagList(
     div(
-      class = "version-badge",
-      icon("flask"),
-      "Commutability Evaluation: Beta Version S1.0"
-    ),
-    div(
       class = "page-header",
       h1(
         class = "main-title",
@@ -34,8 +29,8 @@ mod_file_upload_ui <- function(id) {
       triggerId = ns("show_file_input_explanation"),
       help_button_page_1_text()
     ),
-    fluidRow(
-      column(
+    glassRow(
+      glassCol(
         width = 6,
         glassCard(
           inputId = ns("card_file_selection"),
@@ -53,9 +48,7 @@ mod_file_upload_ui <- function(id) {
               button_label = "Browse...",
               button_label_icon = icon("file-upload"),
               placeholder = "No clinical samples here",
-              help_text = paste0(
-                "Measurements from Samples that one wish to do."
-              )
+              help_text = "Measurements from Samples that one wish to do."
             )
           ),
           div(
@@ -68,18 +61,14 @@ mod_file_upload_ui <- function(id) {
               button_label = "Browse...",
               button_label_icon = icon("file-upload"),
               placeholder = "No EQAM data currently selected",
-              help_text = paste0(
-                "EQAM is an abbreviation for external quality assessment ",
-                "material. However, it does not have to be EQAM data. It ",
-                "can also be certified reference material (CRM) data, or ",
-                "other materials that is sensible to evaluate for ",
-                "commutability."
-              )
+              help_text = "External Quality Assessment Material data..."
             )
           )
         )
       ),
-      column(
+
+      # Høyre Kolonne (Configuration)
+      glassCol(
         width = 6,
         glassCard(
           inputId = ns("card_configuration"),
