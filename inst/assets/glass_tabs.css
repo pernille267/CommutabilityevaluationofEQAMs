@@ -113,3 +113,53 @@
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   BOXED VARIATION ("Crystal Container")
+   Use when tabset is standalone on the background (not inside a card)
+   ========================================================================== */
+
+.glass-tabset-boxed .glass-tab-nav {
+  /* The Crystal Look */
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 240, 255, 0.90) 100%);
+  border: 1px solid rgba(96, 92, 168, 0.15);
+
+  /* ENDRING: Skygge KUN oppover (-5px) og til sidene. Ingen skygge nedover. */
+  box-shadow: 0 -5px 15px rgba(96, 92, 168, 0.05),
+              5px 0 15px rgba(96, 92, 168, 0.02),
+              -5px 0 15px rgba(96, 92, 168, 0.02);
+
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none; /* Viktig: Ingen kantlinje i bunn */
+
+  padding: 10px 20px;
+  margin-bottom: 0px;
+  position: relative;
+
+  /* ENDRING: Z-index må være høyere enn kortet under for å dekke kortets topp-kant */
+  z-index: 50;
+}
+
+/* Adjust button spacing inside the box */
+.glass-tabset-boxed .glass-tab-btn {
+  margin-bottom: 0;
+  padding: 10px 15px;
+}
+
+/* Ensure the active underline sits flush with the bottom */
+.glass-tabset-boxed .glass-tab-btn::after {
+  bottom: -10px; /* Pushes line exactly to the edge */
+  height: 3px;
+}
+
+/* Optional: Tweaks for the content wrapper immediately following a boxed nav */
+.glass-tabset-boxed .glass-tab-content-wrapper {
+  /* Hvis kortet under har en border-radius i toppen, kan det se rart ut
+     hvis vi ikke justerer det. Men ofte ser det fint ut at fanen
+     sitter "på toppen" av et avrundet kort.
+     Vi sikrer bare at det ikke er noe padding som skyver det ned. */
+  padding-top: 0;
+}

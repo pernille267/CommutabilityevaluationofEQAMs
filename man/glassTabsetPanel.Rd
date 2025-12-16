@@ -4,7 +4,13 @@
 \alias{glassTabsetPanel}
 \title{Glass Tabset Panel}
 \usage{
-glassTabsetPanel(inputId, ..., selected = NULL, color = "purple")
+glassTabsetPanel(
+  inputId,
+  ...,
+  selected = NULL,
+  color = "purple",
+  boxed = FALSE
+)
 }
 \arguments{
 \item{inputId}{The id of the input object.}
@@ -14,6 +20,9 @@ glassTabsetPanel(inputId, ..., selected = NULL, color = "purple")
 \item{selected}{The value of the tab to select initially.}
 
 \item{color}{The active color theme: "purple" (default) or "green".}
+
+\item{boxed}{Logical. If TRUE, the navigation bar gets a distinct glass container style.
+Use this when the tabset is placed directly on the page background.}
 }
 \description{
 Glass Tabset Panel

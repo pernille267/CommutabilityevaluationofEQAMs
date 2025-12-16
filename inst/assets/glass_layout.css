@@ -1,0 +1,297 @@
+/* ==========================================================================
+   GLASS LAYOUT ENGINE v3.2 (Tinted Crystal Edition)
+   ========================================================================== */
+
+/* 1. GLOBAL RESET */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --sidebar-width: 80px;
+  --header-height: 70px;
+
+  /* BACKGROUND: Slightly darker to make the glass pop */
+  --bg-color: #f0f2f8;
+
+  /* THE MIDDLE GROUND: "Tinted Crystal"
+     Not solid white, not dirty purple. A crisp, cool white with
+     a hint of lavender transparency. */
+  --glass-surface-bg: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(240, 240, 255, 0.90) 100%
+  );
+
+  /* SEPARATION: A distinct border color to define the edges */
+  --glass-edge: 1px solid rgba(96, 92, 168, 0.15);
+
+  /* SEPARATION: Shadow to lift the shell above the content */
+  --glass-shadow: 0 4px 20px rgba(96, 92, 168, 0.08);
+
+  --brand-purple: #605CA8;
+  --text-dark: #2c3e50;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Source Sans Pro', sans-serif;
+  background-color: var(--bg-color);
+
+  /* Deep Orb Background - This provides the contrast for the glass */
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(96, 92, 168, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 90% 90%, rgba(40, 167, 69, 0.08) 0%, transparent 50%);
+  background-attachment: fixed;
+
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* --- THE GRID SHELL --- */
+.glass-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+  grid-template-areas:
+    "brand header"
+    "sidebar content";
+  height: 100%;
+  width: 100%;
+}
+
+/* --- 1. BRAND AREA (Top Left) --- */
+.glass-brand {
+  grid-area: brand;
+  background: var(--glass-surface-bg);
+  /* Distinct borders to separate from content area */
+  border-bottom: var(--glass-edge);
+  border-right: var(--glass-edge);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30; /* Highest layer */
+}
+
+.glass-brand img {
+  max-width: 45px;
+  height: auto;
+}
+
+/* --- 2. SIDEBAR (Left) --- */
+.glass-sidebar {
+  grid-area: sidebar;
+  background: var(--glass-surface-bg);
+
+  /* KEY CHANGE: Separation from Content */
+  border-right: var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 30px;
+  gap: 20px;
+  z-index: 20; /* Above content */
+}
+
+/* Navigation Item */
+.glass-nav-item {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8898aa;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  /* Unselected items are transparent to let the glass background show */
+  background: transparent;
+}
+
+.glass-nav-item:hover {
+  color: var(--brand-purple);
+  background-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 10px rgba(96, 92, 168, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Active State */
+.glass-nav-item.active {
+  /* Strong Purple Gradient */
+  background: linear-gradient(135deg, #605CA8 0%, #7a76c5 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(96, 92, 168, 0.3);
+}
+
+/* Tooltip (Unchanged, works well) */
+.glass-nav-item::after {
+  content: attr(data-title);
+  position: absolute;
+  left: 65px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-10px);
+  background: var(--brand-purple);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(96, 92, 168, 0.2);
+}
+
+.glass-nav-item::before {
+  content: '';
+  position: absolute;
+  left: 59px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-10px);
+  border: 6px solid transparent;
+  border-right-color: var(--brand-purple);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.glass-nav-item:hover::after,
+.glass-nav-item:hover::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* --- 3. TOP BAR (Header) --- */
+.glass-header {
+  grid-area: header;
+  background: var(--glass-surface-bg);
+
+  /* KEY CHANGE: Separation from Content */
+  border-bottom: var(--glass-edge);
+  box-shadow: 0 2px 15px rgba(96, 92, 168, 0.05);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  z-index: 25; /* High z-index to cast shadow on content */
+}
+
+.glass-app-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-purple);
+  letter-spacing: 0.5px;
+  /* Make title pop */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.glass-header-extras {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+/* Version Badge (Enhanced) */
+.app-version {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 800;
+  color: var(--brand-purple);
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(96, 92, 168, 0.2);
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+/* User Profile Mini */
+.user-profile-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-purple);
+  border: 1px solid rgba(96, 92, 168, 0.15);
+  box-shadow: 0 2px 5px rgba(96, 92, 168, 0.1);
+}
+
+/* --- 4. CONTENT AREA (The Router) --- */
+.glass-content-area {
+  grid-area: content;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 30px !important;
+  width: auto;
+  max-width: 100%;
+  background-color: transparent;
+}
+
+/* Grid System */
+.glass-row {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 25px;
+  width: 100%;
+  margin-bottom: 25px;
+  align-items: start;
+  max-width: 100%;
+}
+
+.glass-col-12 { grid-column: span 12; }
+.glass-col-9  { grid-column: span 9; }
+.glass-col-8  { grid-column: span 8; }
+.glass-col-6  { grid-column: span 6; }
+.glass-col-4  { grid-column: span 4; }
+.glass-col-3  { grid-column: span 3; }
+
+@media (max-width: 992px) {
+  .glass-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .glass-col-12, .glass-col-9, .glass-col-8,
+  .glass-col-6, .glass-col-4, .glass-col-3 {
+    grid-column: span 1;
+  }
+}
+
+/* Page Animations */
+.glass-page {
+  display: none;
+  width: 100%;
+  animation: fadeScaleIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.glass-page.active {
+  display: block;
+}
+
+@keyframes fadeScaleIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

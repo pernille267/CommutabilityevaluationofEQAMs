@@ -9,11 +9,16 @@
 #' @param toolbar UI elements to place in the header (e.g. buttons).
 #' @param icon An optional icon().
 #' @param footer Optional footer text or UI.
+#' @param attached Logical. If TRUE, removes top border-radius to blend with a boxed tabset above.
 #' @param width Width of the card.
 #'
 #' @importFrom htmltools tagList tags htmlDependency
 #' @export
-glassResultCard <- function(inputId, title, ..., toolbar = NULL, icon = NULL, footer = NULL, width = "100%") {
+glassResultCard <- function(inputId, title, ..., toolbar = NULL, icon = NULL, footer = NULL, attached = FALSE, width = "100%") {
+
+  # Class Construction
+  card_classes <- "glass-result-card"
+  if (attached) card_classes <- paste(card_classes, "attached-top")
 
   # Icon Handling
   icon_html <- if (!is.null(icon)) {
@@ -39,7 +44,7 @@ glassResultCard <- function(inputId, title, ..., toolbar = NULL, icon = NULL, fo
   # Structure
   ui_structure <- htmltools::tags$div(
     id = inputId,
-    class = "glass-result-card",
+    class = card_classes,
     style = paste0("width: ", width, ";"),
 
     # Header

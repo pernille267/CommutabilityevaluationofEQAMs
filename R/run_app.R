@@ -58,76 +58,68 @@
 run_app <- function() {
   options(knitr.kable.NA = '', shiny.autoreload = TRUE)
 
-  # --- Global User Interface (Dashbord Interface Styled) ---
-  ui <- dashboardPage(
-    header = dashboardHeader(title = "Commutability Evaluation", titleWidth = 300),
-    # --- Sidebar Menu Options ---
-    sidebar = dashboardSidebar(
-      sidebarMenu(
-        menuItem(text = "Upload Data", tabName = "file_upload", icon = icon("upload")),
-        menuItem(text = "Nonselectivity", tabName = "differences_in_non_selectivity", icon = icon("arrows-left-right-to-line")),
-        menuItem(text = "Outlier Analysis", tabName = "outlier_analysis", icon = icon("ruler")),
-        menuItem(text = "Model Validation", tabName = "model_validation", icon = icon("clipboard")),
-        menuItem(text = "Results", tabName = "results", icon = icon("square-poll-horizontal"))
-      ),
-      width = 300
+  # --- GLOBAL UI ---
+  ui <- glassPage(
+    title = "Commutability Evaluation",
+
+    # 1. Branding (Logo Area)
+    branding = tags$div(
+      # Using an icon as placeholder, replace with img(src="...") later if needed
+      style = "color: #605CA8; font-size: 28px;",
+      icon("dna")
     ),
-    body = dashboardBody(
-      withMathJax(), # Load the MathJax library
-      includeCSS("www/styles.css"), # Source the CSS styles
-      # The main body is composed of tabItems, each calling a specific module UI
-      tabItems(
-        tabItem(tabName = "file_upload", mod_file_upload_ui("file_upload_1")),
-        tabItem(tabName = "differences_in_non_selectivity", mod_dins_ui("differences_in_non_selectivity_1")),
-        tabItem(tabName = "outlier_analysis", mod_outlier_analysis_ui("outlier_analysis_1")),
-        tabItem(tabName = "model_validation", mod_model_validation_ui("model_validation_1")),
-        tabItem(tabName = "results", mod_results_ui("results_1"))
+
+    # 2. Header Extras (Right side)
+    header_items = tagList(
+      div(class = "app-version", "Beta v1.0"),
+      glassButton("help_docs", label = "Docs", icon = icon("book"), width = "100px"),
+      div(class = "user-profile-mini",
+          div(class = "user-avatar", icon("user")),
+          span("Guest User")
       )
     ),
-    skin = "blue" # Arbitrary Choice - Completely Overhauled by CSS
+
+    # 3. Sidebar (Navigation)
+    sidebar = glassSidebar(
+      inputId = "main_nav",
+      glassNavItem("file_upload", icon("upload"), "Data Upload", active = TRUE),
+      glassNavItem("dins", icon("arrows-left-right-to-line"), "Nonselectivity"),
+      glassNavItem("outliers", icon("ruler"), "Outlier Analysis"),
+      glassNavItem("model_val", icon("clipboard"), "Model Validation"),
+      glassNavItem("results", icon("square-poll-horizontal"), "Results")
+    ),
+
+    includeCSS("www/styles.css"),
+
+    # 4. Content Routes (The Pages)
+    # Important: Use glassRoute here, NOT tabPanel or tabItem
+    glassRoute("file_upload", mod_file_upload_ui("file_upload_1")),
+    glassRoute("dins", mod_dins_ui("differences_in_non_selectivity_1")),
+    glassRoute("outliers", mod_outlier_analysis_ui("outlier_analysis_1")),
+    glassRoute("model_val", mod_model_validation_ui("model_validation_1")),
+    glassRoute("results", mod_results_ui("results_1"))
   )
 
+  # --- BACKEND ---
+  server <- function(input, output, session) {
 
-
-  # Back end
-  server <- function(input, output) {
-
-    # 1. Instantiate the 'File Upload' module
-    # This module returns a list of reactive expressions containing:
-    # --- (1) Uploaded raw data
-    # --- (2) Diagnostics of uploaded data.
+    # 1. File Upload Module
     file_upload_data <- mod_file_upload_server("file_upload_1")
 
-    # 2. Instantiate the differences in 'Nonselectivity' module
-    # It receives the reactive data from the 'File Upload' module.
-    # It returns a reactive list of the user's selected DINS parameters.
-    # --- Note: Only requires valid uploaded clinical sample data to operate
+    # 2. Nonselectivity Module
     mod_dins_params <- mod_dins_server("differences_in_non_selectivity_1",
                                        file_upload_data = file_upload_data)
 
-    # 3. Instantiate the 'Outlier Analysis' module
-    # It receives the data from the 'File Upload' module.
-    # It returns a reactive list containing:
-    # --- (1) The user's selected 'Outlier Analysis' parameters
-    # --- (2) The results (data.table) from the outlier analysis
-    # --- --- Note: Results are only generated if button is pressed
+    # 3. Outlier Analysis Module
     outlier_data <- mod_outlier_analysis_server("outlier_analysis_1",
                                                 file_upload_data = file_upload_data)
 
-    # 4. Instantiate the 'Model Validation' module
-    # It receives the data from:
-    # --- (1) The 'File Upload' module
-    # --- (2) The differences in 'Nonselectivity' module
-    # It returns a reactive list containing:
-    # --- (1) The resulting assessment test table (button must be pressed)
-    # --- (2) The resulting assessment plot (button must be pressed)
+    # 4. Model Validation Module
     model_validation_data <- mod_model_validation_server("model_validation_1",
                                                          file_upload_data = file_upload_data,
                                                          mod_dins_params = mod_dins_params)
 
-    # 5. Instantiate the 'Results' module
-    # It receives the data from all previous modules
-    # It returns nothing
+    # 5. Results Module
     mod_results_server("results_1",
                        file_upload_data = file_upload_data,
                        mod_dins_params = mod_dins_params,
@@ -136,8 +128,5 @@ run_app <- function() {
 
   }
 
-  # Run the application
   shinyApp(ui = ui, server = server)
-
 }
-

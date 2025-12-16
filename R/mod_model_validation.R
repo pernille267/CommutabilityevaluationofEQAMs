@@ -7,11 +7,6 @@
 mod_model_validation_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    div(
-      class = "version-badge",
-      icon("flask"),
-      "Commutability Evaluation: Beta Version S1.0"
-    ),
     # --- Dashboard Tab Header -------------------------------------------------
     div(
       class = "page-header",
@@ -39,7 +34,7 @@ mod_model_validation_ui <- function(id) {
       inputId = ns("model_validation_tabs"),
       selected = "formal_tests",
       color = "purple",
-
+      boxed = TRUE,
       # --- Panel 1 - Formal Assesment ---
       glassTabPanel(
         title = "Formal Assessment",
@@ -97,8 +92,8 @@ mod_model_validation_ui <- function(id) {
           width = "100%",
 
           # Customization Inputs
-          fluidRow(
-            column(
+          glassRow(
+            glassCol(
               width = 4,
               h4("Set Labels"),
               div(
@@ -126,7 +121,7 @@ mod_model_validation_ui <- function(id) {
                 )
               )
             ),
-            column(
+            glassCol(
               width = 4,
               h4("Download Dimensions"),
               div(
@@ -157,7 +152,7 @@ mod_model_validation_ui <- function(id) {
                 )
               )
             ),
-            column(
+            glassCol(
               width = 4,
               h4("Additional Download Options"),
               div(
@@ -186,8 +181,8 @@ mod_model_validation_ui <- function(id) {
             )
           ),
           h4("Display Options"),
-          fluidRow(
-            column(
+          glassRow(
+            glassCol(
               width = 4,
               glassRadioButtons(
                 inputId = ns("include_se_band"),
@@ -197,7 +192,7 @@ mod_model_validation_ui <- function(id) {
                 width = "100%"
               )
             ),
-            column(
+            glassCol(
               width = 4,
               glassTogglePanel(
                 triggerId = ns("which_plot"),
