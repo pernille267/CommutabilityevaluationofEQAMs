@@ -396,7 +396,7 @@ mod_file_upload_server <- function(id) {
         inputId = "reference_method",
         choices = c("none", choices),
         selected = "none",
-        disable = !should_enable
+        disabled = !should_enable
       )
     })
 
@@ -525,7 +525,6 @@ mod_file_upload_server <- function(id) {
       }
       current_validity()
     })
-
 
     # Vi lytter direkte på is_valid()
     observeEvent(is_valid(), {

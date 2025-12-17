@@ -35,9 +35,9 @@ glassTextInput(
 
 \item{tooltip_filled}{Text to show on hover when input has content.}
 
-\item{width}{The width of the input (e.g., "100\\%").}
+\item{width}{The width of the input (e.g., "auto").}
 
-\item{unit}{Optional text to display on the right side (e.g. "kg", "\%").}
+\item{unit}{Optional text to display on the right side (e.g. "kg", "mmol/mol").}
 
 \item{disabled}{Logical. Should it be disabled on load?}
 }

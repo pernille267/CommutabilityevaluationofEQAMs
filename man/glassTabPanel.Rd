@@ -6,6 +6,15 @@
 \usage{
 glassTabPanel(title, ..., value = title, icon = NULL)
 }
+\arguments{
+\item{title}{A \code{character} string. The title of the glassTabPanel.}
+
+\item{...}{HTML input.}
+
+\item{value}{A \code{character} string. The id of the glassTabPanel.}
+
+\item{icon}{A \code{icon(...)} appearing just before \code{title}.}
+}
 \description{
 Glass Tab Panel
 }

@@ -127,6 +127,11 @@ glassDownloadButton <- function(outputId, label = "Download", icon = shiny::icon
 
 #' Update Glass Button
 #'
+#' @param session A valid Shiny session object.
+#' @param inputId The input slot that will be used to access the value.
+#' @param label The label to display.
+#' @param icon An optional icon() to appear in the white section.
+#' @param disabled Logical. Should the button be disabled?
 #' @export
 updateGlassButton <- function(session, inputId, label = NULL, icon = NULL, disabled = NULL) {
   message <- list()

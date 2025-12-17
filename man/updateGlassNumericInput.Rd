@@ -13,6 +13,19 @@ updateGlassNumericInput(
   disabled = NULL
 )
 }
+\arguments{
+\item{session}{A valid shiny session object}
+
+\item{inputId}{The local inputId (not the full ID)}
+
+\item{label}{The label for the \code{glassTextInput(...)}}
+
+\item{value}{The current text in the input field in \code{glassTextInput(...)}}
+
+\item{accept}{The acceptable interval for \code{value} to be in.}
+
+\item{disabled}{A \code{logical} value.}
+}
 \description{
 Update Glass Numeric Input
 }
