@@ -229,12 +229,7 @@ mod_results_ui <- function(id) {
               ),
               icon = icon("table-list"),
               attached = TRUE,
-              withSpinner(
-                # Change from DT::DTOutput to uiOutput
-                ui_element = uiOutput(outputId = ns("ce_results")),
-                color = "#605ca8", # Changed color to purple to match original
-                type = 4
-              )
+              uiOutput(outputId = ns("ce_results"))
             )
           ),
           glassTabPanel(
@@ -266,12 +261,7 @@ mod_results_ui <- function(id) {
               ),
               icon = icon("vial"),
               attached = TRUE,
-              withSpinner(
-                # Change from DT::DTOutput to uiOutput
-                ui_element = uiOutput(outputId = ns("ce_results_grid")),
-                color = "#605ca8", # Changed color to purple to match original
-                type = 4
-              )
+              uiOutput(outputId = ns("ce_results_grid"))
             )
           )
         )
@@ -448,14 +438,10 @@ mod_results_ui <- function(id) {
               icon = icon("download")
             )
           ),
-          withSpinner(
-            ui_element = plotOutput(
-              outputId = ns("ce_plots"),
-              width = "100%",
-              height = "auto"
-            ),
-            type = 4,
-            color = "#605ca8"
+          plotOutput(
+            outputId = ns("ce_plots"),
+            width = "100%",
+            height = "auto"
           )
         )
       ),
