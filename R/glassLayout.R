@@ -41,14 +41,11 @@ glassPage <- function(title, branding, sidebar, header_items = NULL, ...) {
       version = "2.0.1", # Bump version
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
       script = "glass_layout.js",
-      stylesheet = "glass_layout.css"
+      stylesheet = c("glass_layout.css", "general_styling.css")
     ),
     # Common dependencies
     htmltools::tags$head(
       htmltools::tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"),
-      # THIS FIXES THE MISSING STYLES (page-header, badges etc)
-      # Assuming standard Shiny folder structure where www is mounted at root
-      htmltools::tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")
     ),
     ui
   )

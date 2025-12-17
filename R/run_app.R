@@ -84,8 +84,6 @@ run_app <- function() {
       glassNavItem("results", icon("square-poll-horizontal"), "Results")
     ),
 
-    includeCSS("www/styles.css"),
-
     # 4. Content Routes (The Pages)
     # Important: Use glassRoute here, NOT tabPanel or tabItem
     glassRoute("file_upload", mod_file_upload_ui("file_upload_1")),
