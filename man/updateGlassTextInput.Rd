@@ -13,6 +13,19 @@ updateGlassTextInput(
   disabled = NULL
 )
 }
+\arguments{
+\item{session}{A valid shiny session object}
+
+\item{inputId}{The local inputId (not the full ID)}
+
+\item{label}{The label for the \code{glassTextInput(...)}}
+
+\item{value}{The current text in the input field in \code{glassTextInput(...)}}
+
+\item{label_icon}{The \code{icon(...)} just before the \code{label}}
+
+\item{disabled}{A \code{logical} value.}
+}
 \description{
 Update Glass Text Input
 }

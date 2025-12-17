@@ -10,8 +10,8 @@
 #' @param placeholder The placeholder text inside the input.
 #' @param tooltip_empty Text to show on hover when input is empty.
 #' @param tooltip_filled Text to show on hover when input has content.
-#' @param width The width of the input (e.g., "100\%").
-#' @param unit Optional text to display on the right side (e.g. "kg", "%").
+#' @param width The width of the input (e.g., "auto").
+#' @param unit Optional text to display on the right side (e.g. "kg", "mmol/mol").
 #' @param disabled Logical. Should it be disabled on load?
 #'
 #' @importFrom htmltools tagList tags htmlDependency
@@ -239,9 +239,19 @@ glassInput <- function(inputId,
 
 #' Update Glass Text Input
 #'
+#' @param session A valid shiny session object
+#' @param inputId The local inputId (not the full ID)
+#' @param label The label for the \code{glassTextInput(...)}
+#' @param value The current text in the input field in \code{glassTextInput(...)}
+#' @param label_icon The \code{icon(...)} just before the \code{label}
+#' @param disabled A \code{logical} value.
+#'
 #' @export
 updateGlassTextInput <- function(session, inputId, label = NULL, value = NULL, label_icon = NULL, disabled = NULL) {
-  message <- list()
+
+  fullId <- session$ns(inputId)
+  message <- list(id = fullId)
+
   if (!is.null(label)) message$label <- label
   if (!is.null(value)) message$value <- value
   if (!is.null(label_icon)) message$label_icon <- as.character(label_icon)
@@ -252,9 +262,19 @@ updateGlassTextInput <- function(session, inputId, label = NULL, value = NULL, l
 
 #' Update Glass Numeric Input
 #'
+#' @param session A valid shiny session object
+#' @param inputId The local inputId (not the full ID)
+#' @param label The label for the \code{glassTextInput(...)}
+#' @param value The current text in the input field in \code{glassTextInput(...)}
+#' @param accept The acceptable interval for \code{value} to be in.
+#' @param disabled A \code{logical} value.
+#'
 #' @export
 updateGlassNumericInput <- function(session, inputId, label = NULL, value = NULL, accept = NULL, disabled = NULL) {
-  message <- list()
+
+  fullId <- session$ns(inputId)
+  message <- list(id = fullId)
+
   if (!is.null(label)) message$label <- label
   if (!is.null(value)) message$value <- value
   if (!is.null(accept)) message$accept <- accept

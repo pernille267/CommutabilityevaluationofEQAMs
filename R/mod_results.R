@@ -1082,13 +1082,13 @@ mod_results_server <- function(id, file_upload_data, mod_dins_params, outlier_da
     observeEvent(optimal_dims(), {
       dims <- optimal_dims()
       # --- Can be manually changed after ---
-      updateNumericInputIcon(
+      updateGlassNumericInput(
         session = session,
         inputId = "width",
         value = dims$width
       )
       # --- Can be manually changed after ---
-      updateNumericInputIcon(
+      updateGlassNumericInput(
         session = session,
         inputId = "height",
         value = dims$height

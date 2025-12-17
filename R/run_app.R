@@ -43,6 +43,8 @@
 #' @import fasteqa
 #' @import ggplot2
 #' @import readxl
+#' @import writexl
+#' @import base64enc
 #' @import rmarkdown
 #' @import shiny
 #' @import smooth.commutability
@@ -76,7 +78,7 @@ run_app <- function() {
     sidebar = glassSidebar(
       inputId = "main_nav",
       glassNavItem("file_upload", icon("upload"), "Data Upload", active = TRUE),
-      glassNavItem("dins", icon("arrows-left-right-to-line"), "Nonselectivity"),
+      glassNavItem("dins", icon("arrows-left-right-to-line"), "Differences in Nonselectivity"),
       glassNavItem("outliers", icon("ruler"), "Outlier Analysis"),
       glassNavItem("model_val", icon("clipboard"), "Model Validation"),
       glassNavItem("results", icon("square-poll-horizontal"), "Results")

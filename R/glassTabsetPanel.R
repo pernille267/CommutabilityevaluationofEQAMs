@@ -77,6 +77,12 @@ glassTabsetPanel <- function(inputId, ..., selected = NULL, color = "purple", bo
 }
 
 #' Glass Tab Panel
+#'
+#' @param title A \code{character} string. The title of the glassTabPanel.
+#' @param ... HTML input.
+#' @param value A \code{character} string. The id of the glassTabPanel.
+#' @param icon A \code{icon(...)} appearing just before \code{title}.
+#'
 #' @export
 glassTabPanel <- function(title, ..., value = title, icon = NULL) {
   icon_html <- if (!is.null(icon)) as.character(icon) else ""

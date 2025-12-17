@@ -6,6 +6,17 @@
 \usage{
 updateGlassButton(session, inputId, label = NULL, icon = NULL, disabled = NULL)
 }
+\arguments{
+\item{session}{A valid Shiny session object.}
+
+\item{inputId}{The input slot that will be used to access the value.}
+
+\item{label}{The label to display.}
+
+\item{icon}{An optional icon() to appear in the white section.}
+
+\item{disabled}{Logical. Should the button be disabled?}
+}
 \description{
 Update Glass Button
 }
