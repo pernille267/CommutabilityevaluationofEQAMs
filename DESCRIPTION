@@ -5,23 +5,27 @@ Author: Pernille Kjeilen Fauskanger
 Maintainer: Pernille Kjeilen Fauskanger <pernille.fauskanger@noklus.no>
 Description: Perform Commutability Evaluation with Ease.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+Depends: 
+    R (>= 4.1.0)
 Imports: 
-    commutability,
+    base64enc,
+    commutability (>= 1.0.0),
     data.table,
-    fasteqa,
+    fasteqa (>= 1.0),
     ggplot2,
+    htmltools,
+    jsonlite,
     readxl,
     rmarkdown,
     shiny,
-    smooth.commutability,
+    smooth.commutability (>= 1.0),
     tinytex,
     tools,
-    htmltools,
-    jsonlite,
-    base64enc,
     writexl
-Depends: 
-    R (>= 4.1.0)
+Remotes: 
+    pernille267/commutability,
+    pernille267/fasteqa,
+    pernille267/smooth.commutability
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
