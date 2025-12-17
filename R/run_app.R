@@ -38,20 +38,13 @@
 #' launching the Shiny application.
 #'
 #' @export
-#' @import bslib
 #' @import commutability
 #' @import data.table
 #' @import fasteqa
 #' @import ggplot2
-#' @import kableExtra
 #' @import readxl
 #' @import rmarkdown
 #' @import shiny
-#' @import shinyBS
-#' @import DT
-#' @import shinycssloaders
-#' @import shinydashboard
-#' @import shinyWidgets
 #' @import smooth.commutability
 #' @import tinytex
 #' @import tools

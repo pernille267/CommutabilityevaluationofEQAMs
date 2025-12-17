@@ -1,9 +1,9 @@
 Package: CommutabilityevaluationofEQAMs
 Title: Commtability and Difference in Nonselectivity Evaluation
-Version: 0.0.0.9000
-Authors@R: 
-    person("Pernille", "Fauskanger")
-Description: What the package does (one paragraph).
+Version: 1.0.0
+Author: Pernille Kjeilen Fauskanger
+Maintainer: Pernille Kjeilen Fauskanger <pernille.fauskanger@noklus.no>
+Description: Perform Commutability Evaluation with Ease.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
