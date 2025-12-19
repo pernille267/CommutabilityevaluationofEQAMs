@@ -1,0 +1,96 @@
+/* --- Glass Loader CSS --- */
+
+#glass-loader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999; /* Alltid øverst */
+
+  /* Glass Effect Background */
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  /* Centering Logic */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  /* Animation State */
+  opacity: 0;
+  pointer-events: none; /* Klikk går igjennom når skjult */
+  transition: opacity 0.4s ease-in-out;
+}
+
+/* --- Active State (Added by JS) --- */
+#glass-loader-overlay.active {
+  opacity: 1;
+  pointer-events: all; /* Blokkerer klikk når synlig */
+}
+
+/* --- The Animation Container --- */
+.glass-loader-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+}
+
+/* --- Inner Pulsing Orb --- */
+.glass-loader-orb {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #a8c0ff, #3f2b96); /* Purple/Blue gradient */
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: glass-pulse 2s infinite ease-in-out;
+  box-shadow: 0 0 15px rgba(63, 43, 150, 0.4);
+}
+
+/* --- Outer Rotating Ring --- */
+.glass-loader-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 4px solid transparent;
+  border-top-color: #605CA8; /* Theme color */
+  border-left-color: rgba(96, 92, 168, 0.3);
+  border-radius: 50%;
+  animation: glass-spin 1.2s infinite linear;
+}
+
+/* --- Text Message --- */
+.glass-loader-text {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #444;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+  animation: glass-fade-text 2s infinite ease-in-out;
+}
+
+/* --- Keyframes --- */
+@keyframes glass-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes glass-pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 25px rgba(63, 43, 150, 0.6); }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+@keyframes glass-fade-text {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}

@@ -140,7 +140,7 @@
   position: relative;
 
   /* ENDRING: Z-index må være høyere enn kortet under for å dekke kortets topp-kant */
-  z-index: 50;
+  z-index: 5;
 }
 
 /* Adjust button spacing inside the box */

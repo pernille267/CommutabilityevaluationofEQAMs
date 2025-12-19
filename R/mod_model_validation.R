@@ -317,7 +317,7 @@ mod_model_validation_ui <- function(id) {
 #'
 #' @return This module does not return any values.
 #' @noRd
-mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
+mod_model_validation_server <- function(id, file_upload_data, mod_dins_params, outlier_data) {
   moduleServer(id, function(input, output, session) {
 
     # --- Trackers -------------------------------------------------------------
@@ -350,6 +350,15 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params) {
         data = cs_data_repaired,
         reference = ref_method
       )
+
+      to_remove <- outlier_data$outliers_to_remove()
+      if (!is.null(to_remove) && nrow(to_remove) > 0) {
+        raw_keys <- paste(raw_data$comparison, raw_data$SampleID, sep = " |SECRET-KEY| ")
+        remove_keys <- paste(to_remove$comparison, to_remove$SampleID, sep = " |SECRET-KEY| ")
+        keep_idx <- !raw_keys %in% remove_keys
+        raw_data <- raw_data[keep_idx, ]
+      }
+
       transformation <- switch(
         mod_dins_params()$transformation,
         "identity" = "identity",

@@ -25,11 +25,14 @@ mod_file_upload_ui <- function(id) {
         color = "green"
       )
     ),
+
     glassTogglePanel(
       triggerId = ns("show_file_input_explanation"),
       help_button_page_1_text()
     ),
+
     glassRow(
+      # --- File Upload ---
       glassCol(
         width = 6,
         glassCard(
@@ -66,14 +69,13 @@ mod_file_upload_ui <- function(id) {
           )
         )
       ),
-
-      # Høyre Kolonne (Configuration)
+      # --- Configuration ---
       glassCol(
         width = 6,
         glassCard(
           inputId = ns("card_configuration"),
           title = "Configuration",
-          icon = icon("hammer"),
+          icon = icon("sliders"),
           collapsible = FALSE,
           width = "100%",
           div(
@@ -91,17 +93,27 @@ mod_file_upload_ui <- function(id) {
               inputId = ns("ignore_invalid_data"),
               label = "Ignore Failed Validation Tests",
               label_icon = icon("bug-slash"),
+              help_text = paste0(
+                "Force the analysis to proceed even if critical validation ",
+                "checks fail. Use with extreme caution."
+              ),
               choices = c("Yes", "No"),
               selected = "No",
+              width = "100%",
+              disabled = TRUE
+            ),
+            glassNotifyUser(
+              inputId = ns("validation_notification"),
+              label = "Validation Status",
+              value = "", # Starts hidden
               width = "100%"
-            )
-          ),
-          uiOutput(ns("warning_placeholder"))
+            ),
+          )
         )
       )
     ),
 
-    # --- Diagnostic Section ---
+    # --- Diagnostic & Validation ---
     glassResultCard(
       inputId = ns("card_diagnostics_main"),
       title = "Diagnostic Overview",
@@ -277,6 +289,67 @@ mod_file_upload_server <- function(id) {
         isTRUE(is.null(current_diagnostics_both()$error))
       )
       return(cs_ok && eq_ok && both_ok)
+    })
+
+    observeEvent(list(current_validity(), current_raw_cs_data_wide(), current_raw_eq_data_wide(), input$ignore_invalid_data), {
+
+      # --- Case 1: Data is not yet uploaded ---
+      if (is.null(current_raw_cs_data_wide()) || is.null(current_raw_eq_data_wide())) {
+        updateGlassRadio(session, "ignore_invalid_data", disabled = TRUE, selected = "No")
+        updateGlassNotifyUser(session, "validation_notification", value = "")
+      }
+
+      originally_valid <- current_validity()
+
+      # --- Case 2: Empty currently_valid() ---
+      if (is.null(originally_valid)) {
+        updateGlassRadio(session, "ignore_invalid_data", disabled = TRUE, selected = "No")
+        updateGlassNotifyUser(session, "validation_notification", value = "")
+      }
+
+      # --- Case 3: Validation tests pass originally ---
+      if (isTRUE(originally_valid)) {
+        updateGlassRadio(session, "ignore_invalid_data", disabled = TRUE, selected = "No")
+        updateGlassNotifyUser(session, "validation_notification", value = "")
+      }
+      # --- Case 4: Validation tests fail originally ---
+      else {
+
+        # --- Activate "Ignore Failed Validation Tests" radiobuttons ---
+        updateGlassRadio(session, "ignore_invalid_data", disabled = FALSE)
+
+        # --- Send notification to user ---
+        if (!is.null(input$ignore_invalid_data) && input$ignore_invalid_data == "Yes") {
+          updateGlassNotifyUser(
+            session = session,
+            inputId = "validation_notification",
+            label = "Validation Ignored",
+            label_icon = icon("triangle-exclamation"),
+            message_type = "warning",
+            value = paste0(
+              "<b>Proceeding with caution.</b> Important validation errors ",
+              "were detected but you chose to ignore them. Analysis results ",
+              "may be unreliable. Do not be surprised if the application ",
+              "crashes at some point."
+            ),
+            timer = 0
+          )
+        }
+        else {
+          updateGlassNotifyUser(
+            session = session,
+            inputId = "validation_notification",
+            label = "Validation Accepted",
+            label_icon = icon("heart"),
+            message_type = "success",
+            value = paste0(
+              "Important validation errors were detected. Luckily you are not ",
+              "one of those that ignore them!"
+            ),
+            timer = 0
+          )
+        }
+      }
     })
 
     # --- Logic for Overall Status Badge ---------------------------------------
@@ -512,6 +585,7 @@ mod_file_upload_server <- function(id) {
       render_agreement_text(current_diagnostics_both())
     })
 
+    # --- Avoid Suspension Issues ----------------------------------------------
     outputOptions(output, "overall_diagnostics_status", suspendWhenHidden = FALSE)
     outputOptions(output, "cs_table_diagnostics", suspendWhenHidden = FALSE)
     outputOptions(output, "cs_text_diagnostics", suspendWhenHidden = FALSE)
@@ -519,6 +593,7 @@ mod_file_upload_server <- function(id) {
     outputOptions(output, "eq_text_diagnostics", suspendWhenHidden = FALSE)
     outputOptions(output, "both_text_diagnostics", suspendWhenHidden = FALSE)
 
+    # --- Check if uploaded data is valid enough to continue -------------------
     is_valid <- reactive({
       if (isTRUE(input$ignore_invalid_data == "Yes")) {
         return(TRUE)
@@ -526,12 +601,50 @@ mod_file_upload_server <- function(id) {
       current_validity()
     })
 
-    # Vi lytter direkte på is_valid()
+    # --- Notification Handling ------------------------------------------------
+    # --- Look for changes in is_valid() ---
     observeEvent(is_valid(), {
       val_status <- is_valid()
       should_pulse <- isTRUE(val_status)
       # Aktiver/Deaktiver puls på "dins" fanen
       updateGlassSidebarHighlight(session, "dins", enable = should_pulse)
+    })
+
+    # Generate short tooltip text for Header Indicator ---
+    diagnostics_status_text <- reactive({
+      # --- Hide Header Indicator before Data is Uploaded ---
+      if (is.null(current_raw_cs_data_wide()) | is.null(current_raw_eq_data_wide())) {
+        return(NULL)
+      }
+
+      # --- Original Validity ---
+      originally_valid <- current_validity()
+
+      # --- Check if Initially Valid ---
+      if (isFALSE(originally_valid)) {
+        # --- Check if user desired to ignore initially invalid data ---
+        if (isTRUE(input$ignore_invalid_data)) {
+          return(
+            "Warning: Validation of uploaded data failed, but is currenty ignored. Proceed with caution."
+          )
+        }
+        else {
+          "Failed: Validation of uploaded data failed. You cannot use these data."
+        }
+      }
+
+      # --- Check if some Columns are removed ---
+      removed <- methods_to_remove_globally()
+      if (!is.null(removed) && length(removed) > 0) {
+        n_removed <- length(removed)
+        # --- Data is repaired for it to be valid ---
+        return(
+          sprintf("Warning: Data repaired. %d invalid method(s) removed.", n_removed)
+        )
+      }
+      return(
+        "Healthy Data: All checks passed!"
+      )
     })
 
     # --- Return Values for Other Modules ---
@@ -540,11 +653,12 @@ mod_file_upload_server <- function(id) {
         raw_cs_data = current_raw_cs_data_wide,
         raw_eq_data = current_raw_eq_data_wide,
         remove_ivd_mds = methods_to_remove_globally,
-        reference_method = reactive({ if (input$reference_method == "none") NULL else input$reference_method }),
+        reference_method = reactive({ if (isTRUE(input$reference_method == "none")) NULL else input$reference_method }),
         is_valid = is_valid,
         diagnostics_cs = current_diagnostics_cs,
         diagnostics_eq = current_diagnostics_eq,
-        diagnostics_both = current_diagnostics_both
+        diagnostics_both = current_diagnostics_both,
+        diagnostics_status_text = diagnostics_status_text
       )
     )
   })

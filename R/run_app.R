@@ -66,6 +66,29 @@ run_app <- function() {
 
     # 2. Header Extras (Right side)
     header_items = tagList(
+      # Status Bar for Indicators
+      div(
+        class = "glass-header-group",
+        # Referansemetode (R)
+        glassHeaderIndicator(
+          inputId = "global_ref_indicator",
+          type = "reference",
+          visible = FALSE
+        ),
+        # Diagnostikk (Hjerte/Status)
+        glassHeaderIndicator(
+          inputId = "global_diag_indicator",
+          type = "diagnostics",
+          visible = FALSE
+        ),
+        # Outlier Filter (Linjal)
+        glassHeaderIndicator(
+          inputId = "global_outlier_indicator",
+          type = "filter",
+          tooltip_text = "No active filters.",
+          visible = FALSE
+        )
+      ),
       div(class = "app-version", "Beta v1.0"),
       glassButton("help_docs", label = "Docs", icon = icon("book"), width = "100px"),
       div(class = "user-profile-mini",
@@ -83,6 +106,9 @@ run_app <- function() {
       glassNavItem("model_val", icon("clipboard"), "Model Validation"),
       glassNavItem("results", icon("square-poll-horizontal"), "Results")
     ),
+
+    # Activate Loading-System
+    useGlassLoader(),
 
     # 4. Content Routes (The Pages)
     # Important: Use glassRoute here, NOT tabPanel or tabItem
@@ -110,7 +136,8 @@ run_app <- function() {
     # 4. Model Validation Module
     model_validation_data <- mod_model_validation_server("model_validation_1",
                                                          file_upload_data = file_upload_data,
-                                                         mod_dins_params = mod_dins_params)
+                                                         mod_dins_params = mod_dins_params,
+                                                         outlier_data = outlier_data)
 
     # 5. Results Module
     mod_results_server("results_1",
@@ -118,6 +145,92 @@ run_app <- function() {
                        mod_dins_params = mod_dins_params,
                        outlier_data = outlier_data,
                        model_validation_data = model_validation_data)
+
+    # --- Header Indicators ---
+
+    # --- Update Reference Method Indicator ---
+    observe({
+      ref <- file_upload_data$reference_method()
+      if (!is.null(ref) && ref != "") {
+        updateGlassHeaderIndicator(
+          session, "global_ref_indicator",
+          visible = TRUE,
+          tooltip_text = paste("Reference Method:", ref)
+        )
+      } else {
+        updateGlassHeaderIndicator(session, "global_ref_indicator", visible = FALSE)
+      }
+    })
+
+    # --- Update Data Validity Indicator ---
+    observe({
+      # --- Get Status Text from 'file_upload_data' ---
+      status_text <- file_upload_data$diagnostics_status_text()
+      if (!is.null(status_text) && status_text != "") {
+        # Bestem ikon og farge basert på teksten (enkel heuristikk)
+        status_type <- "success"
+        icon_name <- "heart-pulse"
+
+        lower_txt <- tolower(status_text)
+        if (grepl("fail|error|invalid", lower_txt)) {
+          status_type <- "error"
+          icon_name <- "triangle-exclamation"
+        } else if (grepl("warning", lower_txt)) {
+          status_type <- "warning"
+          icon_name <- "circle-exclamation"
+        }
+
+        updateGlassHeaderIndicator(
+          session, "global_diag_indicator",
+          visible = TRUE,
+          tooltip_text = status_text,
+          status = status_type,
+          icon_name = icon_name
+        )
+      } else {
+        updateGlassHeaderIndicator(session, "global_diag_indicator", visible = FALSE)
+      }
+    })
+
+    # A. Lytt på endringer i outliers som skal fjernes (fra modulen)
+    observeEvent(outlier_data$outliers_to_remove(), {
+      to_remove <- outlier_data$outliers_to_remove()
+      if (!is.null(to_remove) && nrow(to_remove) > 0) {
+        # Det finnes et aktivt filter!
+        # 1. Oppdater teksten på Header Indicator (men hold den skjult enn så lenge)
+        msg <- paste0("Active Filter Applied: ", nrow(to_remove),
+                      " outlier(s) from Outlier Analysis are currently flagged for removal")
+        updateGlassHeaderIndicator(session, "global_outlier_indicator",
+                                   tooltip_text = msg,
+                                   visible = FALSE) # Skjult fordi den store boksen vises først
+
+        # 2. Vis den store notifikasjonen INNE i modulen
+        # (Dette håndteres allerede internt i mod_outlier_analysis_server ved hjelp av updateGlassNotifyUser)
+
+      } else {
+        # Ingen filter (eller filter tømt)
+
+        # Skjul Header Indicator
+        updateGlassHeaderIndicator(session, "global_outlier_indicator", visible = FALSE)
+      }
+    }, ignoreNULL = FALSE)
+
+    # B. Lytt på at brukeren LUKKER ("Dismiss") den store notifikasjonen
+    # Notifikasjonen heter "outlier_notification" inne i modulen "outlier_analysis_1"
+    # JS sender signalet: NS("outlier_notification") + "_dismissed"
+
+    observeEvent(input[["outlier_analysis_1-outlier_notification_dismissed"]], {
+
+      # Sjekk at vi faktisk har outliers (sikkerhetsnett)
+      to_remove <- outlier_data$outliers_to_remove()
+
+      if (!is.null(to_remove) && nrow(to_remove) > 0) {
+        # Brukeren har lukket boksen, og vi har et aktivt filter.
+        # Nå skal Header Indicator gli inn!
+
+        updateGlassHeaderIndicator(session, "global_outlier_indicator", visible = TRUE)
+      }
+    })
 
   }
 

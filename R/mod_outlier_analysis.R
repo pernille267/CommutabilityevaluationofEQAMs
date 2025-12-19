@@ -80,6 +80,25 @@ mod_outlier_analysis_ui <- function(id) {
             width = "100%",
             disabled = FALSE
           )
+        ),
+        glassCol(
+          width = 4,
+          glassRadioButtons(
+            inputId = ns("outlier_action"),
+            label = "Action on Outliers",
+            label_icon = icon("trash-can"),
+            help_text = paste0(
+              "Choose whether to keep identified outliers in the dataset or ",
+              "flag them for removal in subsequent steps."
+            ),
+            choices = c(
+              "Keep Outliers" = "keep",
+              "Remove Outliers" = "remove"
+            ),
+            selected = "keep",
+            width = "100%",
+            disabled = FALSE
+          )
         )
       )
     ),
@@ -88,17 +107,32 @@ mod_outlier_analysis_ui <- function(id) {
     glassResultCard(
       inputId = ns("outlier_test_results"),
       title = "Outlier Test Results",
-      toolbar = glassButton(
-        inputId = ns("get_outlier_results"),
-        label = "Analyze",
-        icon = icon("magnifying-glass-chart"),
-        width = "50%",
-        color = "purple",
-        disabled = FALSE
+      toolbar = div(
+        style = "display: flex; gap: 10px; width: 100%;",
+        glassButton(
+          inputId = ns("get_outlier_results"),
+          label = "Analyze",
+          icon = icon("magnifying-glass-chart"),
+          width = "auto",
+          color = "purple",
+          disabled = FALSE
+        ),
+        glassDownloadButton(
+          outputId = ns("download_outliers"),
+          label = "Download",
+          icon = icon("file-excel"),
+          width = "auto",
+          disabled = FALSE
+        )
       ),
       icon = icon("table"),
       width = "100%",
-      # CHANGE 2: Using uiOutput instead of DTOutput for glassTable
+      glassNotifyUser(
+        inputId = ns("outlier_notification"),
+        label = "Notification",
+        value = "",
+        width = "auto"
+      ),
       uiOutput(outputId = ns("outlier_results_ui"))
     )
   )
@@ -189,10 +223,11 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       return(raw_data)
     })
 
-    # --- Create a reactiveVal to Cache Results. -------------------------------
+    # --- Create a reactiveVal to Cache Outlier Analysis Results. --------------
     analysis_results_val <- reactiveVal(NULL)
 
-    # --- *EXPERIMENTAL* (START) ---
+    # --- Create a reactiveVal to Cache Outlier Data (for removal purposes) ----
+    outliers_to_remove_backup <- reactiveVal(NULL)
 
     # --- Track Performed Outlier Tests ---
     completed_tests <- reactiveVal(character(0))
@@ -200,16 +235,24 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     # --- Track whether outlier analysis is deemed completed ----
     outlier_analysis_deemed_complete <- reactiveVal(FALSE)
 
-    # --- Reset Tracking of Performed Tests if Data Changes ---
+    # --- Reset Caches if Data Changes in Some Given Ways ---
     observeEvent(raw_cs_data_long(), {
+      # --- Empty caches when raw_cs_data_long changes ---
+      # Note: This change by new upload, or another choice for reference method
       completed_tests(character(0))
       outlier_analysis_deemed_complete(FALSE)
+      analysis_results_val(NULL)
+      outliers_to_remove_backup(NULL)
+
+      # Reset notification
+      updateGlassNotifyUser(
+        session = session,
+        inputId = "outlier_notification",
+        value = ""
+      )
     })
 
-    # --- *EXPERIMENTAL* (END) ---
-
-    # --- CHANGE 3: Enable Button Logic ----------------------------------------
-    # Watch for Data Availability AND Input Changes to re-enable the button
+    # --- Check Data & Input Changes to re-enable the 'Analyze' button ---
     observeEvent(list(raw_cs_data_long(), input$outlier_test, input$outlier_test_conf_level), {
       # Only proceed if data is available
       if (!is.null(raw_cs_data_long())) {
@@ -221,18 +264,20 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       }
     }, ignoreInit = TRUE)
 
-    # --- Update reactiveVal when `Analyze` Button is Pressed ------------------
+    # --- Update analysis_results_val when `Analyze` Button is Pressed ---------
     observeEvent(input$get_outlier_results, {
-      # Require `raw_cs_data_long()` to exist
       req(raw_cs_data_long())
 
-      # CHANGE 4: Disable button immediately on click
+      # --- The Outlier Analysis ---
+
+      # Disable button immediately on click
       updateGlassButton(
         session = session,
         inputId = "get_outlier_results",
         disabled = TRUE
       )
 
+      # --- Get Outlier Analysis Results ---
       results <- commutability::do_outlier_analysis(
         data = raw_cs_data_long(),
         method = input$outlier_test,
@@ -240,9 +285,72 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
         level = as.numeric(input$outlier_test_conf_level),
         output = "visual"
       )
+
+      # --- Fill Cache with Outlier Analysis Results ---
       analysis_results_val(results)
 
-      # Record that this test now have been complete if not completed before
+      # --- Handling Outlier Removal Mapping ---
+      current_method <- input$outlier_test
+      current_action <- input$outlier_action
+
+      # --- Remove Outliers Only Enabled for 'Between Samples' ---
+      if (current_method == "burnett") {
+        if (current_action == "remove") {
+
+          # --- Get Relevant Information from 'results' ---
+          comparison_mapper <- results[["IVD-MD Comparison"]]
+          outlier_information <- results[["Outliers"]]
+
+          # --- Helper function for resolving the 'repeat-dots' ---
+          fix_annoying_dots <- function(x) {
+            fixed_x <- character(length(x))
+            previous_x_val <- if (length(x) > 0) x[1] else ""
+            for (ith_value in seq_along(x)) {
+              if (x[ith_value] != ".") previous_x_val <- x[ith_value]
+              fixed_x[ith_value] <- previous_x_val
+            }
+            return(fixed_x)
+          }
+
+          # --- Resolve 'repeat-dots' Using the Helper Function Above ---
+          outlier_information <- fix_annoying_dots(
+            as.character(
+              outlier_information
+            )
+          )
+
+          # Define Outlier Mapper data.table
+          outlier_mapping_dt <- NULL
+
+          # --- Convert multi-content cells to unit-content cells ---
+          outlier_idx <- !is.na(outlier_information) & !(outlier_information %in% c("none", ""))
+
+          if (any(outlier_idx)) {
+            active_outliers <- outlier_information[outlier_idx]
+            active_comparisons <- comparison_mapper[outlier_idx]
+            split_list <- strsplit(
+              x = active_outliers,
+              split = ", "
+            )
+            reps <- lengths(split_list)
+            long_comparisons <- rep(active_comparisons, times = reps)
+            long_sample_ids <- unlist(split_list)
+            outlier_mapping_dt <- data.table::data.table(
+              "comparison" = long_comparisons,
+              "SampleID" = long_sample_ids
+            )
+            outliers_to_remove_backup(outlier_mapping_dt)
+          }
+          else {
+            outliers_to_remove_backup(NULL)
+          }
+        }
+        else {
+          outliers_to_remove_backup(NULL)
+        }
+      }
+
+      # --- Record Tests Completion ---
       current_set <- completed_tests()
       current_method <- input$outlier_test
       if (!current_method %in% current_set) {
@@ -250,7 +358,75 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       }
     })
 
-    # --- Render Table Using renderGlassTable ------------------------
+    # --- Outliers to Remove (Reactive Filter Switch) ---
+    outliers_to_remove <- reactive({
+      req(input$outlier_action)
+      fallback_cached_data <- outliers_to_remove_backup()
+      if (input$outlier_action == "remove" && !is.null(fallback_cached_data)) {
+        return(fallback_cached_data)
+      }
+      else {
+        return(NULL)
+      }
+    })
+
+    # --- Handle Information Sent to User ---
+    observeEvent(outliers_to_remove(), {
+      current_cached_data <- outliers_to_remove()
+
+      # --- Only Notify User if there are Outliers to be Removed ---
+      if (!is.null(current_cached_data) && nrow(current_cached_data) > 0) {
+        # --- Filter is Active ---
+        n_outliers <- nrow(current_cached_data)
+        updateGlassNotifyUser(
+          session = session,
+          inputId = "outlier_notification",
+          label = "Active Filter Applied",
+          label_icon = icon("filter"),
+          value = paste0(
+            "<b>",
+            n_outliers,
+            " outlier(s)</b> from 'Between Samples' analysis are currently ",
+            "flagged for removal."
+          ),
+          message_type = "warning",
+          timer = 0 # 0 betyr at den blir stående til brukeren lukker den
+        )
+      }
+      else {
+        # --- Filter is Inactive ---
+        # --- Cache is filled, but we choose to keep the outliers anyway ---
+        if (!is.null(input$outlier_action) && input$outlier_action == "keep" && !is.null(outliers_to_remove_backup())) {
+          updateGlassNotifyUser(
+            session = session,
+            inputId = "outlier_notification",
+            label = "Filter Cleared",
+            label_icon = icon("check"),
+            value = "Outliers are kept!",
+            message_type = "info",
+            timer = 5000 # Forsvinner etter 5 sek
+          )
+        }
+        else {
+          # Reset notification
+          updateGlassNotifyUser(
+            session = session,
+            inputId = "outlier_notification",
+            value = ""
+          )
+        }
+      }
+    }, ignoreNULL = FALSE)
+
+    # --- Handle Information Sent to User (& Debugging) ------------------------
+    observe({
+      # ---- *Debuggging* ------------------------------------------------------
+      debug_outliers_to_remove_backup <<- outliers_to_remove_backup()
+      debug_outliers_to_remove_current <<- outliers_to_remove()
+      # ---- *Debuggging* ------------------------------------------------------
+    })
+
+    # --- Render Table Using renderGlassTable ----------------------------------
     output$outlier_results_ui <- renderUI({
       # Require cache to be filled before displaying table
       req(analysis_results_val())
@@ -344,8 +520,31 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
       HTML(modified_html_str)
     })
 
+    # --- Download Handler for Excel Export ------------------------------------
+    output$download_outliers <- downloadHandler(
+      filename = function() {
+        paste0(
+          "outlier_analysis_",
+          input$outlier_test,
+          "_",
+          Sys.Date(),
+          ".xlsx"
+        )
+      },
+      content = function(file) {
+        req(analysis_results_val())
+        writexl::write_xlsx(
+          x = analysis_results_val(),
+          path =  file,
+          col_names = TRUE,
+          format_headers = TRUE
+        )
+      }
+    )
+
     # --- Avoid Suspension Issues ---
     outputOptions(output, "outlier_results_ui", suspendWhenHidden = FALSE)
+    outputOptions(output, "download_outliers", suspendWhenHidden = FALSE)
 
     # --- *EXPERIMENTAL* ---
 
@@ -370,10 +569,12 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     return(
       list(
         results = analysis_results_val,
+        outliers_to_remove = outliers_to_remove,
         params = reactive({
           list(
             outlier_test = input$outlier_test,
-            outlier_test_conf_level = as.numeric(input$outlier_test_conf_level)
+            outlier_test_conf_level = as.numeric(input$outlier_test_conf_level),
+            outlier_action = input$outlier_action
           )
         })
       )
