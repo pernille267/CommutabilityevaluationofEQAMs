@@ -141,6 +141,17 @@ perform_structural_checks <- function(cs_data, eq_data, methods_to_remove = NULL
 
       return(out)
     }
+    else {
+      return(list(
+        "equal_names" = FALSE,
+        "equal_order" = FALSE,
+        "names_in_cs_data_but_not_in_eq_data" = setdiff(names(cs_data), names(eq_data)),
+        "names_in_eq_data_but_not_in_cs_data" = setdiff(names(eq_data), names(cs_data)),
+        "order_cs_data" = paste(names(cs_data), collapse = ", "),
+        "order_eq_data" = paste(names(eq_data), collapse = ", "),
+        "error" = "No repair action could be taken to check data post repair."
+      ))
+    }
   }
 
   # --- 3. Handle Standard Case (Initial Repair Succeeded) ---

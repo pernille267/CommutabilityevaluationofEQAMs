@@ -364,14 +364,70 @@ render_diagnostic_table <- function(diagnostics, type = "cs", is_post_repair_val
   current_badge <- diagnostics$badge
   current_score <- diagnostics$score
 
+  # Check Whether Current Badge and Score Exist
+  if (is.null(current_badge)) {
+    current_badge <- "not acceptable"
+  }
+  if (is.null(current_score)) {
+    current_score <- 0L
+  }
+  if (is.na(current_score)) {
+    current_score <- 0L
+  }
+
   badge_colors <- list(
     "perfect" = "#7851a9",
     "acceptable" = "#28A745",
     "questionable" = "#FEAB3A",
-    "extremely poor" = "#B61F06"
+    "extremely poor" = "#B61F06",
+    "not acceptable" = "#000000"
   )
   score_color <- badge_colors[[current_badge]]
-  if(is.null(score_color)) score_color <- "#6c757d"
+  if(is.null(score_color)) score_color <- "#000000"
+
+  # --- Fallback ---
+  if (!is.null(post_repair_score) && is.na(post_repair_score)) {
+
+    # --- 1. Caption ---
+    caption_text <- generate_quality_message(
+      quality = "not acceptable",
+      sample_type = type,
+      is_post_repair_valid = FALSE,
+      post_repair_score = 0
+    )
+
+    # --- 2. Sidebar ---
+    badge_html <- sprintf(
+      '<span class="glass-diag-badge-pill" style="color:%s; border: 1px solid %s;">%s</span>',
+      score_color, score_color, tools::toTitleCase(current_badge)
+    )
+    circle_html <- sprintf(
+      '<div class="glass-score-circle" style="background-color: %s;">%s</div>',
+      score_color, current_score
+    )
+    sidebar_content <- paste0(badge_html, circle_html)
+
+    generic_fall_back_data <- data.table::data.table(
+      "IVD-MD" = c("Unknown"),
+      "Samples" = "Unknown",
+      "Replicates" = "Unknown",
+      "Invalid Results (%)" = "Probably a lot"
+    )
+
+    # --- Fallback Render ---
+    return(
+      renderGlassTable(
+        data = generic_fall_back_data,
+        col_names = c("IVD-MD", "Samples", "Replicates", "Invalid Results (%)"),
+        caption = caption_text,
+        sidebar_html = sidebar_content,
+        sidebar_title = NULL,
+        highlight_rows = 1,
+        sortable = FALSE
+      )
+    )
+
+  }
 
   # --- 1. Caption ---
   caption_text <- generate_quality_message(
@@ -407,7 +463,7 @@ render_diagnostic_table <- function(diagnostics, type = "cs", is_post_repair_val
   output_tbl <- data.table::data.table(
     "IVD-MD" = current_IVD_MDs,
     "Number of Samples" = diagnostics$quality$effective_number_of_samples,
-    "Number of Replicates" = format(diagnostics$quality$average_number_of_replicates, digits=3),
+    "Number of Replicates" = format(diagnostics$quality$average_number_of_replicates, digits = 2),
     "Invalid %" = formatted_fractions
   )
 
@@ -417,8 +473,7 @@ render_diagnostic_table <- function(diagnostics, type = "cs", is_post_repair_val
   # --- 4. Render ---
   renderGlassTable(
     data = output_tbl,
-    # Soft column names (Title Case)
-    col_names = c("IVD-MD", "N Samples", "N Replicates", "Invalid %"),
+    col_names = c("IVD-MD", "Samples", "Replicates", "Invalid Results (%)"),
     caption = caption_text,
     sidebar_html = sidebar_content,
     sidebar_title = NULL,

@@ -215,6 +215,21 @@ mod_file_upload_server <- function(id) {
       })
     }
 
+    # --- Data Check with Error Handling
+    safe_check_data <- function(data, type) {
+      tryCatch({
+        res <- commutability::check_data(data = data, type = type)
+        if (!is.list(res) || is.null(res$badge)) {
+          return(NULL)
+        }
+        return(res)
+      }, error = function(e) {
+        # Debugging ...
+        message("Caught error in check_data: ", e$message)
+        return(NULL)
+      })
+    }
+
     # --- Read Data ------------------------------------------------------------
     current_raw_cs_data_wide <- reactive({
       req(input$cs_data)
@@ -233,26 +248,51 @@ mod_file_upload_server <- function(id) {
     # --- Diagnostics of Clinical Sample Data ----------------------------------
     current_diagnostics_cs <- reactive({
       req(current_raw_cs_data_wide())
-      commutability::check_data(data = current_raw_cs_data_wide(), type = "cs")
+      safe_check_data(
+        data = current_raw_cs_data_wide(),
+        type = "cs"
+      )
     })
 
     # --- Diagnostics of EQAM Data ---------------------------------------------
     current_diagnostics_eq <- reactive({
       req(current_raw_eq_data_wide())
-      commutability::check_data(data = current_raw_eq_data_wide(), type = "eqam")
+      safe_check_data(
+        data = current_raw_eq_data_wide(),
+        type = "eqam"
+      )
     })
 
     # --- Methods to Remove Globally -------------------------------------------
     methods_to_remove_globally <- reactive({
-      req(
-        current_diagnostics_cs(),
-        current_diagnostics_eq()
+
+      # --- Diagnostics Objects
+      diag_cs <- current_diagnostics_cs()
+      diag_eq <- current_diagnostics_eq()
+
+      if (!is.null(diag_cs) && !is.null(diag_eq)) {
+        return(
+          unique(c(
+            current_diagnostics_cs()$repair$remove_these_methods,
+            current_diagnostics_eq()$repair$remove_these_methods
+          ))
+        )
+      }
+      else if (!is.null(diag_cs) && is.null(diag_eq)) {
+        return(
+          current_diagnostics_cs()$repair$remove_these_methods
+        )
+
+      }
+      else if (is.null(diag_cs) && !is.null(diag_eq)) {
+        return(
+          current_diagnostics_eq()$repair$remove_these_methods
+        )
+
+      }
+      return(
+        NULL
       )
-      # --- Gather invalid methods from both diagnostics objects ---
-      unique(c(
-        current_diagnostics_cs()$repair$remove_these_methods,
-        current_diagnostics_eq()$repair$remove_these_methods
-      ))
     })
 
     # --- Equivalence Diagnostics of Clinical Sample and EQAM data -------------
@@ -268,9 +308,7 @@ mod_file_upload_server <- function(id) {
         eq_data = current_raw_eq_data_wide(),
         methods_to_remove = methods_to_remove_globally()
       )
-
       return(out)
-
     })
 
     # --- Assess General Validity of Uploaded Data -----------------------------
@@ -281,8 +319,8 @@ mod_file_upload_server <- function(id) {
         current_diagnostics_eq(),
         current_diagnostics_both()
       )
-      cs_ok <- current_diagnostics_cs()$badge != "not acceptable"
-      eq_ok <- current_diagnostics_eq()$badge != "not acceptable"
+      cs_ok <- isTRUE(current_diagnostics_cs()$badge != "not acceptable")
+      eq_ok <- isTRUE(current_diagnostics_eq()$badge != "not acceptable")
       both_ok <- all(
         isTRUE(current_diagnostics_both()$equal_names),
         isTRUE(current_diagnostics_both()$equal_order),
@@ -291,35 +329,63 @@ mod_file_upload_server <- function(id) {
       return(cs_ok && eq_ok && both_ok)
     })
 
+    # --- Update 'ignore_invalid_data' & Validation Indicator ------------------
     observeEvent(list(current_validity(), current_raw_cs_data_wide(), current_raw_eq_data_wide(), input$ignore_invalid_data), {
 
       # --- Case 1: Data is not yet uploaded ---
       if (is.null(current_raw_cs_data_wide()) || is.null(current_raw_eq_data_wide())) {
-        updateGlassRadio(session, "ignore_invalid_data", disabled = TRUE, selected = "No")
-        updateGlassNotifyUser(session, "validation_notification", value = "")
+        updateGlassRadio(
+          session = session,
+          inputId = "ignore_invalid_data",
+          selected = "No",
+          disabled = TRUE
+        )
+        updateGlassNotifyUser(
+          session = session,
+          inputId = "validation_notification",
+          value = ""
+        )
       }
 
       originally_valid <- current_validity()
 
       # --- Case 2: Empty currently_valid() ---
       if (is.null(originally_valid)) {
-        updateGlassRadio(session, "ignore_invalid_data", disabled = TRUE, selected = "No")
-        updateGlassNotifyUser(session, "validation_notification", value = "")
+        updateGlassRadio(
+          session = session,
+          inputId = "ignore_invalid_data",
+          selected = "No",
+          disabled = TRUE
+        )
+        updateGlassNotifyUser(
+          session = session,
+          inputId = "validation_notification",
+          value = ""
+        )
       }
-
       # --- Case 3: Validation tests pass originally ---
-      if (isTRUE(originally_valid)) {
-        updateGlassRadio(session, "ignore_invalid_data", disabled = TRUE, selected = "No")
-        updateGlassNotifyUser(session, "validation_notification", value = "")
+      else if (isTRUE(originally_valid)) {
+        updateGlassRadio(
+          session = session,
+          inputId = "ignore_invalid_data",
+          selected = "No",
+          disabled = TRUE
+        )
+        updateGlassNotifyUser(
+          session = session,
+          inputId = "validation_notification",
+          value = ""
+        )
       }
-      # --- Case 4: Validation tests fail originally ---
-      else {
-
-        # --- Activate "Ignore Failed Validation Tests" radiobuttons ---
-        updateGlassRadio(session, "ignore_invalid_data", disabled = FALSE)
-
-        # --- Send notification to user ---
-        if (!is.null(input$ignore_invalid_data) && input$ignore_invalid_data == "Yes") {
+      else if (isFALSE(originally_valid)) {
+        # --- Activate "Ignore Failed Validation Tests" Rad. Buttons ---
+        updateGlassRadio(
+          session = session,
+          inputId = "ignore_invalid_data",
+          disabled = FALSE
+        )
+        # --- Send Notification to User if Invalid Data is Ignored ---
+        if (isTRUE(input$ignore_invalid_data == "Yes")) {
           updateGlassNotifyUser(
             session = session,
             inputId = "validation_notification",
@@ -335,16 +401,32 @@ mod_file_upload_server <- function(id) {
             timer = 0
           )
         }
+        # --- Send Notification to User if Invalid Data is Accepted ---
+        else if (isFALSE(input$ignore_invalid_data == "No")) {
+          updateGlassNotifyUser(
+            session = session,
+            inputId = "validation_notification",
+            label = "Validation Accepted",
+            label_icon = icon("heart"),
+            message_type = "info",
+            value = paste0(
+              "Important validation errors were detected. Luckily you are not ",
+              "one of those that ignore them!"
+            ),
+            timer = 1e4
+          )
+        }
+        # --- Send Notification to Developer because it cannot happen that we get here ...
         else {
           updateGlassNotifyUser(
             session = session,
             inputId = "validation_notification",
             label = "Validation Accepted",
             label_icon = icon("heart"),
-            message_type = "success",
+            message_type = "error",
             value = paste0(
-              "Important validation errors were detected. Luckily you are not ",
-              "one of those that ignore them!"
+              "Apparently, input$ignore_invalid_data is not Yes or No. ",
+              "This cannot happen unless it is NULL. But how can it be NULL?"
             ),
             timer = 0
           )
@@ -352,23 +434,39 @@ mod_file_upload_server <- function(id) {
       }
     })
 
-    # --- Logic for Overall Status Badge ---------------------------------------
-    # --- Notes ----------------------------------------------------------------
-    # This is a single indicator that tells the user whether they can move
-    # forward or not
+    # --- A single indicator on whether data is acceptable ---
     output$overall_diagnostics_status <- renderUI({
-      # --- Require diagnostics have been run before showing ---
-      req(
-        current_diagnostics_cs(),
-        current_diagnostics_eq(),
-        current_diagnostics_both()
-      )
+      # --- Check if uploaded data exists ---
+      has_cs_data <- !is.null(current_raw_cs_data_wide())
+      has_eq_data <- !is.null(current_raw_eq_data_wide())
+      has_data <- has_cs_data && has_eq_data
+
+      # --- Return NULL if we are missing data ---
+      if (!has_data) {
+        return(
+          NULL
+        )
+      }
+
+      # * Here we can be sure that the data exists *
 
       # Record the current validity of uploaded data
       is_valid <- current_validity()
 
-      # Toggle whether failed validation tests should be ignored
-      ignore_issues <- input$ignore_invalid_data == "Yes"
+      # Return NULL, if current_validity does not exist yet or is NULL
+      if (is.null(is_valid)) {
+        return(
+          NULL
+        )
+      }
+
+      # Force is_valid to TRUE/FALSE
+      is_valid <- isTRUE(is_valid)
+
+      # * Here we can be sure that is_valid exists *
+
+      # Does the user intend to ignore that the data is deemed invalid?
+      ignore_issues <- isTRUE(input$ignore_invalid_data == "Yes")
 
       if (is_valid) {
         status_class <- "status-ok"
@@ -398,7 +496,6 @@ mod_file_upload_server <- function(id) {
     })
 
     # --- DYNAMIC ICON RENDERING -----------------------------------------------
-    # This allows the UI structure to stay in mod_file_upload_ui
 
     # 1. CS Icon
     output$status_icon_cs <- renderUI({
@@ -435,33 +532,42 @@ mod_file_upload_server <- function(id) {
     # --- Observer that updates the list of valid reference method choices -----
     observe({
       # --- Record current validity at this point in time ---
-      is_valid <- current_validity()
+      is_valid <- isTRUE(current_validity()) || isTRUE(input$ignore_invalid_data == "Yes")
+
+      # --- Double check that current_raw_cs_data_wide() is not NULL ---
+      raw_cs <- current_raw_cs_data_wide()
+
+      # Start with empty character vector
+      choices <- character(0)
 
       # --- Start with all potential choices for reference methods ---
-      choices <- if (is_valid) {
-        cs_data_repaired <- commutability::repair_data(
-          data = current_raw_cs_data_wide(),
-          type = "cs",
-          remove_invalid_methods = FALSE,
-          include_repair_summary = FALSE
+      if (is_valid && !is.null(raw_cs)) {
+        # Wrap repair attempt into TryCatch to Stay Safe
+        cs_data_repaired <- tryCatch({
+          commutability::repair_data(
+            data = raw_cs,
+            type = "cs",
+            remove_invalid_methods = FALSE,
+            include_repair_summary = FALSE
+          )
+        },
+        error = function(e) NULL,
+        warning = function(w) NULL
         )
-        # Extract only the method columns
-        setdiff(names(cs_data_repaired), c("SampleID", "ReplicateID"))
-      }
-      else {
-        character(0) # Return empty character vector if not valid
+        # Extract only the method columns (if repair was successful)
+        if (!is.null(cs_data_repaired)) {
+          choices <- setdiff(
+            names(cs_data_repaired),
+            c("SampleID", "ReplicateID")
+          )
+        }
       }
 
       # --- Remove methods from the list that are deemed invalid ---
-      # --- Notes ---
-      # (Rationale) Invalid methods should not be eligible as reference methods
       to_remove <- methods_to_remove_globally()
-      if (length(to_remove) > 0) {
+      if (!is.null(to_remove) && length(to_remove) > 0) {
         choices <- setdiff(choices, to_remove)
       }
-
-      # Handle logical check for character input
-      should_enable <- is_valid | (input$ignore_invalid_data == "Yes")
 
       # --- Update list of choices for reference method ---
       updateGlassDropdown(
@@ -469,25 +575,8 @@ mod_file_upload_server <- function(id) {
         inputId = "reference_method",
         choices = c("none", choices),
         selected = "none",
-        disabled = !should_enable
+        disabled = !is_valid
       )
-    })
-
-    # --- Deliver warning if user desires to ignore failed validation tests ----
-    output$warning_placeholder <- renderUI({
-      if (isTRUE(input$ignore_invalid_data == "Yes")) {
-        div(
-          class = "input-warning-note",
-          icon("exclamation-triangle"),
-          paste0(
-            "This is not recommended! Proceeding with invalid data may lead ",
-            "to unreliable results or cause the application to crash."
-          )
-        )
-      }
-      else {
-        NULL
-      }
     })
 
     # --- Get the Post-Repair Diagnostics for the Clinical Sample Data ---------
@@ -497,7 +586,6 @@ mod_file_upload_server <- function(id) {
         current_raw_cs_data_wide(),
         current_diagnostics_cs()
       )
-
       out <- post_repair_diagnostics(
         data = current_raw_cs_data_wide(),
         prior_repair_diagnostics = current_diagnostics_cs(),
@@ -552,7 +640,7 @@ mod_file_upload_server <- function(id) {
       render_diagnostic_table(
         diagnostics = current_diagnostics_eq(),
         type = "eq",
-        is_post_repair_valid = current_diagnostics_eq()$badge != "not acceptable",
+        is_post_repair_valid = isTRUE(current_diagnostics_eq()$badge != "not acceptable"),
         post_repair_score = post_repair_diagnostics_eq()$score
       )
     })
@@ -605,9 +693,13 @@ mod_file_upload_server <- function(id) {
     # --- Look for changes in is_valid() ---
     observeEvent(is_valid(), {
       val_status <- is_valid()
-      should_pulse <- isTRUE(val_status)
-      # Aktiver/Deaktiver puls på "dins" fanen
-      updateGlassSidebarHighlight(session, "dins", enable = should_pulse)
+      activate_pulse_notification <- isTRUE(val_status)
+      # Activate / Diactivate Notification on the DINS Sidebar Tag
+      updateGlassSidebarHighlight(
+        session = session,
+        tabName = "dins",
+        enable = activate_pulse_notification
+      )
     })
 
     # Generate short tooltip text for Header Indicator ---
@@ -620,16 +712,31 @@ mod_file_upload_server <- function(id) {
       # --- Original Validity ---
       originally_valid <- current_validity()
 
+      # --- Check if 'current_validity' exists first ---
+      if (is.null(originally_valid)) {
+        return(NULL)
+      }
+
       # --- Check if Initially Valid ---
       if (isFALSE(originally_valid)) {
-        # --- Check if user desired to ignore initially invalid data ---
-        if (isTRUE(input$ignore_invalid_data)) {
+        # --- User desires to ignore initially invalid data ---
+        if (isTRUE(input$ignore_invalid_data == "Yes")) {
           return(
-            "Warning: Validation of uploaded data failed, but is currenty ignored. Proceed with caution."
+            paste0(
+              "Warning: Validation of uploaded data failed, but is currenty ",
+              "ignored by you. Proceed with caution."
+            )
+
           )
         }
+        # --- User desires to accept initially invalid data as useless ---
         else {
-          "Failed: Validation of uploaded data failed. You cannot use these data."
+          return(
+            paste0(
+              "Failed: Validation of uploaded data failed. You cannot use these ",
+              "data. You are currently accepting this fate."
+            )
+          )
         }
       }
 
@@ -637,9 +744,15 @@ mod_file_upload_server <- function(id) {
       removed <- methods_to_remove_globally()
       if (!is.null(removed) && length(removed) > 0) {
         n_removed <- length(removed)
-        # --- Data is repaired for it to be valid ---
+        # --- Data was repaired for it to be valid ---
         return(
-          sprintf("Warning: Data repaired. %d invalid method(s) removed.", n_removed)
+          sprintf(
+            paste0(
+              "Warning: Data was required to be heavily repaired by ",
+              "removing %d invalid method(s) for it to be acceptable by the AI."
+            ),
+            n_removed
+          )
         )
       }
       return(
