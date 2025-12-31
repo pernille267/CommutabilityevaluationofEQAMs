@@ -1,0 +1,29 @@
+.glass-chart-container {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden; /* Important for SVG overflow */
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+}
+
+.glass-chart-tooltip {
+  position: absolute;
+  text-align: left;
+  padding: 8px;
+  font: 12px 'Source Sans Pro', sans-serif;
+  background: rgba(30, 30, 40, 0.95);
+  color: white;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.x-axis path, .y-axis path,
+.x-axis line, .y-axis line {
+  stroke: #ddd;
+}
+
+.x-axis text, .y-axis text {
+  font-family: 'Source Sans Pro', sans-serif;
+  fill: #666;
+}
