@@ -403,12 +403,27 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params, o
       # Require `cs_data_long()` to exist
       req(cs_data_long())
 
+
+      # --- Add Loader ---
+
+      # --- Activate Loader ---
+      showGlassLoader(
+        id = session$ns("loader_formal"),
+        text = "Calculating formal tests...",
+        selector = paste0("#", session$ns("card_formal_results"))
+      )
+
+      # --- Deactivate Loader at Any Exit ---
+      on.exit(hideGlassLoader(id = session$ns("loader_formal")))
+
       # Disable button immediately on click
       updateGlassButton(
         session = session,
         inputId = "run_tests",
         disabled = TRUE
       )
+
+
 
       # Remove NA-values before performing tests
       data_without_NAs <- na.omit(object = cs_data_long())
@@ -588,6 +603,18 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params, o
     # --- Update Cache when `Plot` Button is Pressed (Disables Button) ---
     assessment_plot_object <- eventReactive(input$plot_assessment_plots, {
       req(file_upload_data$is_valid(), cs_data_long())
+
+      # Update Selector To point to Results Card
+      showGlassLoader(
+        id = session$ns("loader_plot"),
+        text = "Rendering plot...",
+        selector = paste0("#", session$ns("card_assessment_plot"))
+      )
+
+      # Fjern loader når plottet er ferdig generert (eller feiler)
+      on.exit(hideGlassLoader(id = session$ns("loader_plot")))
+
+
       if (file_upload_data$is_valid()) {
 
         # Disable Button

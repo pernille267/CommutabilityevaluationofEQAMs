@@ -1,77 +1,65 @@
-// --- Glass Loader JavaScript ---
+$(document).ready(function() {
 
-$(document).on('shiny:connected', function(event) {
+  // Show loader handler
+  Shiny.addCustomMessageHandler('glass-loader-show', function(message) {
+    var id = message.id;
+    var text = message.text || "Arbeider...";
+    var selector = message.selector;
 
-  var $overlay = $('#glass-loader-overlay');
-  var $text = $overlay.find('.glass-loader-text');
+    // Fjern eksisterende loader med samme ID for å unngå duplikater
+    $('#' + id).remove();
 
-  // Timers
-  var busyTimer = null;
-  var longWaitTimer = null;
+    // HTML struktur for loaderen
+    var loaderHtml = `
+      <div id="${id}" class="glass-loader-wrapper" style="display: none; opacity: 0;">
+        <div class="glass-loader-spinner"></div>
+        ${text ? `<div class="glass-loader-text">${text}</div>` : ''}
+      </div>
+    `;
 
-  // Settings
-  var delayMs = 1000;      // Viser loader etter 1 sekund (Best Practice)
-  var longWaitMs = 10000;   // Bytter melding etter 10 sekunder
+    var $loader = $(loaderHtml);
 
-  // Texts (Husk at default må matche R-filen din hvis du vil unngå "flash" ved reset)
-  var defaultText = "Performing statistical magic...";
-  var longText = "Still crunching numbers... Heavy calculations require a little extra patience. We're getting there!";
+    if (selector) {
+      // LOKAL LOADER
+      var $target = $(selector);
+      if ($target.length > 0) {
+        // Legg til klasse på forelderen for å styre posisjonering
+        $target.addClass('glass-loader-parent-active');
 
-  // 1. Når Shiny begynner å jobbe
-  $(document).on('shiny:busy', function() {
-
-    // Start "Show Loader" Timer (hvis den ikke allerede kjører)
-    if (!busyTimer) {
-      busyTimer = setTimeout(function() {
-        $overlay.addClass('active');
-      }, delayMs);
-    }
-
-    // Start "Long Wait Message" Timer
-    if (!longWaitTimer) {
-      longWaitTimer = setTimeout(function() {
-        // Bytt tekst KUN hvis loaderen faktisk er synlig
-        if ($overlay.hasClass('active')) {
-          // En liten fade-effekt for tekstbyttet
-          $text.fadeOut(200, function() {
-            $(this).text(longText).fadeIn(200);
-          });
-        }
-      }, longWaitMs);
-    }
-
-  });
-
-  // 2. Når Shiny er ferdig
-  $(document).on('shiny:idle', function() {
-
-    // Rydd opp timere umiddelbart
-    if (busyTimer) { clearTimeout(busyTimer); busyTimer = null; }
-    if (longWaitTimer) { clearTimeout(longWaitTimer); longWaitTimer = null; }
-
-    // Skjul overlay
-    $overlay.removeClass('active');
-
-    // Reset teksten tilbake til default (litt forsinket så brukeren ikke ser byttet mens den fader ut)
-    setTimeout(function() {
-      $text.text(defaultText);
-      $text.show(); // Sikre at den er synlig (i tilfelle fadeOut hang igjen)
-    }, 500);
-  });
-
-  // 3. Custom Message Handler for manuelle oppdateringer
-  Shiny.addCustomMessageHandler('glass-loader-update-text', function(message) {
-    // Oppdaterer defaultText også, slik at den ikke overskrives ved neste reset hvis man ønsker det
-    // Men her holder vi det enkelt og oppdaterer bare visningen der og da.
-    $text.text(message);
-  });
-
-  // 4. Custom Message Handler for å tvinge visning
-  Shiny.addCustomMessageHandler('glass-loader-show', function(state) {
-    if (state === true) {
-      $overlay.addClass('active');
+        $loader.addClass('localized');
+        $target.append($loader);
+      } else {
+        console.warn("Glass Loader: Fant ikke elementet med selector:", selector);
+        // Fallback til fullskjerm hvis target ikke finnes?
+        // Vi velger å ikke vise noe for å unngå forvirring, eller du kan uncomment under:
+        // $('body').append($loader.addClass('fullscreen'));
+        return;
+      }
     } else {
-      $overlay.removeClass('active');
+      // FULLSKJERM LOADER (Default)
+      $loader.addClass('fullscreen');
+      $('body').append($loader);
+    }
+
+    // Fade in
+    $loader.css('display', 'flex').animate({ opacity: 1 }, 200);
+  });
+
+  // Hide loader handler
+  Shiny.addCustomMessageHandler('glass-loader-hide', function(message) {
+    var id = message.id;
+    var $loader = $('#' + id);
+
+    if ($loader.length) {
+      $loader.animate({ opacity: 0 }, 200, function() {
+        // Fjern klassen fra forelderen hvis det var en lokal loader
+        var $parent = $loader.parent();
+        if ($parent.hasClass('glass-loader-parent-active')) {
+          $parent.removeClass('glass-loader-parent-active');
+        }
+
+        $(this).remove();
+      });
     }
   });
 

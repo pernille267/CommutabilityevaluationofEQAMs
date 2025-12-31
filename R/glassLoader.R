@@ -1,52 +1,42 @@
-#' Glass Loader UI Component
+#' Glass Loader
 #'
-#' Adds a global, glass-morphism styled loading overlay to the application.
-#' This overlay automatically appears when Shiny is busy (with a slight delay to prevent flickering).
+#' @param id Unik ID for loaderen (namespace blir håndtert automatisk hvis session sendes)
 #'
-#' @return HTML tags to be inserted into the UI.
-#' @importFrom htmltools tagList tags htmlDependency
+#' @return HTML for loader dependencies
 #' @export
 useGlassLoader <- function() {
-
-  # Bygg HTML-strukturen
-  ui_structure <- htmltools::tags$div(
-    id = "glass-loader-overlay",
-
-    # Spinner Container
-    htmltools::tags$div(
-      class = "glass-loader-spinner",
-      htmltools::tags$div(class = "glass-loader-ring"),
-      htmltools::tags$div(class = "glass-loader-orb")
-    ),
-
-    # Message
-    htmltools::tags$div(
-      class = "glass-loader-text",
-      "Performing statistical magic..." # Default text
-    )
-  )
-
-  # Legg til avhengigheter
   htmltools::tagList(
-    ui_structure,
     htmltools::htmlDependency(
       name = "glass-loader",
       version = "1.0.0",
-      src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
+      src = c(file = "assets"),
       script = "glass_loader.js",
-      stylesheet = "glass_loader.css"
+      stylesheet = "glass_loader.css",
+      package = "CommutabilityevaluationofEQAMs"
     )
   )
 }
 
-#' Update Glass Loader Message
+#' Show Glass Loader
 #'
-#' Updates the text displayed in the loading overlay.
-#' Call this *before* triggering a heavy calculation if you want a custom message.
+#' @param id ID for loader-meldingen
+#' @param text Valgfri tekst å vise under spinneren
+#' @param selector (Valgfri) CSS-selector for elementet loaderen skal dekke (f.eks. "#mitt-kort-id").
+#'                 Hvis NULL, dekker den hele skjermen.
+#' @param session Shiny session object
 #'
-#' @param session The Shiny session object.
-#' @param message The text string to display (e.g., "Analyzing Data...").
 #' @export
-updateGlassLoaderText <- function(session, message) {
-  session$sendCustomMessage("glass-loader-update-text", message)
+showGlassLoader <- function(id = "global_loader", text = NULL, selector = NULL, session = shiny::getDefaultReactiveDomain()) {
+  message <- list(id = id, text = text, selector = selector)
+  session$sendCustomMessage("glass-loader-show", message)
+}
+
+#' Hide Glass Loader
+#'
+#' @param id ID for loader-meldingen som skal skjules
+#' @param session Shiny session object
+#'
+#' @export
+hideGlassLoader <- function(id = "global_loader", session = shiny::getDefaultReactiveDomain()) {
+  session$sendCustomMessage("glass-loader-hide", list(id = id))
 }

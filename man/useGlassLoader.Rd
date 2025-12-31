@@ -2,14 +2,16 @@
 % Please edit documentation in R/glassLoader.R
 \name{useGlassLoader}
 \alias{useGlassLoader}
-\title{Glass Loader UI Component}
+\title{Glass Loader}
 \usage{
 useGlassLoader()
 }
+\arguments{
+\item{id}{Unik ID for loaderen (namespace blir håndtert automatisk hvis session sendes)}
+}
 \value{
-HTML tags to be inserted into the UI.
+HTML for loader dependencies
 }
 \description{
-Adds a global, glass-morphism styled loading overlay to the application.
-This overlay automatically appears when Shiny is busy (with a slight delay to prevent flickering).
+Glass Loader
 }

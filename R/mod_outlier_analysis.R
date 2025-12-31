@@ -237,8 +237,7 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
 
     # --- Reset Caches if Data Changes in Some Given Ways ---
     observeEvent(raw_cs_data_long(), {
-      # --- Empty caches when raw_cs_data_long changes ---
-      # Note: This change by new upload, or another choice for reference method
+      # *New* upload, or *Another* choice for reference method
       completed_tests(character(0))
       outlier_analysis_deemed_complete(FALSE)
       analysis_results_val(NULL)
@@ -267,6 +266,24 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     # --- Update analysis_results_val when `Analyze` Button is Pressed ---------
     observeEvent(input$get_outlier_results, {
       req(raw_cs_data_long())
+
+      # --- Add Loader ---
+
+      # --- Activate Loader ---
+      showGlassLoader(
+        id = session$ns("loader_outlier_tests"),
+        text = "Analyzing and Looking for Outliers ...",
+        selector = paste0("#", session$ns("outlier_test_results"))
+      )
+
+      # --- Deactive Loader at Any Exit ---
+      on.exit(
+        expr = {
+          hideGlassLoader(
+            id = session$ns("loader_outlier_tests")
+          )
+        }
+      )
 
       # --- The Outlier Analysis ---
 
