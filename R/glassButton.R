@@ -1,7 +1,8 @@
-#' Glass Action Button (Split Style)
+#' Glass Action Button (Split Style) with Urgent Mode
 #'
 #' A custom, two-tone action button.
 #' Left: White pill with Icon. Right: Purple gradient with Label.
+#' Can be set to "Urgent" mode to display a bouncing arrow and text above.
 #'
 #' @param inputId The input slot that will be used to access the value.
 #' @param label The label to display.
@@ -9,25 +10,40 @@
 #' @param width The width of the button (e.g., '100%', '200px').
 #' @param color A character string. "purple" (default) or "green".
 #' @param disabled Logical. Should the button be disabled on load?
+#' @param urgent Logical. If TRUE, shows an animated arrow and text above the button.
+#' @param urgent_text Character. The text to display when urgent (default "press me").
 #'
 #' @importFrom htmltools tagList tags htmlDependency
 #' @export
-glassButton <- function(inputId, label, icon = NULL, width = NULL, color = "purple", disabled = FALSE) {
+glassButton <- function(inputId, label, icon = NULL, width = NULL,
+                        color = "purple", disabled = FALSE,
+                        urgent = FALSE, urgent_text = "press me") {
 
-  # Class String
+  # Class String for the Button
   class_str <- "glass-btn"
   if (color == "green") class_str <- paste(class_str, "green")
   if (disabled) class_str <- paste(class_str, "disabled")
 
-  # Style String
+  # Style String for the Button
   style_str <- ""
   if (!is.null(width)) style_str <- paste0("width: ", width, ";")
 
   # Icon Content
   icon_html <- if (!is.null(icon)) as.character(icon) else ""
 
-  # Build the Split Structure
-  ui_structure <- htmltools::tags$div(
+  # Urgent Indicator Class
+  urgent_class <- "urgent-indicator"
+  if (urgent) urgent_class <- paste(urgent_class, "visible")
+
+  # 1. Build the Urgent Indicator HTML
+  urgent_html <- htmltools::tags$div(
+    class = urgent_class,
+    htmltools::tags$span(class = "urgent-text", urgent_text),
+    htmltools::tags$div(class = "urgent-arrow", htmltools::HTML("&#9660;")) # Down Arrow
+  )
+
+  # 2. Build the Button Structure
+  btn_structure <- htmltools::tags$div(
     id = inputId,
     class = class_str,
     style = style_str,
@@ -46,12 +62,20 @@ glassButton <- function(inputId, label, icon = NULL, width = NULL, color = "purp
     )
   )
 
+  # 3. Wrap them together
+  # The wrapper handles the vertical stacking
+  ui_wrapper <- htmltools::tags$div(
+    class = "glass-btn-wrapper",
+    urgent_html,
+    btn_structure
+  )
+
   # Attach Dependencies
   htmltools::tagList(
-    ui_structure,
+    ui_wrapper,
     htmltools::htmlDependency(
       name = "glass-button",
-      version = "1.0.2", # Bump version
+      version = "1.0.3", # Bump version
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
       script = "glass_button.js",
       stylesheet = "glass_button.css"
@@ -132,12 +156,17 @@ glassDownloadButton <- function(outputId, label = "Download", icon = shiny::icon
 #' @param label The label to display.
 #' @param icon An optional icon() to appear in the white section.
 #' @param disabled Logical. Should the button be disabled?
+#' @param urgent Logical. Should the urgent animation be shown?
+#' @param urgent_text Character. Update the urgent message text.
 #' @export
-updateGlassButton <- function(session, inputId, label = NULL, icon = NULL, disabled = NULL) {
+updateGlassButton <- function(session, inputId, label = NULL, icon = NULL,
+                              disabled = NULL, urgent = NULL, urgent_text = NULL) {
   message <- list()
   if (!is.null(label)) message$label <- label
   if (!is.null(icon)) message$icon <- as.character(icon)
   if (!is.null(disabled)) message$disabled <- as.logical(disabled)
+  if (!is.null(urgent)) message$urgent <- as.logical(urgent)
+  if (!is.null(urgent_text)) message$urgent_text <- as.character(urgent_text)
 
   session$sendInputMessage(inputId, message)
 }

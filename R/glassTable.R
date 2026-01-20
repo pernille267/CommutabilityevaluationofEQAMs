@@ -6,6 +6,8 @@
 #' @param sidebar_html Optional raw HTML for the sidebar.
 #' @param sidebar_title Title for the sidebar column.
 #' @param highlight_rows Vector of row indices to highlight.
+#' @param highlight_cells A list where names are specific cell values (strings)
+#' that may may appear, and the list list values are the HTML replacement.
 #' @param sortable Logical.
 #'
 #' @importFrom htmltools tagList tags htmlDependency HTML
@@ -18,9 +20,10 @@ renderGlassTable <- function(data,
                              sidebar_html = NULL,
                              sidebar_title = NULL,
                              highlight_rows = NULL,
+                             highlight_cells = NULL,
                              sortable = TRUE) {
 
-  # 1. Robust Data Handling (Fixes potential crash with plain data.frames)
+  # Robust Data Handling (Fixes potential crash with plain data.frames or lists)
   if (!data.table::is.data.table(data)) {
     data <- data.table::as.data.table(data)
   }
@@ -86,13 +89,28 @@ renderGlassTable <- function(data,
 
     cells <- lapply(data, function(col_data) {
       val <- col_data[i]
+
+      # Handle NA values (Return empty cell)
+      if (is.na(val)) {
+        return(htmltools::tags$td(class = "glass-td", ""))
+      }
+
+      # Check for Cell Highlighting (Exact Match)
+      val_str <- as.character(val)
+      content <- val_str
+
+      if (!is.null(highlight_cells) && val_str %in% names(highlight_cells)) {
+        # Use the custom HTML provided in the list
+        content <- highlight_cells[[val_str]]
+      }
+
       # Auto-Align Body Cells
       is_num <- is.numeric(val) || (is.character(val) && grepl("^[0-9.% ]+$", val))
       align <- if (is_num) "center" else "left"
 
       htmltools::tags$td(
         class = paste0("glass-td align-", align),
-        as.character(val)
+        content
       )
     })
 
@@ -133,7 +151,7 @@ renderGlassTable <- function(data,
       sidebar_col,
       data_col
     ),
-    pagination_footer # <--- ADD THIS AT THE BOTTOM
+    pagination_footer
   )
 
   htmltools::tagList(
@@ -141,7 +159,7 @@ renderGlassTable <- function(data,
     ui,
     htmltools::htmlDependency(
       name = "glass-table",
-      version = "13.0.0", # Major version bump for architectural change
+      version = "13.0.0",
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
       script = "glass_table.js",
       stylesheet = "glass_table.css"

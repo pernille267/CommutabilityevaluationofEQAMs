@@ -1,5 +1,5 @@
 // ==========================================================================
-// GLASS CHART JS v16.0 - No Borders, Clean Arrow Heads
+// GLASS CHART JS v15.2 - Centered Titles, Spacing Fix, Updated Hints
 // ==========================================================================
 
 (function () {
@@ -71,7 +71,7 @@
 
     container.tabIndex = 0;
 
-    // Block Browser Zoom
+    // Block Browser Zoom (Ctrl+Wheel)
     container.addEventListener("wheel", function(e) {
       if (e.ctrlKey) { e.preventDefault(); e.stopPropagation(); }
     }, { passive: false });
@@ -80,7 +80,7 @@
       container.focus({ preventScroll: true });
     });
 
-    // --- KEYBOARD LISTENERS FOR ALT FEEDBACK ---
+    // --- 1. KEYBOARD LISTENERS FOR ALT FEEDBACK ---
     container.addEventListener("keydown", (e) => {
       if (e.key === "Alt") {
         container.classList.add("alt-scroll-mode");
@@ -97,7 +97,7 @@
        container.classList.remove("alt-scroll-mode");
     });
 
-    // Keyboard Scrolling
+    // Keyboard Scrolling (Alt + Arrows)
     container.addEventListener("keydown", (e) => {
       if (e.key === "Escape") return;
 
@@ -129,6 +129,7 @@
     grad.append("stop").attr("offset", "50%").attr("stop-color", "#605CA8");
     grad.append("stop").attr("offset", "100%").attr("stop-color", "#4B4885");
 
+    // --- UPDATED HINT TEXT ---
     root.append("div").attr("class", "glass-chart-hint")
       .html("Ctrl+Wheel: Zoom &bull; Ctrl+Drag: Box Zoom &bull; Ctrl+Shift: Sync &bull; Alt+Arrows: Scroll");
 
@@ -283,6 +284,8 @@
 
       if (!isFocusMode) {
         g.append("path").attr("class", "facet-title-strip");
+
+        // --- SPLIT TEXT ELEMENTS FOR ANIMATION ---
         g.append("text").attr("class", "facet-title facet-title-main");
         g.append("text").attr("class", "facet-title-split facet-title-y");
         g.append("text").attr("class", "facet-title-split facet-title-x");
@@ -352,6 +355,7 @@
         totalWidth = clientW;
         totalHeight = clientH;
       } else {
+        // --- INCREASED TOP MARGIN FOR HINT TEXT ---
         margin = { top: 60, right: 20, bottom: 40, left: 50 };
         const nFacets = Math.max(comparisons.length, 1);
 
@@ -466,27 +470,72 @@
           g.append("text").attr("class", "axis-label-large").attr("x", facetWidth / 2).attr("y", facetHeight + 40).text(xName);
           g.append("text").attr("class", "axis-label-large").attr("transform", "rotate(-90)").attr("x", -facetHeight / 2).attr("y", -40).text(yName);
         } else {
-          // Rounded Corners
-          const stripH = 24; const R = 8;
-          const shardPath = `M 0 -${stripH - R} Q 0 -${stripH} ${R} -${stripH} L ${facetWidth - R} -${stripH} Q ${facetWidth} -${stripH} ${facetWidth} -${stripH - R} L ${facetWidth} 0 L 0 0 Z`;
-          const strip = g.select(".facet-title-strip").attr("d", shardPath).attr("fill", "url(#shard-gradient)").attr("stroke", "none");
+          // --- ROUNDED FACET CORNERS ---
+          const stripH = 24;
+          const R = 8;
 
-          // Axis Labels
-          const names = comp.split(" - "); const yName = names[0] || "Method 1"; const xName = names[1] || "Method 2";
-          const titleMain = g.select(".facet-title-main").attr("x", facetWidth / 2).attr("y", -8).attr("text-anchor", "middle").attr("transform", null).style("opacity", 1).text(comp);
-          const titleY = g.select(".facet-title-y").text(yName).style("opacity", 0).attr("transform", `translate(${facetWidth/2}, -8) rotate(0)`);
-          const titleX = g.select(".facet-title-x").text(xName).style("opacity", 0).attr("transform", `translate(${facetWidth/2}, -8)`);
+          const shardPath = `
+            M 0 -${stripH - R}
+            Q 0 -${stripH} ${R} -${stripH}
+            L ${facetWidth - R} -${stripH}
+            Q ${facetWidth} -${stripH} ${facetWidth} -${stripH - R}
+            L ${facetWidth} 0
+            L 0 0
+            Z
+          `;
 
+          const strip = g.select(".facet-title-strip")
+            .attr("d", shardPath)
+            .attr("fill", "url(#shard-gradient)")
+            .attr("stroke", "none");
+
+          // --- ANIMATED AXIS LABELS ---
+          const names = comp.split(" - ");
+          const yName = names[0] || "Method 1";
+          const xName = names[1] || "Method 2";
+
+          const titleMain = g.select(".facet-title-main")
+            .attr("x", facetWidth / 2).attr("y", -8)
+            .attr("text-anchor", "middle") // <--- FIXED CENTER ALIGNMENT
+            .attr("transform", null)
+            .style("opacity", 1)
+            .text(comp);
+
+          const titleY = g.select(".facet-title-y")
+            .text(yName)
+            .style("opacity", 0)
+            .attr("transform", `translate(${facetWidth/2}, -8) rotate(0)`);
+
+          const titleX = g.select(".facet-title-x")
+            .text(xName)
+            .style("opacity", 0)
+            .attr("transform", `translate(${facetWidth/2}, -8)`);
+
+          // Animation Events
           strip.on("pointerenter.anim", () => {
+             // 1. Fade out Main Title
              titleMain.transition().duration(400).style("opacity", 0);
-             titleY.transition().duration(400).style("opacity", 1).attr("transform", `translate(-35, ${facetHeight/2}) rotate(-90)`);
-             titleX.transition().duration(400).style("opacity", 1).attr("transform", `translate(${facetWidth/2}, ${facetHeight - 10})`);
+
+             // 2. Move Y Label to Left Axis
+             titleY.transition().duration(400)
+               .style("opacity", 1)
+               .attr("transform", `translate(-35, ${facetHeight/2}) rotate(-90)`);
+
+             // 3. Move X Label to Inside Bottom Axis (CORRECTED POSITION)
+             titleX.transition().duration(400)
+               .style("opacity", 1)
+               .attr("transform", `translate(${facetWidth/2}, ${facetHeight - 10})`);
           });
 
           strip.on("pointerleave.anim", () => {
+             // Revert
              titleMain.transition().duration(400).style("opacity", 1);
-             titleY.transition().duration(400).style("opacity", 0).attr("transform", `translate(${facetWidth/2}, -8) rotate(0)`);
-             titleX.transition().duration(400).style("opacity", 0).attr("transform", `translate(${facetWidth/2}, -8)`);
+             titleY.transition().duration(400)
+               .style("opacity", 0)
+               .attr("transform", `translate(${facetWidth/2}, -8) rotate(0)`);
+             titleX.transition().duration(400)
+               .style("opacity", 0)
+               .attr("transform", `translate(${facetWidth/2}, -8)`);
           });
         }
 
@@ -522,27 +571,8 @@
         function redraw(newX, newY) {
           facetState.xAxisG.attr("transform", `translate(0,${facetHeight})`).call(d3.axisBottom(newX).ticks(isFocus ? 10 : 5));
           facetState.yAxisG.call(d3.axisLeft(newY).ticks(isFocus ? 10 : 5));
-
           if (isFocus) g.selectAll(".tick text").style("font-size", "14px");
           else g.selectAll(".tick text").style("font-size", "10px");
-
-          // --- 2. CLEAN UP TICKS NEAR ARROWS ---
-          const arrowBuffer = 12; // Pixels from the arrow head tip to clear
-
-          // Hide X Ticks overlapping Arrow
-          facetState.xAxisG.selectAll(".tick").each(function(d) {
-             const xPos = newX(d);
-             if (xPos > facetWidth - arrowBuffer) d3.select(this).style("opacity", 0);
-             else d3.select(this).style("opacity", 1);
-          });
-
-          // Hide Y Ticks overlapping Arrow
-          facetState.yAxisG.selectAll(".tick").each(function(d) {
-             const yPos = newY(d);
-             if (yPos < arrowBuffer) d3.select(this).style("opacity", 0);
-             else d3.select(this).style("opacity", 1);
-          });
-
           const area = d3.area().x(d => newX(d.predictor)).y0(d => newY(d.pi_lwr)).y1(d => newY(d.pi_upr));
           facetState.ribbon.attr("d", area);
           if (facetState.csSel) facetState.csSel.attr("cx", d => newX(d.MP_B)).attr("cy", d => newY(d.MP_A));
@@ -696,3 +726,4 @@
     return { update, destroy };
   }
 })();
+

@@ -4,7 +4,15 @@
 \alias{updateGlassButton}
 \title{Update Glass Button}
 \usage{
-updateGlassButton(session, inputId, label = NULL, icon = NULL, disabled = NULL)
+updateGlassButton(
+  session,
+  inputId,
+  label = NULL,
+  icon = NULL,
+  disabled = NULL,
+  urgent = NULL,
+  urgent_text = NULL
+)
 }
 \arguments{
 \item{session}{A valid Shiny session object.}
@@ -16,6 +24,10 @@ updateGlassButton(session, inputId, label = NULL, icon = NULL, disabled = NULL)
 \item{icon}{An optional icon() to appear in the white section.}
 
 \item{disabled}{Logical. Should the button be disabled?}
+
+\item{urgent}{Logical. Should the urgent animation be shown?}
+
+\item{urgent_text}{Character. Update the urgent message text.}
 }
 \description{
 Update Glass Button

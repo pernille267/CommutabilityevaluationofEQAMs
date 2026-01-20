@@ -3,27 +3,41 @@
    Theme: Split Capsule | White Icon | Purple Gradient Label | Green Option
    ========================================================================== */
 
+/* --- WRAPPER (NEW) ---
+   Holds the Urgent Message and the Button together vertically.
+   Moves the margin from the button to here to preserve layout spacing.
+*/
+.glass-btn-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 6px;
+  vertical-align: middle;
+  position: relative;
+}
+
 /* Target BOTH class names */
 .glass-btn,
 .glass-download-btn {
   /* Layout */
   display: inline-flex;
-  align-items: stretch; /* Forces children to fill height */
-  justify-content: flex-start; /* Align content to the left */
+  align-items: stretch;
+  justify-content: flex-start;
 
   /* Dimensions */
-  height: 42px;        /* Fixed height for consistency */
+  height: 42px;
   min-width: 160px;
-  margin: 6px;
+  /* margin: 6px;  <-- REMOVED (Moved to wrapper) */
+  margin: 0;
   padding: 0;
 
   /* Shape & Masking */
-  border-radius: 50px; /* The Pill Shape */
+  border-radius: 50px;
   border: none;
   outline: none;
-  overflow: hidden; /* Clips the children to the rounded corners */
+  overflow: hidden;
 
-  /* THE BACKGROUND (Applied to container now, not label) */
+  /* THE BACKGROUND */
   background: linear-gradient(135deg, #605CA8 0%, #9e64c2 100%);
 
   /* Shadow & Interaction */
@@ -31,7 +45,56 @@
   cursor: pointer;
   user-select: none;
   transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-  text-decoration: none !important; /* For <a> tags */
+  text-decoration: none !important;
+}
+
+/* --- THE URGENT INDICATOR (NEW) --- */
+.urgent-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 5px;
+
+  /* Text Style */
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #D9534F; /* Urgent Red */
+
+  /* Animation */
+  animation: urgentBounce 1s infinite ease-in-out;
+
+  /* Visibility Control */
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  transition: opacity 0.3s, height 0.3s;
+}
+
+.urgent-indicator.visible {
+  opacity: 1;
+  height: auto;
+  overflow: visible;
+}
+
+/* The Arrow Symbol */
+.urgent-arrow {
+  font-size: 18px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* Animation Keyframes */
+@keyframes urgentBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 /* The Icon (White overlay on the left) */
@@ -40,9 +103,9 @@
   color: #605CA8;
 
   /* Size */
-  width: 44px; /* Fixed width */
-  min-width: 44px; /* Prevent squashing */
-  flex-shrink: 0; /* NEVER shrink */
+  width: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
 
   /* Centering Magic */
   display: flex;
@@ -52,7 +115,7 @@
 
   /* Interaction */
   transition: color 0.2s;
-  z-index: 2; /* Sits above the gradient */
+  z-index: 2;
 }
 
 /* --- The Label (Transparent Text Area) --- */
@@ -61,11 +124,11 @@
   color: #ffffff;
 
   /* Layout */
-  flex-grow: 1; /* Fills remaining space */
+  flex-grow: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 15px 0 10px; /* Slight padding adj */
+  padding: 0 15px 0 10px;
 
   /* Text Decoration */
   font-family: 'Source Sans Pro', sans-serif;
@@ -128,5 +191,4 @@
 .glass-btn.green:hover .glass-btn-icon {
   color: #1e7e34;
 }
-
 

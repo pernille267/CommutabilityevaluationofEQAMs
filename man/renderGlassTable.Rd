@@ -11,6 +11,7 @@ renderGlassTable(
   sidebar_html = NULL,
   sidebar_title = NULL,
   highlight_rows = NULL,
+  highlight_cells = NULL,
   sortable = TRUE
 )
 }
@@ -26,6 +27,9 @@ renderGlassTable(
 \item{sidebar_title}{Title for the sidebar column.}
 
 \item{highlight_rows}{Vector of row indices to highlight.}
+
+\item{highlight_cells}{A list where names are specific cell values (strings)
+that may may appear, and the list list values are the HTML replacement.}
 
 \item{sortable}{Logical.}
 }

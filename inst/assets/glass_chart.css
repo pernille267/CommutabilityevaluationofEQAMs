@@ -1,29 +1,207 @@
+/* --- GLASS CHART CSS v15.0 --- */
+
 .glass-chart-container {
   background: white;
   border-radius: 12px;
-  overflow: hidden; /* Important for SVG overflow */
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+  overflow: auto;
+
+  /* 1. Discrete, elegant default state */
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+
+  /* Smooth transition for the focus effect */
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  /* Ensure container can receive focus */
+  outline: none;
 }
 
+/* 1. The "Alt-Scroll" Feedback State */
+/* Only active when JS adds 'alt-scroll-mode' AND user hovers */
+.glass-chart-container.alt-scroll-mode:hover {
+  border-color: #605CA8; /* Match your theme color */
+  box-shadow: 0 0 0 4px rgba(96, 92, 168, 0.2); /* Soft purple glow */
+  cursor: grab; /* Hint that interaction is possible */
+}
+
+/* The SVG Chart */
+.glass-chart {
+  display: block;
+  overflow: visible;
+  max-width: none;
+}
+
+/* Tooltip */
 .glass-chart-tooltip {
-  position: absolute;
+  position: fixed;
   text-align: left;
   padding: 8px;
   font: 12px 'Source Sans Pro', sans-serif;
-  background: rgba(30, 30, 40, 0.95);
+  background: #605CA8;
   color: white;
   border-radius: 4px;
   pointer-events: none;
   z-index: 1000;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  max-width: 280px;
+  line-height: 1.35;
 }
 
+.glass-chart-tooltip .muted { opacity: 0.75; }
+
+.glass-chart-tooltip.pinned {
+  pointer-events: auto;
+  outline: 2px solid rgba(255,255,255,0.25);
+}
+
+/* --- AXES & ARROWS --- */
 .x-axis path, .y-axis path,
-.x-axis line, .y-axis line {
-  stroke: #ddd;
+.x-axis line, .y-axis line { stroke: none; }
+
+.x-axis .tick line, .y-axis .tick line {
+  stroke: black;
+  stroke-width: 1px;
 }
 
 .x-axis text, .y-axis text {
   font-family: 'Source Sans Pro', sans-serif;
-  fill: #666;
+  fill: black;
+  font-size: 10px;
 }
+
+.axis-shaft {
+  stroke: black;
+  stroke-width: 1.5px;
+  fill: none;
+}
+
+.axis-label-large {
+  font-family: 'Source Sans Pro', sans-serif;
+  fill: #000;
+  font-size: 16px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+/* --- ZETA STATISTICS LABEL --- */
+.zeta-label {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 11px;
+  fill: #333;
+  cursor: help;
+  font-weight: 600;
+}
+
+.glass-chart.focused-view .zeta-label { font-size: 14px; }
+
+/* Facet Styling */
+.facet-title-strip {
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+  cursor: default; /* Indicates it's interactive for the hover effect */
+  transition: filter 0.3s;
+}
+
+/* Enhance shadow on hover to encourage interaction */
+.facet-title-strip:hover {
+  filter: drop-shadow(0 4px 6px rgba(96, 92, 168, 0.4));
+}
+
+.facet-title {
+  font-family: 'Source Sans Pro', sans-serif;
+  fill: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  pointer-events: none;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* 3. Styles for the Animated Split Titles */
+.facet-title-split {
+  font-family: 'Source Sans Pro', sans-serif;
+  fill: #333; /* Dark color for axis labels */
+  font-weight: 600;
+  font-size: 12px;
+  pointer-events: none;
+  text-anchor: middle;
+  opacity: 0; /* Hidden by default */
+}
+
+.facet-border {
+  fill: none;
+  stroke: none;
+}
+
+.facet-border.focused {
+  stroke: #2196F3;
+  stroke-width: 2px;
+}
+
+.facet-border.global-focused {
+  stroke: #9C27B0;
+  stroke-width: 2px;
+}
+
+@keyframes pulse-red {
+  0% { stroke: #FF5252; stroke-width: 4px; }
+  50% { stroke: #FF5252; stroke-width: 6px; }
+  100% { stroke: #FF5252; stroke-width: 4px; }
+}
+
+.facet-border.limit-error {
+  stroke: #FF5252 !important;
+  animation: pulse-red 0.3s ease-in-out 2;
+}
+
+/* Points & Selection */
+.cs-point.dimmed, .ce-point.dimmed { opacity: 0.15; }
+.cs-point.selected, .ce-point.selected { opacity: 1; }
+.cs-point.hovered { filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25)); }
+.ce-point.pinned-node { stroke: black !important; stroke-width: 2px !important; }
+
+/* Rate Ring */
+.rate-ring {
+  fill: none;
+  stroke: #2196F3;
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  pointer-events: none;
+  transition: stroke-dasharray 0.3s ease;
+}
+.rate-ring-bg {
+  fill: none;
+  stroke: rgba(0,0,0,0.1);
+  stroke-width: 2.5px;
+  pointer-events: none;
+}
+
+/* Hint Text */
+.glass-chart-hint {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  font: 11px/1.2 'Source Sans Pro', sans-serif;
+  color: rgba(0,0,0,0.65);
+  user-select: none;
+  pointer-events: none;
+  background: rgba(255,255,255,0.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* CLOSE BUTTON */
+.close-button-group { cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
+.close-button-group:hover { opacity: 1; }
+.close-button-bg { fill: rgba(0,0,0,0.05); stroke: none; }
+.close-button-x { stroke: #333; stroke-width: 2px; stroke-linecap: round; }
+.close-button-group:hover .close-button-bg { fill: #FF5252; }
+.close-button-group:hover .close-button-x { stroke: white; }
+
+/* Interaction Layers */
+.zoom-capture { fill: none; pointer-events: all; cursor: grab; }
+.zoom-capture:active { cursor: grabbing; }
+.brush-layer .overlay { pointer-events: none; }
+
+.glass-chart.brush-mode .brush-layer .overlay { pointer-events: all; cursor: crosshair; }
+.glass-chart.zoom-box-mode .zoom-capture { cursor: zoom-in; }
+.glass-chart.zoom-box-mode .brush-layer .overlay { pointer-events: all; cursor: zoom-in; }
+.glass-chart.zoom-box-mode .plot-area *, .glass-chart.brush-mode .plot-area * { pointer-events: none !important; }

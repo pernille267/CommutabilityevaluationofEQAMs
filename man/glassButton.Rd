@@ -2,7 +2,7 @@
 % Please edit documentation in R/glassButton.R
 \name{glassButton}
 \alias{glassButton}
-\title{Glass Action Button (Split Style)}
+\title{Glass Action Button (Split Style) with Urgent Mode}
 \usage{
 glassButton(
   inputId,
@@ -10,7 +10,9 @@ glassButton(
   icon = NULL,
   width = NULL,
   color = "purple",
-  disabled = FALSE
+  disabled = FALSE,
+  urgent = FALSE,
+  urgent_text = "press me"
 )
 }
 \arguments{
@@ -25,8 +27,13 @@ glassButton(
 \item{color}{A character string. "purple" (default) or "green".}
 
 \item{disabled}{Logical. Should the button be disabled on load?}
+
+\item{urgent}{Logical. If TRUE, shows an animated arrow and text above the button.}
+
+\item{urgent_text}{Character. The text to display when urgent (default "press me").}
 }
 \description{
 A custom, two-tone action button.
 Left: White pill with Icon. Right: Purple gradient with Label.
+Can be set to "Urgent" mode to display a bouncing arrow and text above.
 }

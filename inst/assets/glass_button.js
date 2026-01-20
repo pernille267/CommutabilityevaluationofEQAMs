@@ -3,7 +3,7 @@ var glassButtonBinding = new Shiny.InputBinding();
 $.extend(glassButtonBinding, {
 
   find: function(scope) {
-    return $(scope).find('.glass-btn');
+    return $(scope).find('.glass-btn, .glass-download-btn');
   },
 
   initialize: function(el) {
@@ -47,6 +47,23 @@ $.extend(glassButtonBinding, {
       } else {
         $el.removeClass('disabled');
       }
+    }
+
+    // Update Urgent State
+    // The urgent indicator is a sibling within the wrapper, immediately preceding the button
+    if (data.hasOwnProperty('urgent')) {
+      var $indicator = $el.parent().find('.urgent-indicator');
+      if (data.urgent) {
+        $indicator.addClass('visible');
+      } else {
+        $indicator.removeClass('visible');
+      }
+    }
+
+    // Update Urgent Text (if changed dynamically)
+    if (data.hasOwnProperty('urgent_text')) {
+       var $indicatorText = $el.parent().find('.urgent-text');
+       $indicatorText.text(data.urgent_text);
     }
   }
 });
