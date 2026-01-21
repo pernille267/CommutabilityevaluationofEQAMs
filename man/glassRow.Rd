@@ -4,10 +4,14 @@
 \alias{glassRow}
 \title{Glass Grid Row}
 \usage{
-glassRow(...)
+glassRow(..., spacers = FALSE)
 }
 \arguments{
 \item{...}{Content (usually \code{glassCol} elements).}
+
+\item{spacers}{Logical. If TRUE, subtle vertical gradient bars appear between
+adjacent columns. Useful for visually connecting related configuration panels.
+Default is FALSE.}
 }
 \description{
 A CSS Grid container that replaces \code{fluidRow}.

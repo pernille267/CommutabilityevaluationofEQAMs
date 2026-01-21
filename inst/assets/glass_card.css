@@ -9,7 +9,7 @@
   /* Softer, deeper shadow for a floating effect */
   box-shadow: 0 8px 30px rgba(0,0,0,0.04);
   border: 1px solid rgba(96, 92, 168, 0.1); /* Subtle purple tint on border */
-  margin-bottom: 25px;
+  /* No margin-bottom: spacers handle spacing between cards */
   overflow: hidden;
   transition: all 0.3s ease;
   position: relative;

@@ -9,6 +9,7 @@ updateGlassRadio(
   inputId,
   choices = NULL,
   selected = NULL,
+  color = NULL,
   disabled = NULL
 )
 }
@@ -20,6 +21,8 @@ updateGlassRadio(
 \item{choices}{Optional. New list of choices.}
 
 \item{selected}{Optional. New selection.}
+
+\item{color}{Optional. Color variant: "green" or "purple".}
 
 \item{disabled}{Optional. TRUE to disable.}
 }

@@ -47,7 +47,17 @@ Shiny.addCustomMessageHandler("glass-radio-update", function(message) {
     return;
   }
 
-  // A. Handle Disabled
+  // A. Handle Color Variant
+  if (message.hasOwnProperty('color')) {
+    // Remove existing color classes
+    group.classList.remove('purple', 'green');
+    // Add new color class (only if purple, green is default)
+    if (message.color === 'purple') {
+      group.classList.add('purple');
+    }
+  }
+
+  // B. Handle Disabled
   if (message.hasOwnProperty('disabled')) {
     if (message.disabled) {
       group.classList.add('disabled');

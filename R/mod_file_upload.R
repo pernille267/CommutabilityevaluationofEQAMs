@@ -22,12 +22,13 @@ mod_file_upload_ui <- function(id) {
         inputId = ns("show_file_input_explanation"),
         label = "Show Help Text",
         icon = icon("circle-question"),
-        color = "green"
+        color = "white"
       )
     ),
 
     glassTogglePanel(
       triggerId = ns("show_file_input_explanation"),
+      show_when = NULL,
       help_button_page_1_text()
     ),
 
@@ -112,6 +113,8 @@ mod_file_upload_ui <- function(id) {
         )
       )
     ),
+
+    glassSpacer(),
 
     # --- Diagnostic & Validation ---
     glassResultCard(
@@ -206,10 +209,10 @@ mod_file_upload_server <- function(id) {
                validate("Unsupported file type. Please upload a .xlsx or .csv file.")
         )
       }, error = function(e) {
-        shiny::showNotification(
-          paste("Error reading file:", e$message),
+        showGlassToast(
+          message = paste("Error reading file:", e$message),
           type = "error",
-          duration = 10
+          duration = 10000
         )
         return(NULL)
       })

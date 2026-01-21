@@ -107,9 +107,14 @@ glassRoute <- function(title, ...) {
 #' Automatically handles spacing (gap) between columns.
 #'
 #' @param ... Content (usually `glassCol` elements).
+#' @param spacers Logical. If TRUE, subtle vertical gradient bars appear between
+#'   adjacent columns. Useful for visually connecting related configuration panels.
+#'   Default is FALSE.
 #' @export
-glassRow <- function(...) {
-  htmltools::tags$div(class = "glass-row", ...)
+glassRow <- function(..., spacers = FALSE) {
+  classes <- "glass-row"
+  if (spacers) classes <- paste(classes, "glass-row-spacers")
+  htmltools::tags$div(class = classes, ...)
 }
 
 #' Glass Grid Column
@@ -127,6 +132,28 @@ glassCol <- function(width, ...) {
     class = paste0("glass-col-", w),
     ...
   )
+}
+
+#' Glass Horizontal Spacer
+#'
+#' A subtle gradient bar to visually connect vertically stacked cards.
+#' Place between glassCard or glassResultCard elements.
+#'
+#' @return An HTML div element with the spacer styling.
+#' @export
+glassSpacer <- function() {
+  htmltools::tags$div(class = "glass-spacer-h")
+}
+
+#' Glass Vertical Spacer
+#'
+#' A subtle gradient bar to visually connect side-by-side cards in a row.
+#' Place between glassCol elements within a glassRow.
+#'
+#' @return An HTML div element with the vertical spacer styling.
+#' @export
+glassSpacerV <- function() {
+  htmltools::tags$div(class = "glass-spacer-v")
 }
 
 #' Update Glass Sidebar Highlight

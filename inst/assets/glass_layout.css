@@ -122,12 +122,18 @@ body {
   transform: translateY(-1px);
 }
 
-/* Active State */
+/* Active State - Glossy 3D Pop */
 .glass-nav-item.active {
-  /* Strong Purple Gradient */
-  background: linear-gradient(135deg, #605CA8 0%, #7a76c5 100%);
+  /* Glossy overlay + Purple gradient (V5 style) */
+  background: 
+    linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%),
+    linear-gradient(135deg, #7571b8 0%, #605CA8 50%, #4d4a8e 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(96, 92, 168, 0.3);
+  
+  /* 3D Pop Shadow */
+  box-shadow: 
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    0 4px 14px rgba(96, 92, 168, 0.35);
 }
 
 /* Tooltip (Unchanged, works well) */
@@ -245,7 +251,7 @@ body {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 30px !important;
+  padding: 15px !important;
   width: auto;
   max-width: 100%;
   background-color: transparent;
@@ -255,11 +261,60 @@ body {
 .glass-row {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 25px;
+  gap: 6px; /* Tight gap - spacer bar fits in between */
   width: 100%;
-  margin-bottom: 25px;
-  align-items: flex-start;
+  /* No margin-bottom: spacers handle spacing */
+  align-items: stretch; /* Cards in row stretch to same height */
   max-width: 100%;
+}
+
+/* ==========================================================================
+   GLASS SPACERS - Visual connectors between cards
+   ========================================================================== */
+
+/* Horizontal Spacer (between vertically stacked cards) */
+.glass-spacer-h {
+  height: 4px;
+  margin: 1px 40px;
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    rgba(96, 92, 168, 0.08) 20%,
+    rgba(96, 92, 168, 0.12) 50%,
+    rgba(96, 92, 168, 0.08) 80%,
+    transparent 100%
+  );
+  border-radius: 2px;
+}
+
+/* Vertical Spacer - ONLY applied when .glass-row-spacers class is present */
+/* Use glassRow(..., spacers = TRUE) to enable */
+.glass-row.glass-row-spacers > [class*="glass-col-"] {
+  position: relative;
+}
+
+.glass-row.glass-row-spacers > [class*="glass-col-"] + [class*="glass-col-"]::before {
+  content: '';
+  position: absolute;
+  left: -3px; /* Center in the 6px gap */
+  top: 40px;
+  bottom: 40px;
+  width: 4px;
+  background: linear-gradient(180deg, 
+    transparent 0%,
+    rgba(96, 92, 168, 0.08) 20%,
+    rgba(96, 92, 168, 0.12) 50%,
+    rgba(96, 92, 168, 0.08) 80%,
+    transparent 100%
+  );
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Column classes - flex containers so children stretch to fill */
+.glass-col-12, .glass-col-9, .glass-col-8, .glass-col-6,
+.glass-col-5, .glass-col-4, .glass-col-3, .glass-col-2 {
+  display: flex;
+  flex-direction: column;
 }
 
 .glass-col-12 { grid-column: span 12; }
@@ -270,8 +325,26 @@ body {
 .glass-col-4  { grid-column: span 4; }
 .glass-col-3  { grid-column: span 3; }
 .glass-col-2  { grid-column: span 2; }
-.glass-col-4  { grid-column: span 4; }
-.glass-col-3  { grid-column: span 3; }
+
+/* Cards inside columns stretch to fill the column height */
+.glass-col-12 > .glass-card,
+.glass-col-9  > .glass-card,
+.glass-col-8  > .glass-card,
+.glass-col-6  > .glass-card,
+.glass-col-5  > .glass-card,
+.glass-col-4  > .glass-card,
+.glass-col-3  > .glass-card,
+.glass-col-2  > .glass-card,
+.glass-col-12 > .glass-result-card,
+.glass-col-9  > .glass-result-card,
+.glass-col-8  > .glass-result-card,
+.glass-col-6  > .glass-result-card,
+.glass-col-5  > .glass-result-card,
+.glass-col-4  > .glass-result-card,
+.glass-col-3  > .glass-result-card,
+.glass-col-2  > .glass-result-card {
+  flex: 1;
+}
 
 @media (max-width: 992px) {
   .glass-row {

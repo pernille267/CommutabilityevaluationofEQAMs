@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C2-V3 Subtle 3D Pop Variants</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="inst/assets/glass_button.css">
+  <style>
+    :root {
+      --brand-purple: #605CA8;
+      --brand-purple-dark: #4d4a8e;
+      --brand-purple-light: #6b67b3;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f0f0f5;
+      padding: 40px;
+      margin: 0;
+    }
+
+    h2 {
+      color: #333;
+      margin: 40px 0 15px 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.6;
+    }
+    h2:first-of-type { margin-top: 0; }
+
+    .variant-label {
+      background: #333;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+
+    /* =========================================================================
+       BASE STYLES
+       ========================================================================= */
+    .page-header {
+      padding: 15px 25px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .page-header h1 {
+      margin: 0;
+      margin-right: auto;
+      font-weight: 600;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      color: white;
+    }
+
+    .page-header h1 i {
+      font-size: 20px;
+      margin-right: 15px;
+      padding: 10px;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .mock-btn {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      cursor: pointer;
+      background: white;
+      color: var(--brand-purple);
+    }
+
+    /* =========================================================================
+       V0: C2-V3 Original (for reference)
+       ========================================================================= */
+    .v0 {
+      background: linear-gradient(180deg, #7571b8 0%, var(--brand-purple) 40%, var(--brand-purple-dark) 100%);
+      box-shadow: 
+        inset 0 2px 0 rgba(255,255,255,0.25),
+        0 3px 10px rgba(96, 92, 168, 0.2);
+    }
+
+    /* =========================================================================
+       V1: Subtle top highlight + bottom shadow
+       ========================================================================= */
+    .v1 {
+      background: linear-gradient(180deg, #7571b8 0%, var(--brand-purple) 40%, var(--brand-purple-dark) 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.3),
+        inset 0 -1px 0 rgba(0,0,0,0.1),
+        0 4px 12px rgba(96, 92, 168, 0.25);
+    }
+
+    /* =========================================================================
+       V2: Soft pillow effect
+       ========================================================================= */
+    .v2 {
+      background: linear-gradient(180deg, #7874b8 0%, var(--brand-purple) 50%, #58559e 100%);
+      box-shadow: 
+        inset 0 2px 4px rgba(255,255,255,0.2),
+        inset 0 -2px 4px rgba(0,0,0,0.08),
+        0 4px 12px rgba(96, 92, 168, 0.22);
+    }
+
+    /* =========================================================================
+       V3: Beveled edge look
+       ========================================================================= */
+    .v3 {
+      background: linear-gradient(180deg, #7571b8 0%, var(--brand-purple) 40%, var(--brand-purple-dark) 100%);
+      border-top: 1px solid rgba(255,255,255,0.25);
+      border-bottom: 1px solid rgba(0,0,0,0.15);
+      box-shadow: 
+        0 4px 12px rgba(96, 92, 168, 0.25);
+    }
+
+    /* =========================================================================
+       V4: Inner glow + lift
+       ========================================================================= */
+    .v4 {
+      background: linear-gradient(180deg, #7571b8 0%, var(--brand-purple) 40%, var(--brand-purple-dark) 100%);
+      box-shadow: 
+        inset 0 1px 2px rgba(255,255,255,0.25),
+        0 6px 16px rgba(96, 92, 168, 0.28),
+        0 2px 4px rgba(96, 92, 168, 0.15);
+    }
+
+    /* =========================================================================
+       V5: Glossy top bar
+       ========================================================================= */
+    .v5 {
+      background: 
+        linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%),
+        linear-gradient(180deg, #7571b8 0%, var(--brand-purple) 40%, var(--brand-purple-dark) 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        0 4px 14px rgba(96, 92, 168, 0.25);
+    }
+
+    /* =========================================================================
+       V6: Pressed bottom edge
+       ========================================================================= */
+    .v6 {
+      background: linear-gradient(180deg, #7a76bc 0%, var(--brand-purple) 35%, #524f96 100%);
+      box-shadow: 
+        inset 0 2px 0 rgba(255,255,255,0.22),
+        inset 0 -1px 2px rgba(0,0,0,0.12),
+        0 3px 10px rgba(96, 92, 168, 0.2);
+    }
+
+    /* =========================================================================
+       V7: Double shadow lift
+       ========================================================================= */
+    .v7 {
+      background: linear-gradient(180deg, #7571b8 0%, var(--brand-purple) 40%, var(--brand-purple-dark) 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        0 2px 4px rgba(96, 92, 168, 0.2),
+        0 6px 20px rgba(96, 92, 168, 0.18);
+    }
+
+    /* =========================================================================
+       V8: Soft raised button
+       ========================================================================= */
+    .v8 {
+      background: linear-gradient(180deg, #7d79be 0%, #6965b0 30%, var(--brand-purple) 60%, #504d94 100%);
+      box-shadow: 
+        inset 0 1px 1px rgba(255,255,255,0.2),
+        0 4px 12px rgba(96, 92, 168, 0.25);
+    }
+
+    /* =========================================================================
+       V9: Subtle convex
+       ========================================================================= */
+    .v9 {
+      background: linear-gradient(180deg, #7874ba 0%, var(--brand-purple) 45%, var(--brand-purple) 55%, #555198 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.28),
+        inset 0 -1px 0 rgba(0,0,0,0.08),
+        0 4px 12px rgba(96, 92, 168, 0.22);
+    }
+
+    /* =========================================================================
+       V10: Minimal 3D - just a hint
+       ========================================================================= */
+    .v10 {
+      background: linear-gradient(180deg, #7470b6 0%, var(--brand-purple) 50%, #5a5799 100%);
+      box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        0 3px 10px rgba(96, 92, 168, 0.2);
+    }
+
+    /* Sample card */
+    .sample-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 25px;
+      box-shadow: 0 4px 16px rgba(96, 92, 168, 0.06);
+      border: 1px solid rgba(96, 92, 168, 0.1);
+      color: #555;
+      font-size: 14px;
+    }
+
+    .sample-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(96, 92, 168, 0.08);
+    }
+
+    .sample-card-header i {
+      color: var(--brand-purple);
+      background: rgba(96, 92, 168, 0.1);
+      padding: 8px;
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sample-card-header span {
+      font-weight: 600;
+      color: var(--brand-purple);
+      font-size: 16px;
+    }
+
+    .sample-card p { margin: 0; line-height: 1.6; }
+
+    .full-demo {
+      background: #f4f4f7;
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+      border: 1px dashed #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>V0 — C2-V3 Original (Reference)</h2>
+  <div class="variant-label">No 3D effect — flat baseline</div>
+  <div class="full-demo">
+    <div class="page-header v0">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V1 — Top Highlight + Bottom Shadow</h2>
+  <div class="variant-label">inset top light + inset bottom dark</div>
+  <div class="full-demo">
+    <div class="page-header v1">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V2 — Soft Pillow Effect</h2>
+  <div class="variant-label">Blurred inset shadows top & bottom</div>
+  <div class="full-demo">
+    <div class="page-header v2">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V3 — Beveled Edge</h2>
+  <div class="variant-label">Light top border + dark bottom border</div>
+  <div class="full-demo">
+    <div class="page-header v3">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V4 — Inner Glow + Lift</h2>
+  <div class="variant-label">Soft inner glow + layered drop shadow</div>
+  <div class="full-demo">
+    <div class="page-header v4">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V5 — Glossy Top Bar</h2>
+  <div class="variant-label">Semi-transparent white overlay at top</div>
+  <div class="full-demo">
+    <div class="page-header v5">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V6 — Pressed Bottom Edge</h2>
+  <div class="variant-label">Darker bottom gradient + inset shadow</div>
+  <div class="full-demo">
+    <div class="page-header v6">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V7 — Double Shadow Lift</h2>
+  <div class="variant-label">Two-layer drop shadow for depth</div>
+  <div class="full-demo">
+    <div class="page-header v7">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V8 — Soft Raised Button</h2>
+  <div class="variant-label">4-stop gradient brighter in middle</div>
+  <div class="full-demo">
+    <div class="page-header v8">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V9 — Subtle Convex</h2>
+  <div class="variant-label">Flat middle band + edge shading</div>
+  <div class="full-demo">
+    <div class="page-header v9">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>V10 — Minimal 3D (Just a Hint)</h2>
+  <div class="variant-label">Very subtle — barely noticeable depth</div>
+  <div class="full-demo">
+    <div class="page-header v10">
+      <h1><i class="fas fa-upload"></i> Data Upload & Validation</h1>
+      <button class="mock-btn"><i class="fas fa-circle-question"></i> Show Help</button>
+    </div>
+    <div class="sample-card">
+      <div class="sample-card-header"><i class="fas fa-sliders"></i><span>Configuration</span></div>
+      <p>Configure your analysis parameters here.</p>
+    </div>
+  </div>
+
+  <h2>Glass Button White Variants (On Purple)</h2>
+  <div class="variant-label">Testing contrast of white split-buttons on brand background</div>
+  <div class="full-demo" style="background: #605CA8; display: flex; flex-direction: column; gap: 20px; align-items: flex-start;">
+    
+    <!-- V1: Base White -->
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span style="color: white; width: 100px; font-size: 13px; font-weight: 600;">V1 (Base White)</span>
+      <div class="glass-btn-wrapper">
+        <div class="glass-btn white" role="button">
+          <span class="glass-btn-icon"><i class="fas fa-download"></i></span>
+          <span class="glass-btn-label">Download Data</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- V2: Medium Gray -->
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span style="color: white; width: 100px; font-size: 13px; font-weight: 600;">V2 (Med Gray)</span>
+      <div class="glass-btn-wrapper">
+        <div class="glass-btn white-v2" role="button">
+          <span class="glass-btn-icon"><i class="fas fa-download"></i></span>
+          <span class="glass-btn-label">Download Data</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- V3: Silver -->
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span style="color: white; width: 100px; font-size: 13px; font-weight: 600;">V3 (Silver)</span>
+      <div class="glass-btn-wrapper">
+        <div class="glass-btn white-v3" role="button">
+          <span class="glass-btn-icon"><i class="fas fa-download"></i></span>
+          <span class="glass-btn-label">Download Data</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

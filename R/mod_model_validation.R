@@ -26,6 +26,7 @@ mod_model_validation_ui <- function(id) {
     # --- Help text output -----------------------------------------------------
     glassTogglePanel(
       triggerId = ns("show_model_validation_explanation"),
+      show_when = NULL,
       help_button_page_4A_text()
     ),
 
@@ -57,13 +58,13 @@ mod_model_validation_ui <- function(id) {
               disabled = FALSE
             ),
             glassDownloadButton(
-              outputId = ns("download_model_at_visual_results"),
+              inputId = ns("download_model_at_visual_results"),
               label = "Table",
               icon = icon("download"),
               width = "auto"
             ),
             glassDownloadButton(
-              outputId = ns("download_model_at_exact_results"),
+              inputId = ns("download_model_at_exact_results"),
               label = "Raw Table",
               icon = icon("download"),
               width = "auto"
@@ -259,6 +260,7 @@ mod_model_validation_ui <- function(id) {
             )
           )
         ),
+        glassSpacer(),
         # --- Plot Result Card (Dropdown moved here) ---
         glassResultCard(
           inputId = ns("card_assessment_plot"),
@@ -275,7 +277,7 @@ mod_model_validation_ui <- function(id) {
               width = "auto"
             ),
             glassDownloadButton(
-              outputId = ns("download_assessment_plots"),
+              inputId = ns("download_assessment_plots"),
               label = "Download",
               icon = icon("download"),
               width = "auto"
@@ -532,46 +534,57 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params, o
     })
 
     # --- Download Formatted Table (Visual Assessment Table) ---
-    output$download_model_at_visual_results <- downloadHandler(
-      filename = function() {
-        paste0(
-          "ceapkfcr_formal_model_validation_tests_visual_table_",
-          Sys.Date(),
-          ".xlsx"
-        )
-      },
-      content = function(file) {
-        table_to_save <- current_assessment_tests_results()$visual
-        req(table_to_save)
-        writexl::write_xlsx(
-          x = table_to_save,
-          path = file,
-          col_names = TRUE,
-          format_headers = TRUE
-        )
-      }
-    )
+    observeEvent(input$download_model_at_visual_results, {
+      req(current_assessment_tests_results())
+      table_to_save <- current_assessment_tests_results()$visual
+      fname <- paste0("ceapkfcr_formal_model_validation_tests_visual_table_", Sys.Date(), ".xlsx")
+      
+      dl_url <- session$registerDataObj(
+        name = paste0("dl_modvis_", as.integer(Sys.time())),
+        data = list(t = table_to_save),
+        filter = function(data, req) {
+          tmp <- tempfile(fileext = ".xlsx")
+          if (is.null(data$t)) {
+             writexl::write_xlsx(data.table::data.table("Error" = "No Data"), path = tmp)
+          } 
+          else {
+             writexl::write_xlsx(x = data$t, path = tmp, col_names = TRUE, format_headers = TRUE)
+          }
+          shiny::httpResponse(
+             200, content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+             content = readBin(tmp, "raw", file.info(tmp)$size)
+          )
+        }
+      )
+      triggerGlassDownload(session, "download_model_at_visual_results", url = dl_url, filename = fname)
+    })
 
     # --- Download Exact Numeric Table (Raw) ---
-    output$download_model_at_exact_results <- downloadHandler(
-      filename = function() {
-        paste0(
-          "ceapkfcr_formal_model_validation_tests_raw_table_",
-          Sys.Date(),
-          ".xlsx"
-        )
-      },
-      content = function(file) {
-        table_to_save <- current_assessment_tests_results()$exact
-        req(table_to_save)
-        writexl::write_xlsx(
-          x = table_to_save,
-          path = file,
-          col_names = TRUE,
-          format_headers = TRUE
-        )
-      }
-    )
+    observeEvent(input$download_model_at_exact_results, {
+      req(current_assessment_tests_results())
+      table_to_save <- current_assessment_tests_results()$exact
+      fname <- paste0("ceapkfcr_formal_model_validation_tests_raw_table_", Sys.Date(), ".xlsx")
+      
+      dl_url <- session$registerDataObj(
+        name = paste0("dl_modexact_", as.integer(Sys.time())),
+        data = list(t = table_to_save),
+        filter = function(data, req) {
+          tmp <- tempfile(fileext = ".xlsx")
+          if (is.null(data$t)) {
+             writexl::write_xlsx(data.table::data.table("Error" = "No Data"), path = tmp)
+          } else {
+             writexl::write_xlsx(x = data$t, path = tmp, col_names = TRUE, format_headers = TRUE)
+          }
+          shiny::httpResponse(
+             200, content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+             content = readBin(tmp, "raw", file.info(tmp)$size)
+          )
+        }
+      )
+      triggerGlassDownload(session, "download_model_at_exact_results", url = dl_url, filename = fname)
+    })
 
     # --- Server Logic for Assessment Plots ------------------------------------
 
@@ -699,41 +712,39 @@ mod_model_validation_server <- function(id, file_upload_data, mod_dins_params, o
     )
 
     # --- Download Assessment Plot ---
-    output$download_assessment_plots <- downloadHandler(
-      filename = function() {
-        paste0(
-          "ceapkfcr_visual_model_validation_",
-          input$which_plot,
-          "_",
-          Sys.Date(),
-          input$plot_download_file_type
-        )
-      },
-      content = function(file) {
+    observeEvent(input$download_assessment_plots, {
+        req(assessment_plot_object())
         plot_to_save <- assessment_plot_object()
-        req(plot_to_save)
-        ggplot2::ggsave(
-          file,
-          plot = plot_to_save,
-          width = as.numeric(input$ap_width),
-          height = as.numeric(input$ap_height),
-          units = "cm",
-          dpi = as.numeric(input$plot_download_quality)
+        
+        ptype <- input$plot_download_file_type
+        w <- as.numeric(input$ap_width)
+        h <- as.numeric(input$ap_height)
+        q <- as.numeric(input$plot_download_quality)
+        
+        fname <- paste0("ceapkfcr_visual_model_validation_", input$which_plot, "_", Sys.Date(), ptype)
+      
+        dl_url <- session$registerDataObj(
+          name = paste0("dl_modplot_", as.integer(Sys.time())),
+          data = list(p = plot_to_save, w=w, h=h, q=q, pt=ptype),
+          filter = function(data, req) {
+            tmp <- tempfile(fileext = data$pt)
+            ggplot2::ggsave(tmp, plot = data$p, width = data$w, height = data$h, units = "cm", dpi = data$q)
+            
+            shiny::httpResponse(
+               200, content_type = "application/octet-stream",
+               headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+               content = readBin(tmp, "raw", file.info(tmp)$size)
+            )
+          }
         )
-      }
-    )
+        triggerGlassDownload(session, "download_assessment_plots", url = dl_url, filename = fname)
+    })
 
     # --- Avoid Suspension Issues ---
 
     # 1. Wake up the DATA GENERATORS first (The Table and Plot)
     outputOptions(output, "formal_assessment_tests_table", suspendWhenHidden = FALSE)
     outputOptions(output, "assessment_plots", suspendWhenHidden = FALSE)
-
-    # 2. Wake up the DATA CONSUMERS second (The Download Handlers)
-    outputOptions(output, "download_model_at_visual_results", suspendWhenHidden = FALSE)
-    outputOptions(output, "download_model_at_exact_results", suspendWhenHidden = FALSE)
-    outputOptions(output, "download_assessment_plots", suspendWhenHidden = FALSE)
-
 
     return(
       list(

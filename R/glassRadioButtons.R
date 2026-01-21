@@ -8,6 +8,7 @@
 #' @param help_text Optional tooltip text to display on hover.
 #' @param choices List of values. Can be named vector c("Label" = "val").
 #' @param selected The initially selected value.
+#' @param color Color variant: "green" (default) or "purple".
 #' @param inline (Deprecated) Always inline/responsive by design.
 #' @param width The width of the container.
 #' @param disabled Logical. Should it be disabled on load?
@@ -20,6 +21,7 @@ glassRadioButtons <- function(inputId,
                               help_text = NULL,
                               choices,
                               selected = NULL,
+                              color = "green",
                               inline = TRUE,
                               width = "100%",
                               disabled = FALSE) {
@@ -68,6 +70,7 @@ glassRadioButtons <- function(inputId,
 
   # --- Container Class ---
   container_cls <- "glass-radio-group"
+  if (color == "purple") container_cls <- paste(container_cls, "purple")
   if (disabled) container_cls <- paste(container_cls, "disabled")
 
   # Build Final UI
@@ -107,10 +110,11 @@ glassRadioButtons <- function(inputId,
 #' @param inputId The id of the input object (use simple ID).
 #' @param choices Optional. New list of choices.
 #' @param selected Optional. New selection.
+#' @param color Optional. Color variant: "green" or "purple".
 #' @param disabled Optional. TRUE to disable.
 #'
 #' @export
-updateGlassRadio <- function(session, inputId, choices = NULL, selected = NULL, disabled = NULL) {
+updateGlassRadio <- function(session, inputId, choices = NULL, selected = NULL, color = NULL, disabled = NULL) {
 
   # Get full inputID
   fullId <- session$ns(inputId)
@@ -142,6 +146,11 @@ updateGlassRadio <- function(session, inputId, choices = NULL, selected = NULL, 
   # Handle Disabled
   if (!is.null(disabled)) {
     message$disabled <- as.logical(disabled)
+  }
+
+  # Handle Color
+  if (!is.null(color)) {
+    message$color <- as.character(color)
   }
 
   session$sendCustomMessage("glass-radio-update", message)

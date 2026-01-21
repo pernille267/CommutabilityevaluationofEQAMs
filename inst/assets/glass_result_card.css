@@ -6,9 +6,9 @@
 .glass-result-card {
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 16px rgba(96, 92, 168, 0.06);
   border: 1px solid rgba(40, 167, 69, 0.15); /* Faint Green Border */
-  margin-bottom: 25px;
+  /* No margin-bottom: spacers handle spacing between cards */
   overflow: visible;
   position: relative;
   transition: all 0.3s ease;

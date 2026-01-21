@@ -26,44 +26,48 @@
    ========================================================================== */
 /* Brukes i mod_file_upload_ui og mod_results_ui */
 
-/* Main Container with Scientific Gradient */
+/* Main Container with Brand Purple Gradient + Glossy 3D Pop */
 .page-header {
-  background: linear-gradient(to bottom, #ffffff 0%, #f4f4f7 100%);
-  padding: 15px 25px;
-  border-radius: 8px;
-  border-bottom: 2px solid #dcdce6;
+  background: 
+    linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 40%),
+    linear-gradient(180deg, #7571b8 0%, #605CA8 40%, #4d4a8e 100%);
+  padding: 10px 25px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  margin-bottom: 25px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  margin-bottom: 6px;
+  box-shadow: 
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    0 4px 14px rgba(96, 92, 168, 0.25);
 }
 
 /* Header Title Typography & Layout */
 .page-header h1 {
   margin: 0;
   margin-right: auto; /* Pushes button to far right */
-  color: #605CA8;
+  color: white;
   font-weight: 600;
-  font-size: 22px;    /* Slight reduction for better fit */
+  font-size: 22px;
   display: flex;
   align-items: center;
   line-height: 1.2;
   letter-spacing: 0.02em;
 }
 
-/* Main Icon Styling (Bubble Effect inside H1) */
+/* Main Icon Styling (Frosted Bubble Effect inside H1) */
 .page-header h1 i {
-  font-size: 24px;
-  color: #605CA8;
+  font-size: 20px;
+  color: white;
   margin-right: 15px;
-  background-color: rgba(96, 92, 168, 0.1);
+  background: rgba(255,255,255,0.15);
   padding: 10px;
   border-radius: 50%;
-  width: 45px;
-  height: 45px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 /* ==========================================================================

@@ -22,6 +22,7 @@ mod_dins_ui <- function(id) {
     ),
     glassTogglePanel(
       triggerId = ns("show_dins_explanation"),
+      show_when = NULL,
       help_button_page_2_text()
     ),
 
@@ -53,6 +54,7 @@ mod_dins_ui <- function(id) {
                 "Box-Cox" = "boxcox"
               ),
               selected = "identity",
+              color = "purple",
               width = "100%"
             ),
             glassSlider(
@@ -110,6 +112,8 @@ mod_dins_ui <- function(id) {
       )
     ),
 
+    glassSpacer(),
+
     # --- Tabset Panels ---
     glassTabsetPanel(
       inputId = ns("dins_results_tabs"),
@@ -152,13 +156,13 @@ mod_dins_ui <- function(id) {
           toolbar = div(
             style = "display: flex; gap: 10px;",
             glassDownloadButton(
-              outputId = ns("download_current_zeta"),
+              inputId = ns("download_current_zeta"),
               label = "Current Estimates",
               icon = icon("download"),
               width = "auto"
             ),
             glassDownloadButton(
-              outputId = ns("download_all_zetas"),
+              inputId = ns("download_all_zetas"),
               label = "All Estimates",
               icon = icon("download"),
               width = "auto"
@@ -182,7 +186,7 @@ mod_dins_ui <- function(id) {
           width = "100%",
           # Toolbar with Download Button
           toolbar = glassDownloadButton(
-            outputId = ns("download_imprecision"),
+              inputId = ns("download_imprecision"),
             label = "Imprecision Estimates",
             icon = icon("download"),
             width = "100%"
@@ -345,8 +349,8 @@ mod_dins_server <- function(id, file_upload_data) {
       req(raw_cs_data_long())
 
       # Show a notification because this takes a few seconds
-      id <- showNotification("Fitting regression models...", type = "message", duration = NULL)
-      on.exit(removeNotification(id))
+      id <- showGlassToast("The AI is checking your data. Will the AI be happy?", type = "message", duration = 2000, closeButton = FALSE)
+      on.exit(removeGlassToast(id))
 
       calculate_candidate_zetas(raw_cs_data_long())
     })
@@ -656,50 +660,66 @@ mod_dins_server <- function(id, file_upload_data) {
     })
 
     # D. Download Handler 1: Current Zeta Results
-    output$download_current_zeta <- downloadHandler(
-      filename = function() { paste0("ceapkfcr_dins_current_", Sys.Date(), ".xlsx") },
-      content = function(file) {
-        req(current_zeta_data())
-        final_zeta_data_debug <<- current_zeta_data()
-        writexl::write_xlsx(
-          x = current_zeta_data(),
-          path = file,
-          col_names = TRUE
-        )
-      }
-    )
+    # --- Download Handler 1: Current Zeta Results -----------------------------
+    observeEvent(input$download_current_zeta, {
+      req(current_zeta_data())
+      data_curr <- current_zeta_data()
+      final_zeta_data_debug <<- data_curr
+      
+      fname <- paste0("ceapkfcr_dins_current_", Sys.Date(), ".xlsx")
+      
+      dl_url <- session$registerDataObj(
+        name = paste0("dl_zeta_", as.integer(Sys.time())),
+        data = list(d = data_curr),
+        filter = function(data, req) {
+          tmp <- tempfile(fileext = ".xlsx")
+          writexl::write_xlsx(x = data$d, path = tmp, col_names = TRUE)
+          shiny::httpResponse(
+             200, content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+             content = readBin(tmp, "raw", file.info(tmp)$size)
+          )
+        }
+      )
+      triggerGlassDownload(session, "download_current_zeta", url = dl_url, filename = fname)
+    })
 
     # E. Download Handler 2: All Possible Zeta Results (Using Cache)
-    output$download_all_zetas <- downloadHandler(
-      filename = function() { paste0("ceapkfcr_dins_all_transformations_and_models_", Sys.Date(), ".xlsx") },
-      content = function(file) {
-        req(cached_zeta_estimates())
-
-        # Flatten the list structure from cached_zeta_estimates
-        raw_list <- cached_zeta_estimates()
-
-        # Helper to extract rows
-        flat_dt <- lapply(raw_list, function(item) {
-          data.table::data.table(
-            comparison = item$comparison,
-            ols_identity = item$ols["identity"],
-            ols_log = item$ols["log"],
-            ols_boxcox = item$ols["boxcox"],
-            ss_identity = item$ss["identity"],
-            ss_log = item$ss["log"],
-            ss_boxcox = item$ss["boxcox"]
+    observeEvent(input$download_all_zetas, {
+      req(cached_zeta_estimates())
+      raw_list <- cached_zeta_estimates()
+      
+      fname <- paste0("ceapkfcr_dins_all_transformations_and_models_", Sys.Date(), ".xlsx")
+      
+      dl_url <- session$registerDataObj(
+        name = paste0("dl_zetall_", as.integer(Sys.time())),
+        data = list(l = raw_list),
+        filter = function(data, req) {
+          tmp <- tempfile(fileext = ".xlsx")
+          
+          flat_dt <- lapply(data$l, function(item) {
+            data.table::data.table(
+              comparison = item$comparison,
+              ols_identity = item$ols["identity"],
+              ols_log = item$ols["log"],
+              ols_boxcox = item$ols["boxcox"],
+              ss_identity = item$ss["identity"],
+              ss_log = item$ss["log"],
+              ss_boxcox = item$ss["boxcox"]
+            )
+          })
+          final_dt <- data.table::rbindlist(flat_dt)
+          
+          writexl::write_xlsx(x = final_dt, path = tmp, col_names = TRUE)
+          shiny::httpResponse(
+             200, content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+             content = readBin(tmp, "raw", file.info(tmp)$size)
           )
-        })
-
-        final_dt <- data.table::rbindlist(flat_dt)
-        final_dt_debug <<- final_dt
-        writexl::write_xlsx(
-          x = final_dt,
-          path = file,
-          col_names = TRUE
-        )
-      }
-    )
+        }
+      )
+      triggerGlassDownload(session, "download_all_zetas", url = dl_url, filename = fname)
+    })
 
     # ==========================================================================
     # IMPRECISION TABLE LOGIC (Glass Table + Downloads)
@@ -819,27 +839,28 @@ mod_dins_server <- function(id, file_upload_data) {
     })
 
     # C. Download Handler: Imprecison Estimates
-    output$download_imprecision <- downloadHandler(
-      filename = function() {
-        fn <- paste0(
-          "ceapkfcr_IVD_MD_wise_imprecision_estimates_",
-          Sys.Date(),
-          ".xlsx"
-        )
-        return(fn)
-      },
-      content = function(file) {
-        req(
-          current_imprecision_data()
-        )
-        final_imprecision_data_debug <<- current_imprecision_data()$formatted
-        writexl::write_xlsx(
-          x = current_imprecision_data()$formatted,
-          path = file,
-          col_names = TRUE
-        )
-      }
-    )
+    observeEvent(input$download_imprecision, {
+      req(current_imprecision_data())
+      data_curr <- current_imprecision_data()$formatted
+      final_imprecision_data_debug <<- data_curr
+      
+      fname <- paste0("ceapkfcr_IVD_MD_wise_imprecision_estimates_", Sys.Date(), ".xlsx")
+      
+      dl_url <- session$registerDataObj(
+        name = paste0("dl_imp_", as.integer(Sys.time())),
+        data = list(d = data_curr),
+        filter = function(data, req) {
+          tmp <- tempfile(fileext = ".xlsx")
+          writexl::write_xlsx(x = data$d, path = tmp, col_names = TRUE)
+          shiny::httpResponse(
+             200, content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+             content = readBin(tmp, "raw", file.info(tmp)$size)
+          )
+        }
+      )
+      triggerGlassDownload(session, "download_imprecision", url = dl_url, filename = fname)
+    })
 
     # --- Avoid Suspension Issues ---
 
@@ -847,11 +868,6 @@ mod_dins_server <- function(id, file_upload_data) {
     outputOptions(output, "general_tab_content", suspendWhenHidden = FALSE)
     outputOptions(output, "calculated_zetas_table", suspendWhenHidden = FALSE)
     outputOptions(output, "calculated_imprecision_table", suspendWhenHidden = FALSE)
-
-    # 2. Wake up the DATA CONSUMERS second (The Download Handlers)
-    outputOptions(output, "download_current_zeta", suspendWhenHidden = FALSE)
-    outputOptions(output, "download_all_zetas", suspendWhenHidden = FALSE)
-    outputOptions(output, "download_imprecision", suspendWhenHidden = FALSE)
 
     # --- *EXPERIMENTAL* ---
 

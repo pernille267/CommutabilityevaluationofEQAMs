@@ -57,31 +57,31 @@ run_app <- function() {
   ui <- glassPage(
     title = "Commutability Evaluation",
 
-    # 1. Branding (Logo Area)
+    # Branding (Logo Area)
     branding = tags$div(
       # Using an icon as placeholder, replace with img(src="...") later if needed
       style = "color: #605CA8; font-size: 28px;",
-      icon("dna")
+      icon("dna") # Placeholder icon
     ),
 
-    # 2. Header Extras (Right side)
+    # Header Extras (Right side)
     header_items = tagList(
       # Status Bar for Indicators
       div(
         class = "glass-header-group",
-        # Referansemetode (R)
+        # Reference Method
         glassHeaderIndicator(
           inputId = "global_ref_indicator",
           type = "reference",
           visible = FALSE
         ),
-        # Diagnostikk (Hjerte/Status)
+        # Diagnostics (Heart/Status)
         glassHeaderIndicator(
           inputId = "global_diag_indicator",
           type = "diagnostics",
           visible = FALSE
         ),
-        # Outlier Filter (Linjal)
+        # Outlier Filter (Ruler)
         glassHeaderIndicator(
           inputId = "global_outlier_indicator",
           type = "filter",
@@ -90,14 +90,14 @@ run_app <- function() {
         )
       ),
       div(class = "app-version", "Beta v1.0"),
-      glassButton("help_docs", label = "Docs", icon = icon("book"), width = "100px"),
+      glassButton("help_docs", label = "Docs", icon = icon("book"), width = "auto"),
       div(class = "user-profile-mini",
           div(class = "user-avatar", icon("user")),
           span("Guest User")
       )
     ),
 
-    # 3. Sidebar (Navigation)
+    # Sidebar (Module Navigation Menu)
     sidebar = glassSidebar(
       inputId = "main_nav",
       glassNavItem("file_upload", icon("upload"), "Data Upload", active = TRUE),
@@ -109,9 +109,11 @@ run_app <- function() {
 
     # Activate Loading-System
     useGlassLoader(),
+    
+    # Activate Toast Notification System
+    useGlassToast(),
 
-    # 4. Content Routes (The Pages)
-    # Important: Use glassRoute here, NOT tabPanel or tabItem
+    # Body (Modules)
     glassRoute("file_upload", mod_file_upload_ui("file_upload_1")),
     glassRoute("dins", mod_dins_ui("differences_in_non_selectivity_1")),
     glassRoute("outliers", mod_outlier_analysis_ui("outlier_analysis_1")),
@@ -134,20 +136,63 @@ run_app <- function() {
                                                 file_upload_data = file_upload_data)
 
     # 4. Model Validation Module
-    model_validation_data <- mod_model_validation_server("model_validation_1",
-                                                         file_upload_data = file_upload_data,
-                                                         mod_dins_params = mod_dins_params,
-                                                         outlier_data = outlier_data)
+    model_validation_data <- mod_model_validation_server(
+      "model_validation_1",
+      file_upload_data = file_upload_data,
+      mod_dins_params = mod_dins_params,
+      outlier_data = outlier_data
+    )
 
     # 5. Results Module
-    mod_results_server("results_1",
-                       file_upload_data = file_upload_data,
-                       mod_dins_params = mod_dins_params,
-                       outlier_data = outlier_data,
-                       model_validation_data = model_validation_data)
+    mod_results_server(
+      "results_1",
+      file_upload_data = file_upload_data,
+      mod_dins_params = mod_dins_params,
+      outlier_data = outlier_data,
+      model_validation_data = model_validation_data
+    )
 
     # --- Header Indicators ---
-
+    
+    # --- Help Documentation Button (Not Working Yet, Look at Later) ---
+    observeEvent(input$help_docs, {
+      doc_content <- get_app_documentation()
+      full_page <- htmltools::tags$html(
+        htmltools::tags$head(
+          htmltools::tags$title("Application Documentation"),
+          htmltools::tags$link(
+            rel = "stylesheet",
+            href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          ),
+          htmltools::tags$style(
+            "body { font-family: 'Source Sans Pro', sans-serif; background: #fdfdfd; padding: 20px; }"
+          )
+        ),
+        htmltools::tags$body(
+          htmltools::h2(
+            tagList(icon("book"), " Application Documentation"),
+            style = "color: #605CA8; border-bottom: 2px solid #eee; padding-bottom: 10px;"
+          ),
+          doc_content
+        )
+      )
+      
+      url <- session$registerDataObj(
+        name = "app_docs",
+        data = full_page,
+        filter = function(data, req) {
+          shiny::httpResponse(
+            200,
+            content_type = "text/html",
+            content = as.character(data)
+          )
+        }
+      )
+      
+      showGlassToast("This feature is under development.", type = "warning", duration = 6000)
+      session$sendCustomMessage("open_url_new_tab", url)
+    }, ignoreInit = TRUE)
+    
     # --- Update Reference Method Indicator ---
     observe({
       ref <- file_upload_data$reference_method()
@@ -157,29 +202,27 @@ run_app <- function() {
           visible = TRUE,
           tooltip_text = paste("Reference Method:", ref)
         )
-      } else {
+      } 
+      else {
         updateGlassHeaderIndicator(session, "global_ref_indicator", visible = FALSE)
       }
     })
 
     # --- Update Data Validity Indicator ---
     observe({
-      # --- Get Status Text from 'file_upload_data' ---
       status_text <- file_upload_data$diagnostics_status_text()
       if (!is.null(status_text) && status_text != "") {
-        # Bestem ikon og farge basert på teksten (enkel heuristikk)
         status_type <- "success"
         icon_name <- "heart-pulse"
-
         lower_txt <- tolower(status_text)
         if (grepl("fail|error|invalid", lower_txt)) {
           status_type <- "error"
           icon_name <- "triangle-exclamation"
-        } else if (grepl("warning", lower_txt)) {
+        } 
+        else if (grepl("warning", lower_txt)) {
           status_type <- "warning"
           icon_name <- "circle-exclamation"
         }
-
         updateGlassHeaderIndicator(
           session, "global_diag_indicator",
           visible = TRUE,
@@ -187,52 +230,52 @@ run_app <- function() {
           status = status_type,
           icon_name = icon_name
         )
-      } else {
-        updateGlassHeaderIndicator(session, "global_diag_indicator", visible = FALSE)
+      } 
+      else {
+        updateGlassHeaderIndicator(
+          session,
+          "global_diag_indicator", 
+          visible = FALSE
+        )
       }
     })
 
-    # A. Lytt på endringer i outliers som skal fjernes (fra modulen)
+    # --- Update Outlier Filter Indicator ---
     observeEvent(outlier_data$outliers_to_remove(), {
       to_remove <- outlier_data$outliers_to_remove()
       if (!is.null(to_remove) && nrow(to_remove) > 0) {
-        # Det finnes et aktivt filter!
-        # 1. Oppdater teksten på Header Indicator (men hold den skjult enn så lenge)
-        msg <- paste0("Active Filter Applied: ", nrow(to_remove),
-                      " outlier(s) from Outlier Analysis are currently flagged for removal")
-        updateGlassHeaderIndicator(session, "global_outlier_indicator",
-                                   tooltip_text = msg,
-                                   visible = FALSE) # Skjult fordi den store boksen vises først
-
-        # 2. Vis den store notifikasjonen INNE i modulen
-        # (Dette håndteres allerede internt i mod_outlier_analysis_server ved hjelp av updateGlassNotifyUser)
-
-      } else {
-        # Ingen filter (eller filter tømt)
-
-        # Skjul Header Indicator
+        # --- Active filter present ---
+        msg <- paste0(
+          "Active Filter Applied: ",
+          nrow(to_remove),
+          " outlier(s) from Outlier Analysis are currently flagged for removal"
+        )
+        updateGlassHeaderIndicator(
+          session,
+          "global_outlier_indicator",
+          tooltip_text = msg,
+          visible = FALSE
+        )
+      } 
+      else {
+        # --- No filter (or filter cleared) ---
+        # Hide Header Indicator
         updateGlassHeaderIndicator(session, "global_outlier_indicator", visible = FALSE)
       }
-    }, ignoreNULL = FALSE)
+    }, ignoreNULL = FALSE) # Trigger also when NULL
 
-    # B. Lytt på at brukeren LUKKER ("Dismiss") den store notifikasjonen
-    # Notifikasjonen heter "outlier_notification" inne i modulen "outlier_analysis_1"
-    # JS sender signalet: NS("outlier_notification") + "_dismissed"
-
+    # Show header indicator when outlier notification is dismissed
     observeEvent(input[["outlier_analysis_1-outlier_notification_dismissed"]], {
-
-      # Sjekk at vi faktisk har outliers (sikkerhetsnett)
       to_remove <- outlier_data$outliers_to_remove()
-
       if (!is.null(to_remove) && nrow(to_remove) > 0) {
-        # Brukeren har lukket boksen, og vi har et aktivt filter.
-        # Nå skal Header Indicator gli inn!
-
-        updateGlassHeaderIndicator(session, "global_outlier_indicator", visible = TRUE)
+        # User closed the box, show header indicator with active filter
+        updateGlassHeaderIndicator(
+          session, 
+          "global_outlier_indicator", 
+          visible = TRUE
+        )
       }
     })
-
   }
-
   shinyApp(ui = ui, server = server)
 }

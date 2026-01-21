@@ -24,6 +24,7 @@ mod_outlier_analysis_ui <- function(id) {
 
     glassTogglePanel(
       triggerId = ns("show_outlier_analysis_explanation"),
+      show_when = NULL,
       help_button_page_3_text()
     ),
 
@@ -103,6 +104,8 @@ mod_outlier_analysis_ui <- function(id) {
       )
     ),
 
+    glassSpacer(),
+
     # --- Card 2 - Outlier Analysis Results ------------------------------------
     glassResultCard(
       inputId = ns("outlier_test_results"),
@@ -118,7 +121,7 @@ mod_outlier_analysis_ui <- function(id) {
           disabled = FALSE
         ),
         glassDownloadButton(
-          outputId = ns("download_outliers"),
+          inputId = ns("download_outliers"),
           label = "Download",
           icon = icon("file-excel"),
           width = "auto",
@@ -538,30 +541,31 @@ mod_outlier_analysis_server <- function(id, file_upload_data) {
     })
 
     # --- Download Handler for Excel Export ------------------------------------
-    output$download_outliers <- downloadHandler(
-      filename = function() {
-        paste0(
-          "outlier_analysis_",
-          input$outlier_test,
-          "_",
-          Sys.Date(),
-          ".xlsx"
-        )
-      },
-      content = function(file) {
-        req(analysis_results_val())
-        writexl::write_xlsx(
-          x = analysis_results_val(),
-          path =  file,
-          col_names = TRUE,
-          format_headers = TRUE
-        )
-      }
-    )
+    observeEvent(input$download_outliers, {
+      req(analysis_results_val())
+      res <- analysis_results_val()
+      test_name <- input$outlier_test
+      
+      fname <- paste0("outlier_analysis_", test_name, "_", Sys.Date(), ".xlsx")
+      
+      dl_url <- session$registerDataObj(
+        name = paste0("dl_out_", as.integer(Sys.time())),
+        data = list(r = res),
+        filter = function(data, req) {
+          tmp <- tempfile(fileext = ".xlsx")
+          writexl::write_xlsx(x = data$r, path = tmp, col_names = TRUE, format_headers = TRUE)
+          shiny::httpResponse(
+             200, content_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers = list("Content-Disposition" = paste0("attachment; filename=\"", fname, "\"")),
+             content = readBin(tmp, "raw", file.info(tmp)$size)
+          )
+        }
+      )
+      triggerGlassDownload(session, "download_outliers", url = dl_url, filename = fname)
+    })
 
     # --- Avoid Suspension Issues ---
     outputOptions(output, "outlier_results_ui", suspendWhenHidden = FALSE)
-    outputOptions(output, "download_outliers", suspendWhenHidden = FALSE)
 
     # --- *EXPERIMENTAL* ---
 

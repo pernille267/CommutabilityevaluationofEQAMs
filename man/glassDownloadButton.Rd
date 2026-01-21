@@ -2,10 +2,10 @@
 % Please edit documentation in R/glassButton.R
 \name{glassDownloadButton}
 \alias{glassDownloadButton}
-\title{Glass Download Button}
+\title{Glass Download Button (Custom Handler)}
 \usage{
 glassDownloadButton(
-  outputId,
+  inputId,
   label = "Download",
   icon = shiny::icon("download"),
   width = NULL,
@@ -13,7 +13,7 @@ glassDownloadButton(
 )
 }
 \arguments{
-\item{outputId}{The output variable to read the download from.}
+\item{inputId}{The input slot to track clicks and receive messages.}
 
 \item{label}{The label to display.}
 
@@ -24,5 +24,7 @@ glassDownloadButton(
 \item{disabled}{Logical. Should the button be disabled on load?}
 }
 \description{
-A custom download button with the "Split Capsule" Glass theme.
+A custom download button using the Glass theme.
+NOTE: This does NOT use shiny's downloadHandler. It acts as an input button.
+You must use \code{triggerGlassDownload()} on the server to send the file.
 }

@@ -8,7 +8,7 @@
 #' @param label The label to display.
 #' @param icon An optional icon() to appear in the white section.
 #' @param width The width of the button (e.g., '100%', '200px').
-#' @param color A character string. "purple" (default) or "green".
+#' @param color A character string. "purple" (default), "green", or "white".
 #' @param disabled Logical. Should the button be disabled on load?
 #' @param urgent Logical. If TRUE, shows an animated arrow and text above the button.
 #' @param urgent_text Character. The text to display when urgent (default "press me").
@@ -22,6 +22,7 @@ glassButton <- function(inputId, label, icon = NULL, width = NULL,
   # Class String for the Button
   class_str <- "glass-btn"
   if (color == "green") class_str <- paste(class_str, "green")
+  if (color == "white") class_str <- paste(class_str, "white")
   if (disabled) class_str <- paste(class_str, "disabled")
 
   # Style String for the Button
@@ -75,7 +76,7 @@ glassButton <- function(inputId, label, icon = NULL, width = NULL,
     ui_wrapper,
     htmltools::htmlDependency(
       name = "glass-button",
-      version = "1.0.3", # Bump version
+      version = "1.0.4", # Bump version
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
       script = "glass_button.js",
       stylesheet = "glass_button.css"
@@ -83,24 +84,28 @@ glassButton <- function(inputId, label, icon = NULL, width = NULL,
   )
 }
 
-#' Glass Download Button
+#' Glass Download Button (Custom Handler)
 #'
-#' A custom download button with the "Split Capsule" Glass theme.
+#' A custom download button using the Glass theme.
+#' NOTE: This does NOT use shiny's downloadHandler. It acts as an input button.
+#' You must use \code{triggerGlassDownload()} on the server to send the file.
 #'
-#' @param outputId The output variable to read the download from.
+#' @param inputId The input slot to track clicks and receive messages.
 #' @param label The label to display.
 #' @param icon An optional icon() to appear in the white section.
 #' @param width The width of the button (e.g., '100%', '200px').
+#' @param color A character string. "purple" (default), "green", or "white".
 #' @param disabled Logical. Should the button be disabled on load?
 #'
 #' @importFrom htmltools tagList tags htmlDependency
 #' @export
-glassDownloadButton <- function(outputId, label = "Download", icon = shiny::icon("download"), width = NULL, disabled = FALSE) {
+glassDownloadButton <- function(inputId, label = "Download", icon = shiny::icon("download"), width = NULL, color = "purple", disabled = FALSE) {
 
   # 1. Build Class String
-  # We use 'glass-download-btn' for styling.
-  # We use 'shiny-download-link' so Shiny knows it's a download handler.
-  class_str <- "glass-download-btn shiny-download-link"
+  # REMOVED: "shiny-download-link" - This is now fully custom.
+  class_str <- "glass-download-btn"
+  if (color == "green") class_str <- paste(class_str, "green")
+  if (color == "white") class_str <- paste(class_str, "white")
   if (disabled) class_str <- paste(class_str, "disabled")
 
   # 2. Build Style String
@@ -111,14 +116,13 @@ glassDownloadButton <- function(outputId, label = "Download", icon = shiny::icon
   icon_html <- if (!is.null(icon)) as.character(icon) else ""
 
   # 4. Build HTML Structure
-  # Note: It MUST be an <a> tag for downloads to work natively
+  # We use <a> but without href, creating a JS-controlled anchor.
   ui_structure <- htmltools::tags$a(
-    id = outputId,
+    id = inputId,
     class = class_str,
     style = style_str,
-    href = "",
-    target = "_blank",
-    download = NA,
+    # No href or download attributes - handled by JS
+    role = "button",
 
     # Part 1: White Icon Area
     htmltools::tags$span(
@@ -134,19 +138,32 @@ glassDownloadButton <- function(outputId, label = "Download", icon = shiny::icon
   )
 
   # 5. Attach Dependencies
-  # We reuse the same 'glass-button' dependency since they share the CSS file.
   htmltools::tagList(
     ui_structure,
     htmltools::htmlDependency(
       name = "glass-button",
-      version = "1.0.1",
+      version = "1.0.5", # Bump version
       src = c(file = system.file("assets", package = "CommutabilityevaluationofEQAMs")),
-      # We don't strictly need the JS for the download button,
-      # but including it doesn't hurt as it targets a different class (.glass-btn).
       script = "glass_button.js",
       stylesheet = "glass_button.css"
     )
   )
+}
+
+#' Trigger Glass Download
+#'
+#' Sends a custom message to the glassDownloadButton to initiate a download.
+#' Useful when generating files dynamically in an observeEvent.
+#'
+#' @param session Shiny session object.
+#' @param inputId The ID of the glassDownloadButton.
+#' @param url The URL of the file to download (path to www or temp file).
+#' @param filename Optional. The name to save the file as.
+#' @export
+triggerGlassDownload <- function(session, inputId, url, filename = NULL) {
+  message <- list(downloadUrl = url)
+  if (!is.null(filename)) message$filename <- filename
+  session$sendInputMessage(inputId, message)
 }
 
 #' Update Glass Button
@@ -155,18 +172,35 @@ glassDownloadButton <- function(outputId, label = "Download", icon = shiny::icon
 #' @param inputId The input slot that will be used to access the value.
 #' @param label The label to display.
 #' @param icon An optional icon() to appear in the white section.
+#' @param color Update the color style ("purple", "green", "white").
 #' @param disabled Logical. Should the button be disabled?
 #' @param urgent Logical. Should the urgent animation be shown?
 #' @param urgent_text Character. Update the urgent message text.
 #' @export
 updateGlassButton <- function(session, inputId, label = NULL, icon = NULL,
-                              disabled = NULL, urgent = NULL, urgent_text = NULL) {
+                              color = NULL, disabled = NULL, urgent = NULL, urgent_text = NULL) {
   message <- list()
   if (!is.null(label)) message$label <- label
   if (!is.null(icon)) message$icon <- as.character(icon)
+  if (!is.null(color)) message$color <- color
   if (!is.null(disabled)) message$disabled <- as.logical(disabled)
   if (!is.null(urgent)) message$urgent <- as.logical(urgent)
   if (!is.null(urgent_text)) message$urgent_text <- as.character(urgent_text)
 
   session$sendInputMessage(inputId, message)
+}
+
+#' Update Glass Download Button
+#'
+#' Alias for updateGlassButton to clarify usage with download buttons.
+#'
+#' @param session A valid Shiny session object.
+#' @param outputId The output slot (which is also the input ID for the button state).
+#' @param label The label to display.
+#' @param icon An optional icon() to appear in the white section.
+#' @param color Update the color style ("purple", "green", "white").
+#' @param disabled Logical. Should the button be disabled?
+#' @export
+updateGlassDownloadButton <- function(session, outputId, label = NULL, icon = NULL, color = NULL, disabled = NULL) {
+  updateGlassButton(session, outputId, label = label, icon = icon, color = color, disabled = disabled)
 }

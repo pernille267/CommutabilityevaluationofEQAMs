@@ -1,11 +1,18 @@
-$(document).on('shiny:inputchanged', function(event) {
+// Listen for both shiny:inputchanged and shiny:value events
+$(document).on('shiny:inputchanged shiny:value', function(event) {
 
   // 1. Get the ID of the input that changed
   var changedId = event.name;
   var value = event.value;
 
+  // Skip if no ID or value
+  if (!changedId || value === undefined) return;
+
   // 2. Find ALL panels listening to this ID
   var panels = document.querySelectorAll('.glass-toggle-panel[data-trigger="' + changedId + '"]');
+
+  // Skip if no panels found
+  if (panels.length === 0) return;
 
   panels.forEach(function(panel) {
     var showWhen = panel.getAttribute('data-show-when');

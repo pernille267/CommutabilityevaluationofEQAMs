@@ -11,6 +11,7 @@ glassRadioButtons(
   help_text = NULL,
   choices,
   selected = NULL,
+  color = "green",
   inline = TRUE,
   width = "100\%",
   disabled = FALSE
@@ -28,6 +29,8 @@ glassRadioButtons(
 \item{choices}{List of values. Can be named vector c("Label" = "val").}
 
 \item{selected}{The initially selected value.}
+
+\item{color}{Color variant: "green" (default) or "purple".}
 
 \item{inline}{(Deprecated) Always inline/responsive by design.}
 

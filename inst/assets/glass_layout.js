@@ -6,6 +6,11 @@
 $(document).on('shiny:connected', function() {
   // 1. Initialize Router
   initGlassRouter();
+  
+  // 1b. Helper for opening URLs in new tabs (e.g. documentation)
+  Shiny.addCustomMessageHandler('open_url_new_tab', function(url) {
+    window.open(url, '_blank');
+  });
 
   // 2. Register Custom Message Handler
   Shiny.addCustomMessageHandler('glass-sidebar-highlight', function(message) {
